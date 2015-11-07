@@ -37,6 +37,10 @@ Namespace Database
             MyClass.New(New CreateManager(Function() New OrmDBManager(connString, mpe, New SQL2000Generator, cache)))
         End Sub
 
+        Public Sub New(ByVal connString As String, ByVal cache As OrmCache, ByVal mpe As ObjectMappingEngine, stmt As SQL2000Generator)
+            MyClass.New(New CreateManager(Function() New OrmDBManager(connString, mpe, stmt, cache)))
+        End Sub
+
         Public Sub New(ByVal mgr As OrmReadOnlyDBManager, Optional ByVal disposeMgr As Boolean = False, Optional newSaver As Boolean = False)
             If mgr Is Nothing Then
                 Throw New ArgumentNullException("mgr")
@@ -376,17 +380,20 @@ Namespace Database
         Protected Overridable Sub Dispose(ByVal disposing As Boolean)
             If Not Me.disposedValue Then
 
-                SaveChanges()
-                Me.disposedValue = True
+                Try
+                    SaveChanges()
+                Finally
+                    Me.disposedValue = True
 
-                If _ss IsNot Nothing Then
-                    _ss.Dispose()
-                End If
+                    If _ss IsNot Nothing Then
+                        _ss.Dispose()
+                    End If
 
-                If _disposeMgr AndAlso _mgr IsNot Nothing Then
-                    _mgr.Dispose()
-                    _mgr = Nothing
-                End If
+                    If _disposeMgr AndAlso _mgr IsNot Nothing Then
+                        _mgr.Dispose()
+                        _mgr = Nothing
+                    End If
+                End Try
             End If
         End Sub
 

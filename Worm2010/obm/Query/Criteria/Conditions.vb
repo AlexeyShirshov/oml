@@ -538,6 +538,10 @@ Namespace Criteria.Conditions
             'End Function
 
             Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
+                If Not Con.IsHashable Then
+                    Return EntityFilter.EmptyHash
+                End If
+
                 If Con._right IsNot Nothing AndAlso Con._oper = ConditionOperator.Or Then
                     Dim l As String = Con.Left.GetFilterTemplate._ToString
                     Dim r As String = Con.Right.GetFilterTemplate._ToString
