@@ -1368,6 +1368,24 @@ l1:
 
             If SelectList IsNot Nothing Then
                 PrepareSelectList(executor, stmt, isAnonym, mpe, filter, contextInfo)
+
+                For Each eu As EntityUnion In _includeEntities
+                    AddTypeFields(mpe, _sl, New Pair(Of EntityUnion, Boolean?)(eu, True), Nothing, isAnonym, stmt)
+
+                    If AutoJoins Then
+                        Dim selOS As EntityUnion = GetSelectedOS()
+                        If selOS IsNot Nothing Then
+                            Dim t As Type = selOS.GetRealType(mpe)
+                            Dim selSchema As IEntitySchema = _types(selOS) 'mpe.GetEntitySchema(t)
+                            If Not HasInQuery(eu) Then
+                                Dim jt As Type = eu.GetRealType(mpe)
+                                mpe.AppendJoin(selOS, t, selSchema, _
+                                    eu, jt, _types(eu), _
+                                    filter, _js, contextInfo, JoinType.Join)
+                            End If
+                        End If
+                    End If
+                Next
             Else
                 'If IsFTS Then
                 '    For Each tp As Pair(Of EntityUnion, Boolean?) In SelectedEntities
@@ -5465,23 +5483,53 @@ l1:
         '    End If
         '    Return dp.Get
         'End Function
+        Public Function Load(ByVal eu As EntityUnion) As QueryCmd
+            Dim os As EntityUnion = GetSelectedOS()
+            If os IsNot Nothing AndAlso os = eu Then
+                Throw New NotSupportedException
+            End If
+            If _joins Is Nothing Then
+                'Throw New QueryCmdException("Entity must be present among joins", Me)
+                If Not _includeEntities.Contains(eu) Then
+                    _includeEntities.Add(eu)
+                End If
+            Else
+                For Each j As QueryJoin In _joins
+                    If j.ObjectSource IsNot Nothing AndAlso j.ObjectSource = eu Then
+                        If Not _includeEntities.Contains(j.ObjectSource) Then
+                            _includeEntities.Add(j.ObjectSource)
+                        End If
+                        Return Me
+                    End If
+                Next
+                'Throw New QueryCmdException("Entity must be present among joins", Me)
+            End If
 
+            Return Me
+        End Function
         Public Function Load(ByVal entityName As String) As QueryCmd
             Dim os As EntityUnion = GetSelectedOS()
             If os IsNot Nothing AndAlso String.Equals(os.AnyEntityName, entityName) Then
                 Throw New NotSupportedException
             End If
             If _joins Is Nothing Then
-                Throw New QueryCmdException("Entity must be present among joins", Me)
+                'Throw New QueryCmdException("Entity must be present among joins", Me)
+                If Not _includeEntities.Any(Function(j) j.AnyEntityName = entityName) Then
+                    _includeEntities.Add(New EntityUnion(entityName))
+                End If
             Else
                 For Each j As QueryJoin In _joins
                     If j.ObjectSource IsNot Nothing AndAlso String.Equals(j.ObjectSource.AnyEntityName, entityName) Then
-                        _includeEntities.Add(j.ObjectSource)
+                        If Not _includeEntities.Contains(j.ObjectSource) Then
+                            _includeEntities.Add(j.ObjectSource)
+                        End If
                         Return Me
                     End If
                 Next
-                Throw New QueryCmdException("Entity must be present among joins", Me)
+                'Throw New QueryCmdException("Entity must be present among joins", Me)
             End If
+
+            Return Me
         End Function
 
         Public Function Load(ByVal t As Type) As QueryCmd
@@ -5490,16 +5538,23 @@ l1:
                 Throw New NotSupportedException
             End If
             If _joins Is Nothing Then
-                Throw New QueryCmdException("Entity must be present among joins", Me)
+                'Throw New QueryCmdException("Entity must be present among joins", Me)
+                If Not _includeEntities.Any(Function(j) j.AnyType = t) Then
+                    _includeEntities.Add(New EntityUnion(t))
+                End If
             Else
                 For Each j As QueryJoin In _joins
                     If j.ObjectSource IsNot Nothing AndAlso j.ObjectSource.AnyType Is t Then
-                        _includeEntities.Add(j.ObjectSource)
+                        If Not _includeEntities.Contains(j.ObjectSource) Then
+                            _includeEntities.Add(j.ObjectSource)
+                        End If
                         Return Me
                     End If
                 Next
-                Throw New QueryCmdException("Entity must be present among joins", Me)
+                'Throw New QueryCmdException("Entity must be present among joins", Me)
             End If
+
+            Return Me
         End Function
 
         Public Function Load(ByVal al As QueryAlias) As QueryCmd
@@ -5508,16 +5563,23 @@ l1:
                 Throw New NotSupportedException
             End If
             If _joins Is Nothing Then
-                Throw New QueryCmdException("Entity must be present among joins", Me)
+                'Throw New QueryCmdException("Entity must be present among joins", Me)
+                If Not _includeEntities.Any(Function(j) j.IsQuery AndAlso j.ObjectAlias Is al) Then
+                    _includeEntities.Add(New EntityUnion(al))
+                End If
             Else
                 For Each j As QueryJoin In _joins
                     If j.ObjectSource IsNot Nothing AndAlso j.ObjectSource.ObjectAlias Is al Then
-                        _includeEntities.Add(j.ObjectSource)
+                        If Not _includeEntities.Contains(j.ObjectSource) Then
+                            _includeEntities.Add(j.ObjectSource)
+                        End If
                         Return Me
                     End If
                 Next
-                Throw New QueryCmdException("Entity must be present among joins", Me)
+                'Throw New QueryCmdException("Entity must be present among joins", Me)
             End If
+
+            Return Me
         End Function
 
 #Region " Create methods "

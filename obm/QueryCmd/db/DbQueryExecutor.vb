@@ -1167,8 +1167,12 @@ l1:
                                 End If
 
                                 Dim f As QueryCmd.FromClauseDef = New QueryCmd.FromClauseDef(join.ObjectSource)
-                                FormTypeTables(mpe, filterInfo, params, almgr, sb, s, join.ObjectSource, query, execCtx, f, Nothing, _
-                                               Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, from, s, execCtx, filterInfo, almgr, params), predi)
+                                Dim fn = Function() " on " & cond.SetUnion(join.M2MObjectSource).SetUnion(join.ObjectSource).MakeQueryStmt(mpe, from, s, execCtx, filterInfo, almgr, params)
+                                If cond Is Nothing Then
+                                    fn = Function() String.Empty
+                                End If
+
+                                FormTypeTables(mpe, filterInfo, params, almgr, sb, s, join.ObjectSource, query, execCtx, f, Nothing, fn, predi)
                             Else
                                 'Throw New NotImplementedException
                                 sb.Append(s.EndLine).Append(join.JoinTypeString()).Append("(")
