@@ -19,7 +19,8 @@ Public Interface IDataContext
     Function [GetByIds](Of T As {New, ISinglePKEntity})(ByVal ids As IEnumerable(Of Object)) As ReadOnlyList(Of T)
     Function [GetByIDDyn](Of T As {ISinglePKEntity})(ByVal id As Object) As T
     Function [GetByIDDyn](Of T As {ISinglePKEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T
-
+    Function [GetByID](ByVal id As Object, t As Type) As ISinglePKEntity
+    Function [GetByID](ByVal id As Object, t As Type, ByVal options As GetByIDOptions) As ISinglePKEntity
     ReadOnly Property Cache As Cache.CacheBase
     ReadOnly Property StmtGenerator As StmtGenerator
     ReadOnly Property MappingEngine As ObjectMappingEngine
@@ -51,13 +52,11 @@ Public MustInherit Class DataContextBase
         _cache = New Cache.ReadonlyCache
         _mpe = OrmManager.DefaultMappingEngine
     End Sub
-
     Public Sub New(stmtGen As StmtGenerator, mpe As ObjectMappingEngine)
         _stmtGen = stmtGen
         _mpe = mpe
         _cache = New Cache.ReadonlyCache
     End Sub
-
     Public Sub New(stmtGen As StmtGenerator, mpe As ObjectMappingEngine, cache As Cache.CacheBase)
         _stmtGen = stmtGen
         _cache = cache
@@ -263,7 +262,7 @@ Public MustInherit Class DataContextBase
     Protected Function GetManager() As IGetManager
         Dim mgr As OrmManager = OrmManager.CurrentManager
         If mgr Is Nothing Then
-            Return New GetManagerDisposable(CreateOrmManager(),nothing)
+            Return New GetManagerDisposable(CreateOrmManager(), Nothing)
         Else
             'don't dispose
             Return New ManagerWrapper(mgr, mgr.MappingEngine)
@@ -271,6 +270,35 @@ Public MustInherit Class DataContextBase
     End Function
 
     Public Event CreateManagerEvent(sender As ICreateManager, args As ICreateManager.CreateManagerEventArgs) Implements ICreateManager.CreateManagerEvent
+
+    Public Function GetByID(id As Object, t As Type) As ISinglePKEntity Implements IDataContext.GetByID
+        Return GetByID(id, t, GetByIDOptions.GetAsIs)
+    End Function
+
+    Public Function GetByID(id As Object, tp As Type, options As GetByIDOptions) As ISinglePKEntity Implements IDataContext.GetByID
+        Dim o As ISinglePKEntity = Nothing
+
+        Using gm = GetManager()
+            Select Case options
+                Case GetByIDOptions.EnsureExistsInStore
+                    o = gm.Manager.GetKeyEntityFromCacheOrDB(id, tp)
+                Case GetByIDOptions.GetAsIs
+                    o = gm.Manager.GetKeyEntityFromCacheOrCreate(id, tp)
+                Case GetByIDOptions.EnsureLoadedFromStore
+                    o = gm.Manager.GetKeyEntityFromCacheLoadedOrDB(id, tp)
+                Case Else
+                    Throw New NotImplementedException
+            End Select
+
+            If o IsNot Nothing Then
+                If o.GetICreateManager Is Nothing Then
+                    o.SetCreateManager(New CreateManager(AddressOf CreateOrmManager))
+                End If
+            End If
+
+            Return o
+        End Using
+    End Function
 End Class
 
 Public Class DataContext

@@ -2,6 +2,7 @@
 Imports System.Collections.Generic
 Imports Worm.Cache
 Imports Worm.Entities.Meta
+Imports System.Linq
 
 Namespace Database
 
@@ -14,6 +15,30 @@ Namespace Database
             RetryLater
             Skip
         End Enum
+
+        Public Delegate Function OnSavedDependency(sndr As Worm.Database.ObjectListSaver, o As Entities.ICachedEntity, o2 As Entities.ICachedEntity) As IEnumerable(Of ICachedEntity)
+
+        Public Event PreSave(ByVal sender As ObjectListSaver)
+        Public Event BeginSave(ByVal sender As ObjectListSaver, ByVal count As Integer)
+        Public Event CannotSave(ByVal sender As ObjectListSaver, ByVal args As CannotSaveEventArgs)
+        Public Event EndSave(ByVal sender As ObjectListSaver)
+        Public Event ObjectSaving(ByVal sender As ObjectListSaver, ByVal args As CancelEventArgs)
+        Public Event ObjectSavingError(ByVal sender As ObjectListSaver, ByVal args As SaveErrorEventArgs)
+        Public Event ObjectPostponed(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
+        Public Event ObjectSaved(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
+        Public Event ObjectAccepting(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
+        Public Event ObjectAccepted(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
+        Public Event ObjectRejecting(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
+        Public Event ObjectRejected(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity, ByVal inLockList As Boolean)
+        Public Event ObjectRestored(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
+        Public Event Commiting(ByVal sender As ObjectListSaver, commit As Boolean)
+        Public Event SaveSuccessed(ByVal sender As ObjectListSaver)
+        Public Event SaveFailed(ByVal sender As ObjectListSaver)
+        Public Event SaveCompleted(ByVal sender As ObjectListSaver)
+        Public Event BeginRejecting(ByVal sender As ObjectListSaver)
+        Public Event BeginAccepting(ByVal sender As ObjectListSaver)
+        Public Event OnAdded(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity, ByVal added As Boolean)
+        Public Event OnRemoved(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
 
         Private _disposedValue As Boolean
         Private _objects As New List(Of _ICachedEntity)
@@ -32,6 +57,7 @@ Namespace Database
         Private _dontResolve As Boolean
         Private _mode As Data.IsolationLevel?
         Private _hasTransaction As Boolean
+        Private _dependencies As New Dictionary(Of ICachedEntity, List(Of Pair(Of ICachedEntity, OnSavedDependency)))
 
 #If DEBUG Then
         Friend _deleted As New List(Of ICachedEntity)
@@ -139,28 +165,6 @@ Namespace Database
         End Class
 
         Friend _dontCheckOnAdd As Boolean
-
-        Public Event PreSave(ByVal sender As ObjectListSaver)
-        Public Event BeginSave(ByVal sender As ObjectListSaver, ByVal count As Integer)
-        Public Event CannotSave(ByVal sender As ObjectListSaver, ByVal args As CannotSaveEventArgs)
-        Public Event EndSave(ByVal sender As ObjectListSaver)
-        Public Event ObjectSaving(ByVal sender As ObjectListSaver, ByVal args As CancelEventArgs)
-        Public Event ObjectSavingError(ByVal sender As ObjectListSaver, ByVal args As SaveErrorEventArgs)
-        Public Event ObjectPostponed(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
-        Public Event ObjectSaved(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
-        Public Event ObjectAccepting(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
-        Public Event ObjectAccepted(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
-        Public Event ObjectRejecting(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
-        Public Event ObjectRejected(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity, ByVal inLockList As Boolean)
-        Public Event ObjectRestored(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
-        Public Event Commiting(ByVal sender As ObjectListSaver, commit As Boolean)
-        Public Event SaveSuccessed(ByVal sender As ObjectListSaver)
-        Public Event SaveFailed(ByVal sender As ObjectListSaver)
-        Public Event SaveCompleted(ByVal sender As ObjectListSaver)
-        Public Event BeginRejecting(ByVal sender As ObjectListSaver)
-        Public Event BeginAccepting(ByVal sender As ObjectListSaver)
-        Public Event OnAdded(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity, ByVal added As Boolean)
-        Public Event OnRemoved(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
 
         'Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal dispose As Boolean)
         '    _mgr = mgr
@@ -341,6 +345,21 @@ Namespace Database
             End If
             RaiseEvent OnRemoved(Me, o)
         End Sub
+        Public Sub CreateDependency(o As ICachedEntity, o2 As ICachedEntity, Optional del As OnSavedDependency = Nothing)
+            Dim depList As List(Of Pair(Of ICachedEntity, OnSavedDependency)) = Nothing
+            If Not _dependencies.TryGetValue(o, depList) OrElse depList Is Nothing Then
+                depList = New List(Of Pair(Of ICachedEntity, OnSavedDependency))
+                _dependencies(o) = depList
+            End If
+
+            Dim d = depList.FindIndex(Function(it) it.First Is o2)
+            If d >= 0 Then
+                depList.RemoveAt(d)
+            End If
+
+            Dim newd = New Pair(Of ICachedEntity, OnSavedDependency)(o2, del)
+            depList.Add(newd)
+        End Sub
 
         Protected Sub ObjRejected(ByVal o As ICachedEntity)
             If Not _startSave Then
@@ -415,21 +434,32 @@ l1:
                     adv.Saving(Me)
                 End If
                 If Not args.Cancel Then
+                    Dim dep = From k In _dependencies
+                              Where k.Value IsNot Nothing AndAlso k.Value.Any(Function(it) it.First Is o)
+
+                    If dep.Any AndAlso Not dep.All(Function(it) saved.Any(Function(it2) it2.Second Is it.Key)) Then
+                        RaiseEvent ObjectPostponed(Me, o)
+                        need2save.Add(o)
+                        Return False
+                    End If
+
                     If Not CanSaveObj(o, col2save) Then
                         RaiseEvent ObjectPostponed(Me, o)
                         need2save.Add(o)
                         Return False
                     Else
-
                         For Each ns As Pair(Of ICachedEntity, Action(Of ICachedEntity)) In args._new2Save
                             need2save.Add(ns.First)
                             If ns.Second IsNot Nothing Then
-                                _dontCheckOnAdd = True
-                                Try
+                                Using New CoreFramework.AutoCleanup(Sub()
+                                                                        _dontCheckOnAdd = True
+                                                                    End Sub,
+                                                                    Sub()
+                                                                        _dontCheckOnAdd = False
+                                                                    End Sub)
+
                                     ns.Second()(ns.First)
-                                Finally
-                                    _dontCheckOnAdd = False
-                                End Try
+                                End Using
                             End If
                         Next
 
@@ -457,6 +487,28 @@ l1:
                         Else
                             saved.Add(New Pair(Of ObjectState, _ICachedEntity)(os, o))
                             RaiseEvent ObjectSaved(Me, o)
+                            Dim depList As List(Of Pair(Of ICachedEntity, OnSavedDependency)) = Nothing
+                            If _dependencies.TryGetValue(o, depList) AndAlso depList IsNot Nothing Then
+                                For Each d In depList
+                                    If d.Second IsNot Nothing Then
+                                        Using New CoreFramework.AutoCleanup(Sub()
+                                                                                _dontCheckOnAdd = True
+                                                                            End Sub,
+                                                                            Sub()
+                                                                                _dontCheckOnAdd = False
+                                                                            End Sub)
+                                            Dim r = d.Second()(Me, o, d.First)
+                                            If r IsNot Nothing Then
+                                                For Each tosave In r
+                                                    If tosave IsNot Nothing Then
+                                                        need2save.Add(tosave)
+                                                    End If
+                                                Next
+                                            End If
+                                        End Using
+                                    End If
+                                Next
+                            End If
                         End If
                     End If
                 End If

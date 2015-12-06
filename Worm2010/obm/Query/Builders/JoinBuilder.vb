@@ -433,6 +433,33 @@ Namespace Query
         End Function
 
 #End Region
+
+#Region " Cross "
+        Public Shared Function cross(ByVal t As Type) As JoinLinkBase
+            Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.CrossJoin, CType(Nothing, IFilter))
+            Return New JoinLinkBase(j)
+        End Function
+
+        Public Shared Function cross(ByVal entityName As String) As JoinLinkBase
+            Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.CrossJoin, Nothing)
+            Return New JoinLinkBase(j)
+        End Function
+
+        Public Shared Function cross(ByVal [alias] As QueryAlias) As JoinLinkBase
+            Dim j As New QueryJoin([alias], Worm.Criteria.Joins.JoinType.CrossJoin, Nothing)
+            Return New JoinLinkBase(j)
+        End Function
+
+        Public Shared Function cross(ByVal os As EntityUnion) As JoinLinkBase
+            Dim j As New QueryJoin(os, Worm.Criteria.Joins.JoinType.CrossJoin, Nothing)
+            Return New JoinLinkBase(j)
+        End Function
+
+        Public Shared Function cross(ByVal table As SourceFragment) As JoinLinkBase
+            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.CrossJoin, Nothing)
+            Return New JoinLinkBase(j)
+        End Function
+#End Region
     End Class
 
     Public Class JoinCondition
