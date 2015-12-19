@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CoreFramework.Text;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -78,14 +79,14 @@ namespace CoreFramework.Globalization
 {
     "", "трилион", "трилиона", "триллионов"
 };
-        static string[] rubles =
-{
-    "", "рубль", "рубля", "рублей"
-};
-        static string[] copecks =
-{
-    "", "копейка", "копейки", "копеек"
-};
+//        static string[] rubles =
+//{
+//    "", "рубль", "рубля", "рублей"
+//};
+//        static string[] copecks =
+//{
+//    "", "копейка", "копейки", "копеек"
+//};
         /// <summary>
         /// «07» января 2004 [+ _year(:года)]
         /// </summary>
@@ -135,20 +136,6 @@ namespace CoreFramework.Globalization
             return (_date.Month - 1) / 3 + 1;
         }
 
-        static bool IsPluralGenitive(int _digits)
-        {
-            if (_digits >= 5 || _digits == 0)
-                return true;
-
-            return false;
-        }
-        static bool IsSingularGenitive(int _digits)
-        {
-            if (_digits >= 2 && _digits <= 4)
-                return true;
-
-            return false;
-        }
         static int lastDigit(long _amount)
         {
             long amount = _amount;
@@ -167,7 +154,7 @@ namespace CoreFramework.Globalization
         /// <param name="_amount"></param>
         /// <param name="_firstCapital"></param>
         /// <returns></returns>
-        public static string CurrencyToTxt(double _amount, bool _firstCapital, string[] rubles, string[] copecks)
+        public static string CurrencyToTxt(double _amount, bool _firstCapital, DigitItems rubles, DigitItems copecks)
         {
             //Десять тысяч рублей 67 копеек
             long rublesAmount = (long)Math.Floor(_amount);
@@ -175,35 +162,10 @@ namespace CoreFramework.Globalization
             int lastRublesDigit = lastDigit(rublesAmount);
             int lastCopecksDigit = lastDigit(copecksAmount);
 
-            string s = NumeralsToTxt(rublesAmount, TextCase.Nominative, true, _firstCapital) + " ";
+            string s = NumeralsToTxt(rublesAmount, TextCase.Nominative, true, _firstCapital) + " " + 
+                Declines.DeclineAny(lastRublesDigit, rubles) + " ";
 
-            if (IsPluralGenitive(lastRublesDigit))
-            {
-                s += rubles[3] + " ";
-            }
-            else if (IsSingularGenitive(lastRublesDigit))
-            {
-                s += rubles[2] + " ";
-            }
-            else
-            {
-                s += rubles[1] + " ";
-            }
-
-            s += String.Format("{0:00} ", copecksAmount);
-
-            if (IsPluralGenitive(lastCopecksDigit))
-            {
-                s += copecks[3] + " ";
-            }
-            else if (IsSingularGenitive(lastCopecksDigit))
-            {
-                s += copecks[2] + " ";
-            }
-            else
-            {
-                s += copecks[1] + " ";
-            }
+            s += String.Format("{0:00} ", copecksAmount) + Declines.DeclineAny(lastCopecksDigit, copecks);
 
             return s.Trim();
         }
@@ -213,7 +175,7 @@ namespace CoreFramework.Globalization
         /// <param name="_amount"></param>
         /// <param name="_firstCapital"></param>
         /// <returns></returns>
-        public static string CurrencyToTxtFull(double _amount, bool _firstCapital)
+        public static string CurrencyToTxtFull(double _amount, bool _firstCapital, DigitItems rubles, DigitItems copecks)
         {
             //10 000 (Десять тысяч) рублей 67 копеек
             long rublesAmount = (long)Math.Floor(_amount);
@@ -221,35 +183,10 @@ namespace CoreFramework.Globalization
             int lastRublesDigit = lastDigit(rublesAmount);
             int lastCopecksDigit = lastDigit(copecksAmount);
 
-            string s = String.Format("{0:N0} ({1}) ", rublesAmount, NumeralsToTxt(rublesAmount, TextCase.Nominative, true, _firstCapital));
+            string s = String.Format("{0:N0} ({1}) ", rublesAmount, NumeralsToTxt(rublesAmount, TextCase.Nominative, true, _firstCapital)) +
+                Declines.DeclineAny(lastRublesDigit, rubles) + " ";
 
-            if (IsPluralGenitive(lastRublesDigit))
-            {
-                s += rubles[3] + " ";
-            }
-            else if (IsSingularGenitive(lastRublesDigit))
-            {
-                s += rubles[2] + " ";
-            }
-            else
-            {
-                s += rubles[1] + " ";
-            }
-
-            s += String.Format("{0:00} ", copecksAmount);
-
-            if (IsPluralGenitive(lastCopecksDigit))
-            {
-                s += copecks[3] + " ";
-            }
-            else if (IsSingularGenitive(lastCopecksDigit))
-            {
-                s += copecks[2] + " ";
-            }
-            else
-            {
-                s += copecks[1] + " ";
-            }
+            s += String.Format("{0:00} ", copecksAmount) + Declines.DeclineAny(lastCopecksDigit, copecks);
 
             return s.Trim();
         }
@@ -259,7 +196,7 @@ namespace CoreFramework.Globalization
         /// <param name="_amount"></param>
         /// <param name="_firstCapital"></param>
         /// <returns></returns>
-        public static string CurrencyToTxtShort(double _amount, bool _firstCapital)
+        public static string CurrencyToTxtShort(double _amount, bool _firstCapital, DigitItems rubles, DigitItems copecks)
         {
             //10 000 рублей 67 копеек        
             long rublesAmount = (long)Math.Floor(_amount);
@@ -267,35 +204,10 @@ namespace CoreFramework.Globalization
             int lastRublesDigit = lastDigit(rublesAmount);
             int lastCopecksDigit = lastDigit(copecksAmount);
 
-            string s = String.Format("{0:N0} ", rublesAmount);
+            string s = String.Format("{0:N0} ", rublesAmount) +
+                Declines.DeclineAny(lastRublesDigit, rubles) + " ";
 
-            if (IsPluralGenitive(lastRublesDigit))
-            {
-                s += rubles[3] + " ";
-            }
-            else if (IsSingularGenitive(lastRublesDigit))
-            {
-                s += rubles[2] + " ";
-            }
-            else
-            {
-                s += rubles[1] + " ";
-            }
-
-            s += String.Format("{0:00} ", copecksAmount);
-
-            if (IsPluralGenitive(lastCopecksDigit))
-            {
-                s += copecks[3] + " ";
-            }
-            else if (IsSingularGenitive(lastCopecksDigit))
-            {
-                s += copecks[2] + " ";
-            }
-            else
-            {
-                s += copecks[1] + " ";
-            }
+            s += String.Format("{0:00} ", copecksAmount) + Declines.DeclineAny(lastCopecksDigit, copecks);
 
             return s.Trim();
         }
@@ -332,11 +244,11 @@ namespace CoreFramework.Globalization
             {
                 digits = lastDigit(_digits);
 
-                if (IsPluralGenitive(digits))
+                if (Declines.IsPluralGenitive(digits))
                 {
                     s += _power[3] + " ";
                 }
-                else if (IsSingularGenitive(digits))
+                else if (Declines.IsSingularGenitive(digits))
                 {
                     s += _power[2] + " ";
                 }
@@ -451,24 +363,31 @@ namespace CoreFramework.Globalization
                     case TextCase.Genitive:
                         s = monthNamesGenitive[_month];
                         break;
+                    default:
+                        throw new NotImplementedException(_case.ToString());
                 }
             }
 
             return s;
         }
-        public static string NumeralsRoman(int _number)
+        public static string NumeralsRoman(int number)
         {
-            string s = "";
-
-            switch (_number)
-            {
-                case 1: s = "I"; break;
-                case 2: s = "II"; break;
-                case 3: s = "III"; break;
-                case 4: s = "IV"; break;
-            }
-
-            return s;
+            if ((number < 0) || (number > 3999)) throw new ArgumentOutOfRangeException("insert value betwheen 1 and 3999");
+            if (number < 1) return string.Empty;
+            if (number >= 1000) return "M" + NumeralsRoman(number - 1000);
+            if (number >= 900) return "CM" + NumeralsRoman(number - 900); //EDIT: i've typed 400 instead 900
+            if (number >= 500) return "D" + NumeralsRoman(number - 500);
+            if (number >= 400) return "CD" + NumeralsRoman(number - 400);
+            if (number >= 100) return "C" + NumeralsRoman(number - 100);
+            if (number >= 90) return "XC" + NumeralsRoman(number - 90);
+            if (number >= 50) return "L" + NumeralsRoman(number - 50);
+            if (number >= 40) return "XL" + NumeralsRoman(number - 40);
+            if (number >= 10) return "X" + NumeralsRoman(number - 10);
+            if (number >= 9) return "IX" + NumeralsRoman(number - 9);
+            if (number >= 5) return "V" + NumeralsRoman(number - 5);
+            if (number >= 4) return "IV" + NumeralsRoman(number - 4);
+            if (number >= 1) return "I" + NumeralsRoman(number - 1);
+            throw new ArgumentOutOfRangeException("something bad happened");
         }
     }
 }

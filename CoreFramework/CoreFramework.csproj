@@ -60,16 +60,20 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutoCleanup.cs" />
+    <Compile Include="Collections\LinqExtensions.cs" />
+    <Compile Include="Collections\ListExtensions.cs" />
     <Compile Include="CommandLineParser.cs" />
     <Compile Include="ConcurentList.cs" />
     <Compile Include="EncodingStringWriter.cs" />
-    <Compile Include="EqualityComparerOnDelegates.cs" />
+    <Compile Include="Collections\EqualityComparerOnDelegates.cs" />
     <Compile Include="Globalization.cs" />
+    <Compile Include="KeylessElementCollection.cs" />
     <Compile Include="NumberConverter.cs" />
     <Compile Include="Pairs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -78,6 +82,7 @@
     <Compile Include="ScopeManagers.cs" />
     <Compile Include="Stack.cs" />
     <Compile Include="SyncHelper.cs" />
+    <Compile Include="Text.cs" />
     <Compile Include="Timer.cs" />
     <Compile Include="TimeZoneInfo.cs" />
   </ItemGroup>
