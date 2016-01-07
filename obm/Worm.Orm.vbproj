@@ -158,6 +158,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\CoreFramework.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Configuration.Install" />
@@ -168,6 +169,7 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyAttributes.vb" />
     <Compile Include="Cache\Abstract.vb" />
     <Compile Include="Cache\CacheItem.vb" />
     <Compile Include="Cache\classes.vb" />
@@ -186,6 +188,7 @@
     <Compile Include="Managers\db\ErrorHandling.vb" />
     <Compile Include="Managers\db\IDataReaderAbstraction.vb" />
     <Compile Include="Managers\db\ModificationsTracker.vb" />
+    <Compile Include="Web\InitMappingEngineModule.vb" />
     <Compile Include="QueryCmd\db\BaseProvider.vb" />
     <Compile Include="IDataContext.vb" />
     <Compile Include="QueryCmd\db\MSSQLQueryCmd.vb" />
@@ -348,13 +351,13 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
-    <PostBuildEvent>$(SolutionDir)ilmerge /log /t:library /keyfile:$(SolutionDir)obm\worm.snk /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /xmldocs /out:$(TargetDir)$(TargetName)-Full.dll $(TargetPath) $(TargetDir)CoreFramework.dll
-$(SolutionDir)ilmerge /log /t:library /keyfile:$(SolutionDir)obm\worm.snk /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /xmldocs /out:$(TargetPath) $(TargetDir)$(TargetName)-Full.dll
+    <PostBuildEvent>$(SolutionDir)ilmerge /log /t:library /keyfile:$(SolutionDir)obm\worm.snk /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /xmldocs /lib:"C:\Program Files (x86)\Microsoft ASP.NET\ASP.NET Web Pages\v2.0\Assemblies" /out:$(TargetDir)$(TargetName)-Full.dll $(TargetPath) $(TargetDir)CoreFramework.dll
+$(SolutionDir)ilmerge /log /t:library /keyfile:$(SolutionDir)obm\worm.snk /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /xmldocs  /lib:"C:\Program Files (x86)\Microsoft ASP.NET\ASP.NET Web Pages\v2.0\Assemblies" /out:$(TargetPath) $(TargetDir)$(TargetName)-Full.dll
 del /Q $(TargetDir)$(TargetName)-Full*</PostBuildEvent>
   </PropertyGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.None.Increment" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

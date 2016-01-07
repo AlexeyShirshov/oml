@@ -11,6 +11,7 @@ Imports Worm.Query
 Imports Worm.Expressions2
 Imports Worm.Cache
 Imports System.Linq
+Imports System.Text.RegularExpressions
 
 'Namespace Schema
 
@@ -75,11 +76,13 @@ Public Class ObjectMappingEngine
     Private _mapn As ResolveEntityNameForHierarchy
     Private _idic As IDictionary
     Private _names As IDictionary
+    Private _idicSpin As New SpinLockRef
     Private _ce As CreateEntityDelegate
     Private _c2int As ConvertVersionToIntDelegate
     Private _features As IList(Of String) = New CoreFramework.Collections.ConcurrentList(Of String)
     Public ReadOnly Mark As Guid = Guid.NewGuid
-
+    Private Shared _entityTypes As IEnumerable(Of Type)
+    Private Shared _entityTypesSpin As New SpinLockRef
     Public Const DefaultVersion As String = "1"
     Public Const NeedEntitySchemaMapping As String = "Worm:NeedEntitySchemaMapping"
 
@@ -1583,10 +1586,7 @@ Public Class ObjectMappingEngine
         End If
         Return tbl
     End Function
-
-    Protected Function CreateObjectSchema(ByRef names As IDictionary) As IDictionary
-        Dim idic As New Specialized.HybridDictionary
-        names = New Specialized.HybridDictionary
+    Public Shared Iterator Function GetTypes2Scan() As IEnumerable(Of Type)
         For Each assembly As Reflection.Assembly In AppDomain.CurrentDomain.GetAssemblies
             If IsBadAssembly(assembly) Then
                 Continue For
@@ -1604,8 +1604,33 @@ Public Class ObjectMappingEngine
             Dim t As Type = GetType(_IEntity)
 
             For Each tp As Type In types
-                If t.IsAssignableFrom(tp) Then GetEntitySchema(tp, Me, idic, names)
+                If t.IsAssignableFrom(tp) Then Yield tp
             Next
+        Next
+    End Function
+    Public Shared Function GetEntityTypes() As IEnumerable(Of Type)
+        If _entityTypes Is Nothing Then
+            Using New CSScopeMgrLite(_entityTypesSpin)
+                If _entityTypes Is Nothing Then
+                    Dim arr As New System.Collections.Concurrent.BlockingCollection(Of Type)()
+                    For Each t In GetTypes2Scan()
+                        arr.Add(t)
+                    Next
+                    _entityTypes = arr
+                End If
+            End Using
+        End If
+
+        Return _entityTypes
+    End Function
+    Public Shared Sub StartLoadEntityTypes()
+        Threading.Tasks.Task.Factory.StartNew(AddressOf GetEntityTypes)
+    End Sub
+    Protected Function CreateObjectSchema(ByRef names As IDictionary) As IDictionary
+        Dim idic As New Specialized.HybridDictionary
+        names = New Specialized.HybridDictionary
+        For Each tp As Type In GetEntityTypes()
+            GetEntitySchema(tp, Me, idic, names)
         Next
         RaiseEvent EndInitSchema(idic)
         Return idic
@@ -1894,7 +1919,7 @@ Public Class ObjectMappingEngine
 
     Private Function GetIdic() As IDictionary
         If _idic Is Nothing Then
-            Using SyncHelper.AcquireDynamicLock("GetObjectSchema")
+            Using New CSScopeMgrLite(_idicSpin)
                 If _idic Is Nothing Then
                     _idic = CreateObjectSchema(_names)
                 End If
@@ -1905,7 +1930,7 @@ Public Class ObjectMappingEngine
 
     Private Function GetNames() As IDictionary
         If _names Is Nothing Then
-            Using SyncHelper.AcquireDynamicLock("GetObjectSchema")
+            Using New CSScopeMgrLite(_idicSpin)
                 If _names Is Nothing Then
                     _idic = CreateObjectSchema(_names)
                 End If
@@ -2058,7 +2083,7 @@ Public Class ObjectMappingEngine
         End If
     End Function
 
-    Public Function ApplyFilter(Of T As SinglePKEntity)(ByVal col As ICollection(Of T), ByVal filter As Criteria.Core.IFilter,ByRef r As Boolean) As ICollection(Of T)
+    Public Function ApplyFilter(Of T As SinglePKEntity)(ByVal col As ICollection(Of T), ByVal filter As Criteria.Core.IFilter, ByRef r As Boolean) As ICollection(Of T)
         Return ApplyFilter(Of T)(col, filter, Nothing, Nothing, r)
     End Function
 
@@ -2831,15 +2856,25 @@ Public Class ObjectMappingEngine
     End Function
 
     Public Shared Function IsBadAssembly(ByVal assembly As Reflection.Assembly) As Boolean
-        'assembly.GetName.GetPublicKeyToken()
+        Dim regex As Regex = Nothing
+        Dim wormPattern = System.Configuration.ConfigurationManager.AppSettings("worm:assembly-pattern")
+        If Not String.IsNullOrEmpty(wormPattern) Then
+            regex = New Regex(wormPattern)
+        End If
+
         Dim moduleName As String = assembly.ManifestModule.Name
-        If moduleName = "mscorlib.dll" OrElse moduleName = "System.Data.dll" OrElse moduleName = "System.Data.dll" _
-                        OrElse moduleName = "System.Xml.dll" OrElse moduleName = "System.dll" _
-                        OrElse moduleName = "System.Configuration.dll" OrElse moduleName = "System.Web.dll" _
-                        OrElse moduleName = "System.Drawing.dll" OrElse moduleName = "System.Web.Services.dll" _
-                        OrElse assembly.FullName.Contains("Microsoft") OrElse moduleName = "Worm.Orm.dll" _
-                        OrElse moduleName = "CoreFramework.dll" OrElse moduleName = "ASPNETHosting.dll" _
-                        OrElse moduleName = "System.Transactions.dll" OrElse moduleName = "System.EnterpriseServices.dll" Then
+        If regex IsNot Nothing AndAlso regex.IsMatch(moduleName) Then
+            Return False
+        End If
+
+        Dim excludedAssemblies = {"mscorlib.dll", "System.Data.dll", "System.Data.dll",
+                                  "System.Xml.dll", "System.dll", "System.Configuration.dll",
+                                  "System.Web.dll", "System.Drawing.dll", "System.Web.Services.dll",
+                                  "Worm.Orm.dll", "CoreFramework.dll", "ASPNETHosting.dll",
+                                  "System.Transactions.dll", "System.EnterpriseServices.dll"}
+        If excludedAssemblies.Any(Function(it) it.ToLower = moduleName.ToLower) OrElse
+            assembly.FullName.Contains("Microsoft") OrElse
+            assembly.FullName.StartsWith("DotNetOpenAuth") Then
             Return True
         Else
             Dim tok As Byte() = assembly.GetName.GetPublicKeyToken()
@@ -2847,6 +2882,9 @@ Public Class ObjectMappingEngine
                 Return True
             End If
             If IsEqualByteArray(New Byte() {&HB0, &H3F, &H5F, &H7F, &H11, &HD5, &HA, &H3A}, tok) Then
+                Return True
+            End If
+            If IsEqualByteArray(New Byte() {&H31, &HBF, &H38, &H56, &HAD, &H36, &H4E, &H35}, tok) Then
                 Return True
             End If
         End If

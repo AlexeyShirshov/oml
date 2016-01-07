@@ -141,6 +141,11 @@ l1:
                     'End If
 
                     Return r
+                ElseIf (t.IsSubclassOf(rt) OrElse rt.IsSubclassOf(t)) AndAlso oschema.FieldColumnMap.TryGetValue(Template.PropertyAlias, Nothing) Then
+                    Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.NotFound
+                    Dim v As Object = ObjectMappingEngine.GetPropertyValue(obj, Template.PropertyAlias, oschema, Nothing) 'schema.GetFieldValue(obj, _fieldname)
+                    r = evval.Eval(v, mpe, Template)
+                    Return r
                 Else
                     Dim o As _IEntity = Nothing
                     If objEU IsNot Nothing Then

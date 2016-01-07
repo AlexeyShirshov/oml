@@ -86,18 +86,25 @@ Public MustInherit Class DataContextBase
     Public Function [GetByID](Of T As {New, ISinglePKEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T Implements IDataContext.GetByID
         Using gm = GetManager()
 
+            Dim mgr = gm.Manager
+            If mgr Is Nothing Then
+                Throw New DataContextException("OrmManager required")
+            End If
+
+            mgr.GetCreateManager = New CreateManager(AddressOf CreateOrmManager)
+
             Dim o As ISinglePKEntity = Nothing
 
             Select Case options
                 Case GetByIDOptions.EnsureExistsInStore
-                    o = gm.Manager.GetKeyEntityFromCacheOrDB(Of T)(id)
+                    o = mgr.GetKeyEntityFromCacheOrDB(Of T)(id)
                     If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
                         o = Nothing
                     End If
                 Case GetByIDOptions.GetAsIs
-                    o = gm.Manager.GetKeyEntityFromCacheOrCreate(Of T)(id)
+                    o = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id)
                 Case GetByIDOptions.EnsureLoadedFromStore
-                    o = gm.Manager.GetKeyEntityFromCacheLoadedOrDB(Of T)(id)
+                    o = mgr.GetKeyEntityFromCacheLoadedOrDB(Of T)(id)
                     If o IsNot Nothing AndAlso o.ObjectState = ObjectState.NotFoundInSource Then
                         o = Nothing
                     End If
@@ -105,11 +112,11 @@ Public MustInherit Class DataContextBase
                     Throw New NotImplementedException
             End Select
 
-            If o IsNot Nothing Then
-                If o.GetICreateManager Is Nothing Then
-                    o.SetCreateManager(New CreateManager(AddressOf CreateOrmManager))
-                End If
-            End If
+            'If o IsNot Nothing Then
+            '    If o.GetICreateManager Is Nothing Then
+            '        o.SetCreateManager(New CreateManager(AddressOf CreateOrmManager))
+            '    End If
+            'End If
             Return CType(o, T)
         End Using
     End Function
@@ -148,6 +155,14 @@ Public MustInherit Class DataContextBase
 
         Using gm = GetManager()
 
+            Dim mgr = gm.Manager
+            If mgr Is Nothing Then
+                Throw New DataContextException("OrmManager required")
+            End If
+
+            mgr.GetCreateManager = New CreateManager(AddressOf CreateOrmManager)
+
+
             Dim ro As New ReadOnlyList(Of T)
             Dim list As IListEdit = ro
             Dim tp As Type = GetType(T)
@@ -155,35 +170,35 @@ Public MustInherit Class DataContextBase
             Select Case options
                 Case GetByIDOptions.GetAsIs
                     If GetType(T) IsNot tp Then
-                        ConvertIdsToObjects(Of T)(tp, list, ids, gm.Manager)
+                        ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
                     Else
-                        ConvertIdsToObjects(tp, list, ids, gm.Manager)
+                        ConvertIdsToObjects(tp, list, ids, mgr)
                     End If
                 Case GetByIDOptions.EnsureExistsInStore
                     If GetType(T) IsNot tp Then
-                        ConvertIdsToObjects(Of T)(tp, list, ids, gm.Manager)
+                        ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
                     Else
-                        ConvertIdsToObjects(tp, list, ids, gm.Manager)
+                        ConvertIdsToObjects(tp, list, ids, mgr)
                     End If
-                    ro = CType(Query.QueryCmd.LoadObjects(ro, 0, list.Count, False, gm.Manager), ReadOnlyList(Of T))
+                    ro = CType(Query.QueryCmd.LoadObjects(ro, 0, list.Count, False, mgr), ReadOnlyList(Of T))
                 Case GetByIDOptions.EnsureLoadedFromStore
                     If GetType(T) IsNot tp Then
-                        ConvertIdsToObjects(Of T)(tp, list, ids, gm.Manager)
+                        ConvertIdsToObjects(Of T)(tp, list, ids, mgr)
                     Else
-                        ConvertIdsToObjects(tp, list, ids, gm.Manager)
+                        ConvertIdsToObjects(tp, list, ids, mgr)
                     End If
-                    ro = CType(Query.QueryCmd.LoadObjects(ro, 0, list.Count, True, gm.Manager), ReadOnlyList(Of T))
+                    ro = CType(Query.QueryCmd.LoadObjects(ro, 0, list.Count, True, mgr), ReadOnlyList(Of T))
                 Case Else
                     Throw New NotImplementedException
             End Select
 
-            For Each o As ISinglePKEntity In list
-                If o IsNot Nothing Then
-                    If o.GetICreateManager Is Nothing Then
-                        o.SetCreateManager(New CreateManager(AddressOf CreateOrmManager))
-                    End If
-                End If
-            Next
+            'For Each o As ISinglePKEntity In list
+            '    If o IsNot Nothing Then
+            '        If o.GetICreateManager Is Nothing Then
+            '            o.SetCreateManager(New CreateManager(AddressOf CreateOrmManager))
+            '        End If
+            '    End If
+            'Next
 
             Return ro
         End Using
@@ -203,22 +218,31 @@ Public MustInherit Class DataContextBase
         Dim o As ISinglePKEntity = Nothing
 
         Using gm = GetManager()
+
+            Dim mgr = gm.Manager
+            If mgr Is Nothing Then
+                Throw New DataContextException("OrmManager required")
+            End If
+
+            mgr.GetCreateManager = New CreateManager(AddressOf CreateOrmManager)
+
+
             Select Case options
                 Case GetByIDOptions.EnsureExistsInStore
-                    o = gm.Manager.GetKeyEntityFromCacheOrDB(id, tp)
+                    o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
                 Case GetByIDOptions.GetAsIs
-                    o = gm.Manager.GetKeyEntityFromCacheOrCreate(id, tp)
+                    o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
                 Case GetByIDOptions.EnsureLoadedFromStore
-                    o = gm.Manager.GetKeyEntityFromCacheLoadedOrDB(id, tp)
+                    o = mgr.GetKeyEntityFromCacheLoadedOrDB(id, tp)
                 Case Else
                     Throw New NotImplementedException
             End Select
 
-            If o IsNot Nothing Then
-                If o.GetICreateManager Is Nothing Then
-                    o.SetCreateManager(New CreateManager(AddressOf CreateOrmManager))
-                End If
-            End If
+            'If o IsNot Nothing Then
+            '    If o.GetICreateManager Is Nothing Then
+            '        o.SetCreateManager(New CreateManager(AddressOf CreateOrmManager))
+            '    End If
+            'End If
 
             Return CType(o, T)
         End Using
@@ -279,22 +303,29 @@ Public MustInherit Class DataContextBase
         Dim o As ISinglePKEntity = Nothing
 
         Using gm = GetManager()
+            Dim mgr = gm.Manager
+            If mgr Is Nothing Then
+                Throw New DataContextException("OrmManager required")
+            End If
+
+            mgr.GetCreateManager = New CreateManager(AddressOf CreateOrmManager)
+
             Select Case options
                 Case GetByIDOptions.EnsureExistsInStore
-                    o = gm.Manager.GetKeyEntityFromCacheOrDB(id, tp)
+                    o = mgr.GetKeyEntityFromCacheOrDB(id, tp)
                 Case GetByIDOptions.GetAsIs
-                    o = gm.Manager.GetKeyEntityFromCacheOrCreate(id, tp)
+                    o = mgr.GetKeyEntityFromCacheOrCreate(id, tp)
                 Case GetByIDOptions.EnsureLoadedFromStore
-                    o = gm.Manager.GetKeyEntityFromCacheLoadedOrDB(id, tp)
+                    o = mgr.GetKeyEntityFromCacheLoadedOrDB(id, tp)
                 Case Else
                     Throw New NotImplementedException
             End Select
 
-            If o IsNot Nothing Then
-                If o.GetICreateManager Is Nothing Then
-                    o.SetCreateManager(New CreateManager(AddressOf CreateOrmManager))
-                End If
-            End If
+            'If o IsNot Nothing Then
+            '    If o.GetICreateManager Is Nothing Then
+            '        o.SetCreateManager()
+            '    End If
+            'End If
 
             Return o
         End Using

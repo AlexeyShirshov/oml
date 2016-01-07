@@ -1074,12 +1074,12 @@ Namespace Query
         End Sub
 
         Public Sub New(ByVal getMgr As CreateManagerDelegate)
-            Me.new()
+            Me.New()
             _getMgr = New CreateManager(getMgr)
         End Sub
 
         Public Sub New(ByVal getMgr As ICreateManager)
-            Me.new()
+            Me.New()
             _getMgr = getMgr
         End Sub
 #End Region
@@ -1744,14 +1744,16 @@ l1:
                         If _js.Find(Function(join) join.ObjectSource = ot.ObjectSource) Is Nothing Then
                             Dim type2join As System.Type = ot.ObjectSource.GetRealType(schema)
 
-                            'If type2join Is Nothing AndAlso Not String.IsNullOrEmpty(ot.EntityName) Then
-                            '    type2join = schema.GetTypeByEntityName(ot.EntityName)
-                            'End If
-                            Try
-                                AppendJoin(schema, selectType, filter, contextInfo, appendMain, l, oschema, types, ot.ObjectSource, type2join, selectOS)
-                            Catch ex As OrmManagerException When selectType.IsAssignableFrom(type2join) OrElse type2join.IsAssignableFrom(selectType)
-                                'do nothing
-                            End Try
+                            If (selectType.IsAssignableFrom(type2join) OrElse type2join.IsAssignableFrom(selectType)) AndAlso
+                                oschema.FieldColumnMap.TryGetValue(ot.PropertyAlias, Nothing) Then
+                                Continue For
+                            End If
+
+                            'Try
+                            AppendJoin(schema, selectType, filter, contextInfo, appendMain, l, oschema, types, ot.ObjectSource, type2join, selectOS)
+                            'Catch ex As OrmManagerException When selectType.IsAssignableFrom(type2join) OrElse type2join.IsAssignableFrom(selectType)
+                            'do nothing
+                            'End Try
                         End If
                     Else
                         Dim cf As CustomFilter = TryCast(fl, CustomFilter)

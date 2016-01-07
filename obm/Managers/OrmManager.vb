@@ -1573,35 +1573,68 @@ l1:
     'End Function
 
     Public Function CreateKeyEntity(ByVal id As Object, ByVal t As Type) As ISinglePKEntity
-        Return SinglePKEntity.CreateKeyEntity(id, t, _cache, _schema)
+        Dim r = SinglePKEntity.CreateKeyEntity(id, t, _cache, _schema)
+        If r.GetICreateManager Is Nothing Then
+            r.SetCreateManager(_crMan)
+        End If
+        Return r
     End Function
 
     Public Function CreateKeyEntity(Of T As {ISinglePKEntity, New})(ByVal id As Object) As T
-        Return SinglePKEntity.CreateKeyEntity(Of T)(id, _cache, _schema)
+        Dim r = SinglePKEntity.CreateKeyEntity(Of T)(id, _cache, _schema)
+        If r.GetICreateManager Is Nothing Then
+            r.SetCreateManager(_crMan)
+        End If
+        Return r
     End Function
 
     Public Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk As IEnumerable(Of PKDesc)) As T
-        Return CachedEntity.CreateObject(Of T)(pk, _cache, _schema)
+        Dim r = CachedEntity.CreateObject(Of T)(pk, _cache, _schema)
+        If r.GetICreateManager Is Nothing Then
+            r.SetCreateManager(_crMan)
+        End If
+        Return r
     End Function
 
     Public Function CreateObject(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type) As Object
-        Return CachedEntity.CreateObject(pk, type, _cache, _schema)
+        Dim r = CachedEntity.CreateObject(pk, type, _cache, _schema)
+        Dim e = TryCast(r, _IEntity)
+        If e IsNot Nothing AndAlso e.GetICreateManager Is Nothing Then
+            e.SetCreateManager(_crMan)
+        End If
+        Return r
     End Function
 
     Public Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk As IEnumerable(Of PKDesc)) As T
-        Return CachedEntity.CreateEntity(Of T)(pk, _cache, _schema)
+        Dim r = CachedEntity.CreateEntity(Of T)(pk, _cache, _schema)
+        If r.GetICreateManager Is Nothing Then
+            r.SetCreateManager(_crMan)
+        End If
+        Return r
     End Function
 
     Public Function CreateEntity(ByVal pk As IEnumerable(Of PKDesc), ByVal t As Type) As _ICachedEntity
-        Return CachedEntity.CreateEntity(pk, t, _cache, _schema)
+        Dim r = CachedEntity.CreateEntity(pk, t, _cache, _schema)
+        If r.GetICreateManager Is Nothing Then
+            r.SetCreateManager(_crMan)
+        End If
+        Return r
     End Function
 
     Protected Friend Function CreateEntity(ByVal t As Type) As IEntity
-        Return Entity.CreateEntity(t, _cache, _schema)
+        Dim r = Entity.CreateEntity(t, _cache, _schema)
+        If r.GetICreateManager Is Nothing Then
+            r.SetCreateManager(_crMan)
+        End If
+        Return r
     End Function
 
     Protected Friend Function CreateEntity(Of T As {_IEntity, New})() As T
-        Return Entity.CreateEntity(Of T)(_cache, _schema)
+        Dim r = Entity.CreateEntity(Of T)(_cache, _schema)
+        If r.GetICreateManager Is Nothing Then
+            r.SetCreateManager(_crMan)
+        End If
+        Return r
     End Function
 
     'Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary, _
