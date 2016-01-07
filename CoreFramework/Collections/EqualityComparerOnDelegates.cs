@@ -44,13 +44,5 @@ namespace CoreFramework.Collections
             return GetHashCodeComparer(obj);
         }
     }
-
-    public static class Extensions
-    {
-        public static IEnumerable<T> Distinct<T>(this IEnumerable<T> eu, Func<T, T, bool> eq, Func<T, int> hash)
-        {
-            return eu.Distinct(new EqualityFunc<T>(eq, hash));
-        }
-
-    }
+       
 }

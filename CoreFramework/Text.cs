@@ -62,7 +62,24 @@ namespace CoreFramework.Text
         {
             return new[] { Single, Singular, Plural};
         }
+        public static DigitItems FromArray(string[] arr)
+        {
+            if (arr == null)
+                return null;
 
+            var r = new DigitItems();
+
+            if (arr.Length > 0)
+                r.Single = arr[0];
+
+            if (arr.Length > 1)
+                r.Singular = arr[1];
+
+            if (arr.Length > 2)
+                r.Plural = arr[2];
+
+            return r;
+        }
         public static DigitItems RuRubles()
         {
             return new DigitItems() { Single = "рубль", Singular="рубля", Plural="рублей" };

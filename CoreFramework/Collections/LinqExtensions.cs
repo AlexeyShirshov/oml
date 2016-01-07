@@ -23,5 +23,24 @@ namespace CoreFramework.Collections
             }
             return coll;
         }
+
+        public static IEnumerable<T> Distinct<T>(this IEnumerable<T> eu, Func<T, T, bool> eq, Func<T, int> hash)
+        {
+            return eu.Distinct(new EqualityFunc<T>(eq, hash));
+        }
+
+        public static IEnumerable<IGrouping<TKey, T>> GroupBy<T, TKey>(this IEnumerable<T> eu, Func<T, TKey> keySelector, 
+            Func<TKey, TKey, bool> eq, Func<TKey, int> hash)
+        {
+            return eu.GroupBy(keySelector, new EqualityFunc<TKey>(eq, hash));
+        }
+
+        public static IEnumerable<IGrouping<TKey, TElement>> GroupBy<T, TKey, TElement>(this IEnumerable<T> eu, 
+            Func<T, TKey> keySelector,
+            Func<T, TElement> elementSelector,
+            Func<TKey, TKey, bool> eq, Func<TKey, int> hash)
+        {
+            return eu.GroupBy(keySelector, elementSelector, new EqualityFunc<TKey>(eq, hash));
+        }
     }
 }
