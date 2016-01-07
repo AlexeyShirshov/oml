@@ -16,7 +16,7 @@ Namespace Database
             Skip
         End Enum
 
-        Public Delegate Function OnSavedDependency(sndr As Worm.Database.ObjectListSaver, o As Entities.ICachedEntity, o2 As Entities.ICachedEntity) As IEnumerable(Of ICachedEntity)
+        Public Delegate Function OnSavedDependency(sndr As Worm.Database.ObjectListSaver, master As Entities.ICachedEntity, slave As Entities.ICachedEntity) As IEnumerable(Of ICachedEntity)
 
         Public Event PreSave(ByVal sender As ObjectListSaver)
         Public Event BeginSave(ByVal sender As ObjectListSaver, ByVal count As Integer)
@@ -345,19 +345,19 @@ Namespace Database
             End If
             RaiseEvent OnRemoved(Me, o)
         End Sub
-        Public Sub CreateDependency(o As ICachedEntity, o2 As ICachedEntity, Optional del As OnSavedDependency = Nothing)
+        Public Sub CreateDependency(master As ICachedEntity, slave As ICachedEntity, Optional del As OnSavedDependency = Nothing)
             Dim depList As List(Of Pair(Of ICachedEntity, OnSavedDependency)) = Nothing
-            If Not _dependencies.TryGetValue(o, depList) OrElse depList Is Nothing Then
+            If Not _dependencies.TryGetValue(master, depList) OrElse depList Is Nothing Then
                 depList = New List(Of Pair(Of ICachedEntity, OnSavedDependency))
-                _dependencies(o) = depList
+                _dependencies(master) = depList
             End If
 
-            Dim d = depList.FindIndex(Function(it) it.First Is o2)
+            Dim d = depList.FindIndex(Function(it) it.First Is slave)
             If d >= 0 Then
                 depList.RemoveAt(d)
             End If
 
-            Dim newd = New Pair(Of ICachedEntity, OnSavedDependency)(o2, del)
+            Dim newd = New Pair(Of ICachedEntity, OnSavedDependency)(slave, del)
             depList.Add(newd)
         End Sub
 

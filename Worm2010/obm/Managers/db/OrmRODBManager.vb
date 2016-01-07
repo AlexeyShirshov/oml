@@ -2807,10 +2807,11 @@ l2:
                                 End If
                             End If
                         End If
-                        Dim pap = "@"
+                        Dim pap = ""
                         If SQLGenerator.SupportMultiline Then
                             sb.Append(SQLGenerator.DeclareVariable(p.ParameterName, tp))
                         Else
+                            pap = "@"
                             sb.Append("declare " & pap & p.ParameterName)
                         End If
                         sb.AppendLine(";set " & pap & p.ParameterName & " = " & val)

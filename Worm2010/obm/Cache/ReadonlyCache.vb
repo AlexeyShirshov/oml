@@ -977,7 +977,7 @@ Namespace Cache
         End Sub
     End Class
 
-    Public MustInherit Class ReadonlyWebCache
+    Public Class ReadonlyWebCache
         Inherits ReadonlyCache
 
         Protected Overrides Function CreateDictionary4ObjectInstances(ByVal t As System.Type) As System.Collections.IDictionary
@@ -1002,7 +1002,9 @@ Namespace Cache
             }
         End Function
 
-        Protected MustOverride Function GetPolicy(ByVal t As Type) As WebCacheDictionaryPolicy
+        Protected Overridable Function GetPolicy(ByVal t As Type) As WebCacheDictionaryPolicy
+            Return WebCacheDictionaryPolicy.CreateDefault
+        End Function
 
         Protected Overrides Function CreateListConverter() As IListObjectConverter
             Return New ListConverter
