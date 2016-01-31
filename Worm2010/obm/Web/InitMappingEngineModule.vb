@@ -1,4 +1,6 @@
-﻿Imports Microsoft.Web.Infrastructure.DynamicModuleHelper
+﻿#If weblazyload Then
+Imports Microsoft.Web.Infrastructure.DynamicModuleHelper
+#End If
 Imports System.Web.Hosting
 
 Namespace Web
@@ -23,7 +25,9 @@ Namespace Web
 
         Public Shared Sub RegisterModule()
             If HostingEnvironment.IsHosted Then
+#If weblazyload Then
                 DynamicModuleUtility.RegisterModule(GetType(InitMappingEngineModule))
+#End If
             Else
                 ObjectMappingEngine.StartLoadEntityTypes()
             End If

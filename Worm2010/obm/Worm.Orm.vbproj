@@ -158,7 +158,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\CoreFramework.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Condition=" $(DefineConstants.Contains('weblazyload')) " Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Configuration.Install" />
@@ -179,12 +179,21 @@
     <Compile Include="Collections\CollectionWithIndex.vb" />
     <Compile Include="Collections\CopyEnumerators.vb" />
     <Compile Include="Collections\SyncGenericDictionary.vb" />
+    <Compile Include="DbMS\BulkLoad\BulkException.vb" />
+    <Compile Include="DbMS\BulkLoad\BulkResults.vb" />
+    <Compile Include="DbMS\BulkLoad\ColumnMapping.vb" />
+    <Compile Include="DbMS\BulkLoad\IBulkLoader.vb" />
+    <Compile Include="DbMS\BulkLoad\IBulkLoadResults.vb" />
+    <Compile Include="DbMS\BulkLoad\ILoadOptions.vb" />
+    <Compile Include="DbMS\BulkLoad\RowsCopiedEventArgs.vb" />
     <Compile Include="DbMS\SP\MultiResultset.vb" />
     <Compile Include="DbMS\SP\NonQuery.vb" />
     <Compile Include="DbMS\SP\QueryEntity.vb" />
     <Compile Include="DbMS\SP\QuerySP.vb" />
     <Compile Include="DbMS\SP\SPBase.vb" />
+    <Compile Include="DbMS\BulkLoad\SqlServerBuildLoader.vb" />
     <Compile Include="Managers\db\AppLockManager.vb" />
+    <Compile Include="Managers\db\ConnectionMgr.vb" />
     <Compile Include="Managers\db\ErrorHandling.vb" />
     <Compile Include="Managers\db\IDataReaderAbstraction.vb" />
     <Compile Include="Managers\db\ModificationsTracker.vb" />
@@ -357,7 +366,7 @@ del /Q $(TargetDir)$(TargetName)-Full*</PostBuildEvent>
   </PropertyGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="True" />
+      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.None.Increment" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

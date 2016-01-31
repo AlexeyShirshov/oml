@@ -110,6 +110,7 @@
     <Compile Include="Advanced\GuidPK.vb" />
     <Compile Include="Advanced\Inheritance.vb" />
     <Compile Include="Advanced\MultiTable.vb" />
+    <Compile Include="Advanced\Bulk.vb" />
     <Compile Include="Advanced\Pod.vb" />
     <Compile Include="Advanced\SimpleModel.vb" />
     <Compile Include="Advanced\SimpleObj.vb" />
@@ -221,6 +222,7 @@
     <EmbeddedResource Include="XML\data.xml" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Advanced\BulkLoad.csv" />
     <None Include="app.config" />
     <None Include="ASPHosting\Web\handler.ashx">
       <CustomToolNamespace>My.Resources</CustomToolNamespace>

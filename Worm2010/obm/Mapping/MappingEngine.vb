@@ -12,6 +12,7 @@ Imports Worm.Expressions2
 Imports Worm.Cache
 Imports System.Linq
 Imports System.Text.RegularExpressions
+Imports System.Reflection
 
 'Namespace Schema
 
@@ -1612,11 +1613,33 @@ Public Class ObjectMappingEngine
         If _entityTypes Is Nothing Then
             Using New CSScopeMgrLite(_entityTypesSpin)
                 If _entityTypes Is Nothing Then
-                    Dim arr As New System.Collections.Concurrent.BlockingCollection(Of Type)()
-                    For Each t In GetTypes2Scan()
-                        arr.Add(t)
-                    Next
-                    _entityTypes = arr
+                    Dim cache = System.Configuration.ConfigurationManager.AppSettings("worm:types-cache")
+                    Dim cachePath = cache
+                    If Not String.IsNullOrEmpty(cache) Then
+                        If Not IO.Path.IsPathRooted(cachePath) Then
+                            If Hosting.HostingEnvironment.IsHosted Then
+                                cachePath = IO.Path.Combine(System.Web.Hosting.HostingEnvironment.ApplicationPhysicalPath, cachePath)
+                            Else
+                                cachePath = IO.Path.Combine(IO.Path.GetDirectoryName(New Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath), cachePath)
+                            End If
+                        End If
+                        If IO.File.Exists(cachePath) Then
+                            _entityTypes = LoadFromCache(cachePath).ToArray
+                        End If
+                    End If
+
+                    If _entityTypes Is Nothing OrElse Not _entityTypes.Any Then
+                        Dim arr As New System.Collections.Concurrent.BlockingCollection(Of Type)()
+                        For Each t In GetTypes2Scan()
+                            arr.Add(t)
+                        Next
+
+                        _entityTypes = arr
+
+                        If Not String.IsNullOrEmpty(cache) Then
+                            SaveToCache(cachePath)
+                        End If
+                    End If
                 End If
             End Using
         End If
@@ -2871,7 +2894,10 @@ Public Class ObjectMappingEngine
                                   "System.Xml.dll", "System.dll", "System.Configuration.dll",
                                   "System.Web.dll", "System.Drawing.dll", "System.Web.Services.dll",
                                   "Worm.Orm.dll", "CoreFramework.dll", "ASPNETHosting.dll",
-                                  "System.Transactions.dll", "System.EnterpriseServices.dll"}
+                                  "System.Transactions.dll", "System.EnterpriseServices.dll",
+                                  "System.Data.SqlServerCe.dll", "MySql.Web.dll",
+                                  "Xceed.Wpf.Toolkit.dll", "FontAwesome.WPF.dll",
+                                  "Antlr3.Runtime.dll", "NLog.dll"}
         If excludedAssemblies.Any(Function(it) it.ToLower = moduleName.ToLower) OrElse
             assembly.FullName.Contains("Microsoft") OrElse
             assembly.FullName.StartsWith("DotNetOpenAuth") Then
@@ -3071,6 +3097,32 @@ Public Class ObjectMappingEngine
             Return _features
         End Get
     End Property
+
+    Private Shared Sub SaveToCache(cachePath As String)
+        Using sw As New IO.StreamWriter(cachePath, False, Encoding.UTF8)
+            For Each t In _entityTypes
+                sw.WriteLine(t.AssemblyQualifiedName)
+            Next
+        End Using
+    End Sub
+
+    Private Shared Iterator Function LoadFromCache(cachePath As String) As IEnumerable(Of Type)
+        Using sr As New IO.StreamReader(cachePath, Encoding.UTF8)
+            Dim line = sr.ReadLine
+            Do While Not String.IsNullOrEmpty(line)
+                Try
+                    Dim entype = Type.GetType(line)
+                    If entype IsNot Nothing Then
+                        Yield entype
+                    End If
+                Catch ex As Exception
+                    Debug.WriteLine("Error during loading type {0}: {1}", line, ex.ToString)
+                End Try
+                line = sr.ReadLine
+            Loop
+        End Using
+    End Function
+
 End Class
 
 'End Namespace

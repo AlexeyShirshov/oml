@@ -457,9 +457,9 @@ Namespace Database
         End Class
 
         Protected _connStr As String
-        Private _tran As System.Data.Common.DbTransaction
+        Friend _tran As System.Data.Common.DbTransaction
         Private _closeConnOnCommit As ConnAction
-        Private _conn As System.Data.Common.DbConnection
+        Friend _conn As System.Data.Common.DbConnection
         Private _createConn As Func(Of System.Data.Common.DbConnection)
         Private _exec As TimeSpan
         Private _fetch As TimeSpan
@@ -2669,7 +2669,9 @@ l2:
             If entity IsNot Nothing Then RaiseObjectLoaded(entity)
             Return obj
         End Function
-
+        Public Function GetConnection() As ConnectionMgr
+            Return New ConnectionMgr(Me)
+        End Function
         Protected Friend Function TestConn(ByVal cmd As System.Data.Common.DbCommand) As ConnAction
             Invariant()
 
@@ -2778,7 +2780,7 @@ l2:
         '<Conditional("TRACE")> _
         Protected Sub TraceStmt(ByVal cmd As System.Data.Common.DbCommand)
             Dim sb As New StringBuilder
-            If _tsStmt.Switch.ShouldTrace(TraceEventType.Information) Then
+            If cmd IsNot Nothing AndAlso _tsStmt.Switch.ShouldTrace(TraceEventType.Information) Then
                 'SyncLock _tsStmt
                 For Each p As System.Data.Common.DbParameter In cmd.Parameters
                     With p
@@ -2808,10 +2810,12 @@ l2:
                             End If
                         End If
                         Dim pap = ""
+                        If Not p.ParameterName.StartsWith("@") Then
+                            pap = "@"
+                        End If
                         If SQLGenerator.SupportMultiline Then
                             sb.Append(SQLGenerator.DeclareVariable(p.ParameterName, tp))
                         Else
-                            pap = "@"
                             sb.Append("declare " & pap & p.ParameterName)
                         End If
                         sb.AppendLine(";set " & pap & p.ParameterName & " = " & val)
