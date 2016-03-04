@@ -9,7 +9,7 @@ namespace CoreFramework.Collections
     {
         public static IEnumerable<DateTime> Range(DateTime start, DateTime end)
         {
-            foreach (var i in System.Linq.Enumerable.Range(0, (end-start).Days))
+            foreach (var i in System.Linq.Enumerable.Range(0, (end-start).Days+1))
             {
                 yield return start.AddDays(i).Date;
             }

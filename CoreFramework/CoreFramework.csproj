@@ -66,25 +66,29 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutoCleanup.cs" />
+    <Compile Include="Basic.cs" />
+    <Compile Include="Collections\ConcurrentHashSet.cs" />
     <Compile Include="Collections\LinqExtensions.cs" />
     <Compile Include="Collections\ListExtensions.cs" />
     <Compile Include="CommandLineParser.cs" />
-    <Compile Include="ConcurentList.cs" />
+    <Compile Include="Collections\ConcurentList.cs" />
+    <Compile Include="Config\ParamsConfiguration.cs" />
+    <Compile Include="Debug\PerfCounter.cs" />
     <Compile Include="EncodingStringWriter.cs" />
     <Compile Include="Collections\EqualityComparerOnDelegates.cs" />
-    <Compile Include="Globalization.cs" />
-    <Compile Include="KeylessElementCollection.cs" />
-    <Compile Include="NumberConverter.cs" />
+    <Compile Include="Globalization\Globalization.cs" />
+    <Compile Include="Config\KeylessElementCollection.cs" />
+    <Compile Include="Globalization\NumberConverter.cs" />
     <Compile Include="Pairs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="QuietDictionary.cs" />
-    <Compile Include="ReadOnlyDictionary.cs" />
-    <Compile Include="ScopeManagers.cs" />
-    <Compile Include="Stack.cs" />
-    <Compile Include="SyncHelper.cs" />
+    <Compile Include="Collections\QuietDictionary.cs" />
+    <Compile Include="Collections\ReadOnlyDictionary.cs" />
+    <Compile Include="Threading\ScopeManagers.cs" />
+    <Compile Include="Debug\Stack.cs" />
+    <Compile Include="Threading\SyncHelper.cs" />
     <Compile Include="Text.cs" />
-    <Compile Include="Timer.cs" />
-    <Compile Include="TimeZoneInfo.cs" />
+    <Compile Include="Debug\Timer.cs" />
+    <Compile Include="Globalization\TimeZoneInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Worm.snk" />
