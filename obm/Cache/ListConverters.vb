@@ -125,8 +125,8 @@ Namespace Cache
             Return objects
         End Function
 
-        Public Shared Function GetProp(ByVal rt As Type, ByVal obj As ICachedEntity, ByVal mgr As OrmManager, ByVal oschema As IEntitySchema) As String
-            Dim prop As String = mgr.MappingEngine.GetJoinFieldNameByType(rt, oschema)
+        Public Shared Function GetProp(ByVal rt As Type, ByVal obj As ICachedEntity, ByVal oschema As IEntitySchema) As String
+            Dim prop As String = oschema.GetJoinFieldNameByType(rt)
             If String.IsNullOrEmpty(prop) Then
                 For Each m As MapField2Column In oschema.FieldColumnMap
                     If m.PropertyInfo.PropertyType.IsAssignableFrom(rt) Then
@@ -154,7 +154,7 @@ Namespace Cache
                 'For Each p As String In props
                 '    prop = p
                 'Next
-                Dim prop As String = GetProp(l.RealType, obj, mc, oschema)
+                Dim prop As String = GetProp(l.RealType, obj, oschema)
                 obj = CType(ObjectMappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
                 If obj.GetType IsNot l.RealType Then
                     If Not String.IsNullOrEmpty(prop) Then
@@ -193,7 +193,7 @@ Namespace Cache
                 'For Each p As String In props
                 '    prop = p
                 'Next
-                Dim prop As String = GetProp(l.RealType, obj, mc, oschema)
+                Dim prop As String = GetProp(l.RealType, obj, oschema)
                 obj = CType(ObjectMappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
                 If obj.GetType IsNot l.RealType Then
                     If Not String.IsNullOrEmpty(prop) Then
@@ -381,7 +381,7 @@ Namespace Cache
                 'For Each p As String In props
                 '    prop = p
                 'Next
-                Dim prop As String = FakeListConverter.GetProp(lo.RealType, obj, mc, oschema)
+                Dim prop As String = FakeListConverter.GetProp(lo.RealType, obj, oschema)
                 obj = CType(ObjectMappingEngine.GetPropertyValue(obj, prop, oschema), ICachedEntity)
                 If obj.GetType IsNot lo.RealType Then
                     If Not String.IsNullOrEmpty(prop) Then
@@ -416,7 +416,7 @@ Namespace Cache
             Dim obj As ICachedEntity = o
             If lo.RealType IsNot obj.GetType Then
                 Dim oschema As IEntitySchema = mc.MappingEngine.GetEntitySchema(obj.GetType)
-                Dim prop As String = FakeListConverter.GetProp(lo.RealType, obj, mc, oschema)
+                Dim prop As String = FakeListConverter.GetProp(lo.RealType, obj, oschema)
                 'Dim props As ICollection(Of String) = mc.MappingEngine.GetPropertyAliasByType(obj.GetType, lo.RealType, oschema)
                 'If props.Count <> 1 Then
                 '    Throw New OrmManagerException(String.Format("Cannot get property of type {0} from {1}", lo.RealType, obj.GetType))

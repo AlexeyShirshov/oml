@@ -6,6 +6,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Query
 Imports Worm.Query.Database
 Imports System.Data
+Imports Worm.Criteria.Joins
 
 Namespace Database
 
@@ -306,6 +307,58 @@ Namespace Database
             End If
 
             Return False
+        End Function
+        Public Overrides ReadOnly Property SupportLimitDelete As Boolean
+            Get
+                Return True
+            End Get
+        End Property
+        Public Overrides Function Delete(mpe As ObjectMappingEngine, sf As SourceFragment, filter As Criteria.Core.IFilter,
+                                         params As ParamMgr, contextInfo As IDictionary, limit As Integer) As String
+            If sf Is Nothing Then
+                Throw New ArgumentNullException("t parameter cannot be nothing")
+            End If
+
+            If filter Is Nothing Then
+                Throw New ArgumentNullException("filter parameter cannot be nothing")
+            End If
+
+            Dim del_cmd As New StringBuilder
+            del_cmd.AppendFormat("delete top ({0}) from ", limit).Append(GetTableName(sf, contextInfo))
+            del_cmd.Append(" where ").Append(filter.MakeQueryStmt(mpe, Nothing, Me, Nothing, contextInfo, Nothing, params))
+
+            Return del_cmd.ToString
+        End Function
+
+        Public Overrides Function Delete(ByVal mpe As ObjectMappingEngine, ByVal type As Type, ByVal filter As Criteria.Core.IFilter,
+                                           joins() As QueryJoin,
+                                           ByVal params As ParamMgr,
+                                           ByVal contextInfo As IDictionary, limit As Integer) As String
+            Dim del_cmd As New StringBuilder
+            Dim almgr = AliasMgr.Create
+            Dim tables = mpe.GetTables(type)
+            Dim schema = mpe.GetEntitySchema(type)
+
+            AppendFrom(mpe, almgr, contextInfo, tables, del_cmd, params, TryCast(schema, IMultiTableObjectSchema), type)
+
+            Dim tblAlias = almgr.GetAlias(tables(0), Nothing)
+
+            del_cmd.Insert(0, "delete top(" & limit & ") " & tblAlias & " from ")
+
+            If joins IsNot Nothing Then
+                For i As Integer = 0 To joins.Length - 1
+                    Dim join As QueryJoin = CType(joins(i), QueryJoin)
+
+                    If Not QueryJoin.IsEmpty(join) Then
+                        'almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
+                        join.MakeSQLStmt(mpe, Nothing, Me, Nothing, contextInfo, almgr, params, Nothing, del_cmd)
+                    End If
+                Next
+            End If
+
+            AppendWhere(mpe, type, schema, filter, almgr, del_cmd, contextInfo, params)
+
+            Return del_cmd.ToString
         End Function
     End Class
 

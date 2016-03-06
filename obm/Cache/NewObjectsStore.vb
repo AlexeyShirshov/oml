@@ -89,7 +89,7 @@ Namespace Cache
         End Function
 
         Public Sub AddNew(ByVal obj As Entities._ICachedEntity) Implements INewObjectsStore.AddNew
-            Dim pk As New PKWrapper(OrmManager.GetPKValues(obj, Nothing))
+            Dim pk As New PKWrapper(obj.GetPKValues(Nothing))
             GetDic(obj.GetType).Add(pk, obj)
         End Sub
 
@@ -113,11 +113,9 @@ Namespace Cache
             End If
 
             Dim l As New List(Of PKDesc)
-            For Each m As MapField2Column In mpe.GetEntitySchema(t).FieldColumnMap
-                If m.IsPK Then
-                    Dim id As Object = GetPKValue(t, m.PropertyAlias, m.PropertyInfo.PropertyType, m.PropertyInfo.DeclaringType)
-                    l.Add(New PKDesc(m.PropertyAlias, id))
-                End If
+            For Each m As MapField2Column In mpe.GetEntitySchema(t).GetPKs
+                Dim id As Object = GetPKValue(t, m.PropertyAlias, m.PropertyInfo.PropertyType, m.PropertyInfo.DeclaringType)
+                l.Add(New PKDesc(m.PropertyAlias, id))
             Next
             Return l.ToArray
         End Function
@@ -151,7 +149,7 @@ Namespace Cache
         End Sub
 
         Public Sub RemoveNew(ByVal obj As Entities._ICachedEntity) Implements INewObjectsStore.RemoveNew
-            RemoveNew(obj.GetType, OrmManager.GetPKValues(obj, Nothing))
+            RemoveNew(obj.GetType, obj.GetPKValues(Nothing))
         End Sub
 
         Public Overloads Function GetNew(ByVal t As System.Type) As System.Collections.Generic.IList(Of Entities._ICachedEntity) Implements INewObjectsStoreEx.GetNewObjects

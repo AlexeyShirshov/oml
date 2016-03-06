@@ -51,14 +51,12 @@ Namespace Database.Storedprocs
                 cols = New List(Of SelectExpression)
                 'Dim pks As List(Of EntityPropertyAttribute) = mgr.MappingEngine.GetPrimaryKeys(GetType(T))
                 Dim oschema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(GetType(T))
-                For Each m As MapField2Column In oschema.FieldColumnMap
-                    If m.IsPK Then
-                        Dim exp As New TableExpression(m.SourceFieldExpression)
-                        Dim se As New SelectExpression(exp, m.PropertyAlias, GetType(T))
-                        se.Attributes = m.Attributes
-                        se.CorrectFieldIndex = True
-                        cols.Add(se)
-                    End If
+                For Each m As MapField2Column In oschema.GetPKs
+                    Dim exp As New TableExpression(m.SourceFieldExpression)
+                    Dim se As New SelectExpression(exp, m.PropertyAlias, GetType(T))
+                    se.Attributes = m.Attributes
+                    se.CorrectFieldIndex = True
+                    cols.Add(se)
                 Next
             End If
             mgr.LoadMultipleObjects(Of T)(cmd, rr, cols)

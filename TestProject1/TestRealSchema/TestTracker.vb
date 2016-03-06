@@ -81,11 +81,11 @@ Public Class TestTracker
                     t.CreatedAt = Now
 
                     Assert.IsNotNull(t)
-                    Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t.GetType, OrmManager.GetPKValues(t, Nothing)))
+                    Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t.GetType, t.GetPKValues(Nothing)))
 
                     Dim t2 As Table2 = tracker.CreateNewKeyEntity(Of Table2)()
                     Assert.IsNotNull(t2)
-                    Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t2.GetType, OrmManager.GetPKValues(t2, Nothing)))
+                    Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t2.GetType, t2.GetPKValues(Nothing)))
 
                     t2.Money = 1000
 
@@ -116,11 +116,11 @@ Public Class TestTracker
                     t.CreatedAt = Now
 
                     Assert.IsNotNull(t)
-                    Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t.GetType, OrmManager.GetPKValues(t, Nothing)))
+                    Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t.GetType, t.GetPKValues(Nothing)))
 
                     Dim t2 As Table2 = tracker.CreateNewKeyEntity(Of Table2)()
                     Assert.IsNotNull(t2)
-                    Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t2.GetType, OrmManager.GetPKValues(t2, Nothing)))
+                    Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t2.GetType, t2.GetPKValues(Nothing)))
 
                     t2.Money = 1000
 
@@ -151,7 +151,7 @@ Public Class TestTracker
                     t.CreatedAt = Now
 
                     Assert.IsNotNull(t)
-                    Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t.GetType, OrmManager.GetPKValues(t, Nothing)))
+                    Assert.IsNotNull(mgr.Cache.NewObjectManager.GetNew(t.GetType, t.GetPKValues(Nothing)))
 
                     tt.Code = 10
 

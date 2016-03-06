@@ -441,7 +441,7 @@ Module Module2
                                             Else
                                                 Dim str As String = Guid.NewGuid.ToString
                                                 t.Name = str
-                                                If OrmManager.HasBodyChanges(t) Then
+                                                If t.HasBodyChanges() Then
                                                     t.SaveChanges(True)
                                                 End If
                                             End If

@@ -50,10 +50,8 @@ l1:
                             'If Not _mgr.MappingEngine.HasEntitySchema(createType) Then
                             _oschema = oschema
                             'End If
-                            For Each pk As MapField2Column In oschema.FieldColumnMap
-                                If pk.IsPK Then
-                                    l.Add(pk.PropertyAlias)
-                                End If
+                            For Each pk As MapField2Column In oschema.GetPKs
+                                l.Add(pk.PropertyAlias)
                             Next
                             If l.Count = 0 Then
                                 GoTo l1
@@ -235,9 +233,9 @@ l2:
                     'CType(ce, UpdatableCachedItem).Filter = query._f
                     'CType(ce, UpdatableCachedItem).Sort = query.Sort
                 ElseIf GetType(ReadonlyMatrix).IsAssignableFrom(l.GetType) Then
-                    ce = New CachedItemBase(CType(l, ReadonlyMatrix), mgr.Cache)
+                    ce = New CachedItemBase(CType(l, ReadonlyMatrix), mgr)
                 Else
-                    ce = New CachedItemBase(l, mgr.Cache)
+                    ce = New CachedItemBase(l, mgr)
                 End If
             End If
             d(p.Id) = ce

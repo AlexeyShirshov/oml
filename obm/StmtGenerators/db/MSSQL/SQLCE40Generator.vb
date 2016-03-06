@@ -281,13 +281,7 @@ Namespace Database
 
                     If updated_tables.Count > 0 Then
                         'Dim sch As IOrmObjectSchema = GetObjectSchema(rt)
-                        Dim pk_table As SourceFragment = Nothing
-                        For Each m As MapField2Column In esch.FieldColumnMap
-                            If m.IsPK Then
-                                pk_table = m.Table 'mpe.GetPropertyTable(esch, c.PropertyAlias)
-                                Exit For
-                            End If
-                        Next
+                        Dim pk_table As SourceFragment = esch.GetPKTable(rt)
 
                         'Dim amgr As AliasMgr = AliasMgr.Create
                         Dim params As New ParamMgr(Me, "p")

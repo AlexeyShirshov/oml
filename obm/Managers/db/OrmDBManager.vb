@@ -633,7 +633,9 @@ Namespace Database
         'Obj2ObjRelationSave(obj, dt, id & key & "901hfn013nvc0nvvl", t)
         'ResetAllM2MRelations(id, key)
         'End Sub
-
+        Public Function Delete(f As cc.IEntityFilter, limit As Integer) As Integer
+            Return _upd.Delete(Me, f, limit)
+        End Function
         Public Function Delete(ByVal f As cc.IEntityFilter) As Integer
             Return _upd.Delete(Me, f)
             '            Dim t As Type = Nothing

@@ -23,10 +23,12 @@ Namespace Database
         Property ColumnMappings As IEnumerable(Of ColumnMapping)
         Property AutoColumns As Boolean
         Property AutoMapColumns As Boolean
+        Property Timeout As Integer?
     End Interface
 
     Public Class BulkLoadOptions
         Implements IBulkLoadOptions
+
         Private _cols As List(Of DataColumn)
         Public Sub New()
             _cols = New List(Of DataColumn)
@@ -77,5 +79,7 @@ Namespace Database
         Public Property TableName As String Implements IBulkLoadOptions.TableName
 
         Public Property TrimWhiteSpace As Boolean Implements IBulkLoadOptions.TrimWhiteSpace
+
+        Public Property Timeout As Integer? Implements IBulkLoadOptions.Timeout
     End Class
 End Namespace

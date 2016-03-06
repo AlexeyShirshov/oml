@@ -17,6 +17,7 @@ Imports System.Threading.Tasks
 Imports System.Threading
 Imports System.Linq
 Imports System.Text.RegularExpressions
+Imports CoreFramework.Debugging
 
 Namespace Database
     Partial Public Class OrmReadOnlyDBManager
@@ -209,12 +210,8 @@ Namespace Database
                                         Try
                                             mgr.LoadSingleObject(cmd, cols, obj, True, False, True)
                                             If Not obj.IsPKLoaded Then
-                                                Dim cnt As Integer = 0
                                                 Dim props = mgr.MappingEngine.GetEntitySchema(obj.GetType)
-                                                For Each mp As MapField2Column In props.FieldColumnMap
-                                                    If mp.IsPK Then cnt += 1
-                                                Next
-                                                obj.PKLoaded(cnt, props)
+                                                obj.PKLoaded(props.GetPKs.Count, props)
                                             End If
                                         Finally
                                             mgr.CloseConn(b)
@@ -415,28 +412,44 @@ Namespace Database
                 End Using
             End Sub
 
-            Public Function Delete(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IEntityFilter) As Integer
+            Public Function Delete(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IEntityFilter,
+                                   Optional limit As Integer? = Nothing) As Integer
+                If f Is Nothing Then
+                    Throw New ArgumentNullException("f")
+                End If
+
+                If limit.HasValue AndAlso Not mgr.SQLGenerator.SupportLimitDelete Then
+                    Throw New OrmManagerException(String.Format("SQL generator {0} does not supports limit", mgr.SQLGenerator.Name))
+                End If
+
                 Dim t As Type = Nothing
-#If DEBUG Then
+
                 For Each fl As cc.EntityFilter In f.GetAllFilters
                     Dim rt As Type = fl.Template.ObjectSource.GetRealType(mgr.MappingEngine)
                     If t Is Nothing Then
-                        t = fl.Template.ObjectSource.GetRealType(mgr.MappingEngine)
-                    ElseIf t IsNot fl.Template.ObjectSource.GetRealType(mgr.MappingEngine) Then
+                        t = rt
+                    ElseIf t IsNot rt Then
                         Throw New InvalidOperationException("All filters must have the same type")
                     End If
                 Next
-#End If
+
+                Dim sf = mgr.MappingEngine.GetTables(t)(0)
+
                 Using cmd As System.Data.Common.DbCommand = mgr.CreateDBCommand()
                     Dim params As New ParamMgr(mgr.SQLGenerator, "p")
                     With cmd
-                        .CommandText = mgr.SQLGenerator.Delete(mgr.MappingEngine, t, f, params, mgr.ContextInfo)
                         .CommandType = System.Data.CommandType.Text
                         If mgr.CommandTimeout.HasValue Then
                             .CommandTimeout = mgr.CommandTimeout.Value
                         End If
+                        If limit.HasValue Then
+                            .CommandText = mgr.SQLGenerator.Delete(mgr.MappingEngine, sf, f, params, mgr.ContextInfo, limit.Value)
+                        Else
+                            .CommandText = mgr.SQLGenerator.Delete(mgr.MappingEngine, sf, f, params, mgr.ContextInfo)
+                        End If
                         params.AppendParams(.Parameters)
                     End With
+
 
                     Dim r As ConnAction = mgr.TestConn(cmd)
                     Try
@@ -468,7 +481,7 @@ Namespace Database
         Private _timeout As Nullable(Of Integer)
         Private _rsThreads As Integer = 1
 
-        Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
+        Protected Shared _QueryObjectsMethodInfo As Reflection.MethodInfo = Nothing
         Protected Shared _LoadMultipleObjectsMI4clm As Reflection.MethodInfo = Nothing
         Protected Shared _LoadMultipleObjectsMI4 As Reflection.MethodInfo = Nothing
 
@@ -1239,6 +1252,12 @@ l1:
             Dim selDic As New Dictionary(Of EntityUnion, LoadTypeDescriptor)
             Dim selOS As New EntityUnion(original_type)
             Dim oschema As IEntitySchema = obj.GetEntitySchema(MappingEngine)
+            Dim mc As MapField2Column = Nothing
+            If Not String.IsNullOrEmpty(propertyAlias) AndAlso oschema.FieldColumnMap.TryGetValue(propertyAlias, mc) AndAlso
+                mc IsNot Nothing AndAlso (mc.Attributes And Field2DbRelations.Hidden) = Field2DbRelations.Hidden Then
+
+                Return
+            End If
 
             Dim c As Condition.ConditionConstructor = PrepareEntity2Load(obj, propertyAlias, original_type, eudic, js, selDic, selOS, oschema)
 
@@ -1484,71 +1503,69 @@ l1:
             End Try
         End Function
 
-        Protected Sub LoadMultipleObjects(ByVal firstType As Type, _
-            ByVal secondType As Type, ByVal cmd As System.Data.Common.DbCommand, ByVal values As IList, _
-            ByVal first_cols As List(Of EntityPropertyAttribute), ByVal sec_cols As List(Of EntityPropertyAttribute))
+        'Protected Sub LoadMultipleObjects(ByVal firstType As Type, _
+        '    ByVal secondType As Type, ByVal cmd As System.Data.Common.DbCommand, ByVal values As IList, _
+        '    ByVal first_cols As List(Of EntityPropertyAttribute), ByVal sec_cols As List(Of EntityPropertyAttribute))
 
-            Dim v As New List(Of ReadOnlyCollection(Of _IEntity))
+        '    Dim v As New List(Of ReadOnlyCollection(Of _IEntity))
 
-            Dim ost As EntityUnion = New EntityUnion(firstType)
-            Dim ostt As EntityUnion = Nothing
-            If firstType IsNot secondType Then
-                ostt = New EntityUnion(secondType)
-            Else
-                ostt = New EntityUnion(New QueryAlias(secondType))
-            End If
+        '    Dim ost As EntityUnion = New EntityUnion(firstType)
+        '    Dim ostt As EntityUnion = Nothing
+        '    If firstType IsNot secondType Then
+        '        ostt = New EntityUnion(secondType)
+        '    Else
+        '        ostt = New EntityUnion(New QueryAlias(secondType))
+        '    End If
 
-            Dim types As New Dictionary(Of EntityUnion, IEntitySchema)
-            Dim firstSchema As IEntitySchema = MappingEngine.GetEntitySchema(firstType)
-            types.Add(ost, firstSchema)
-            Dim secondSchema As IEntitySchema = MappingEngine.GetEntitySchema(secondType)
-            types.Add(ostt, secondSchema)
+        '    Dim types As New Dictionary(Of EntityUnion, IEntitySchema)
+        '    Dim firstSchema As IEntitySchema = MappingEngine.GetEntitySchema(firstType)
+        '    types.Add(ost, firstSchema)
+        '    Dim secondSchema As IEntitySchema = MappingEngine.GetEntitySchema(secondType)
+        '    types.Add(ostt, secondSchema)
 
-            'Dim pdic As New Dictionary(Of Type, IDictionary)
-            'pdic.Add(firstType, MappingEngine.GetProperties(firstType, types(ost)))
-            'If firstType IsNot secondType Then
-            '    pdic.Add(secondType, MappingEngine.GetProperties(secondType, types(ostt)))
-            'End If
+        '    'Dim pdic As New Dictionary(Of Type, IDictionary)
+        '    'pdic.Add(firstType, MappingEngine.GetProperties(firstType, types(ost)))
+        '    'If firstType IsNot secondType Then
+        '    '    pdic.Add(secondType, MappingEngine.GetProperties(secondType, types(ostt)))
+        '    'End If
 
-            Dim sel As New List(Of SelectExpression)
+        '    Dim sel As New List(Of SelectExpression)
 
-            If first_cols Is Nothing Then
-                For Each p As MapField2Column In firstSchema.FieldColumnMap
-                    If p.IsPK Then
-                        sel.Add(New SelectExpression(New ObjectProperty(ost, p.PropertyAlias)))
-                    End If
-                Next
-                'sel.Add(New SelectExpression(ost, MappingEngine.GetPrimaryKeys(firstType, types(ost))(0).PropertyAlias))
-            Else
-                For Each p As MapField2Column In firstSchema.FieldColumnMap
-                    sel.Add(New SelectExpression(New ObjectProperty(ost, p.PropertyAlias)))
-                Next
-                'sel.AddRange(MappingEngine.GetSortedFieldList(firstType).ConvertAll(Function(ep As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(ep, firstType)))
-            End If
+        '    If first_cols Is Nothing Then
+        '        For Each p As MapField2Column In firstSchema.GetPKs
+        '            sel.Add(New SelectExpression(New ObjectProperty(ost, p.PropertyAlias)))
+        '        Next
+        '        'sel.Add(New SelectExpression(ost, MappingEngine.GetPrimaryKeys(firstType, types(ost))(0).PropertyAlias))
+        '    Else
+        '        For Each p As MapField2Column In firstSchema.FieldColumnMap
+        '            sel.Add(New SelectExpression(New ObjectProperty(ost, p.PropertyAlias)))
+        '        Next
+        '        'sel.AddRange(MappingEngine.GetSortedFieldList(firstType).ConvertAll(Function(ep As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(ep, firstType)))
+        '    End If
 
-            If sec_cols Is Nothing Then
-                For Each p As MapField2Column In secondSchema.FieldColumnMap
-                    If p.IsPK Then
-                        sel.Add(New SelectExpression(New ObjectProperty(ostt, p.PropertyAlias)))
-                    End If
-                Next
-                'sel.Add(New SelectExpression(ostt, MappingEngine.GetPrimaryKeys(secondType, types(ostt))(0).PropertyAlias))
-            Else
-                For Each p As MapField2Column In secondSchema.FieldColumnMap
-                    sel.Add(New SelectExpression(New ObjectProperty(ostt, p.PropertyAlias)))
-                Next
-                'sel.AddRange(MappingEngine.GetSortedFieldList(secondType).ConvertAll(Function(ep As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(ep, secondType)))
-            End If
+        '    If sec_cols Is Nothing Then
+        '        For Each p As MapField2Column In secondSchema.FieldColumnMap
+        '            If p.IsPK Then
+        '                sel.Add(New SelectExpression(New ObjectProperty(ostt, p.PropertyAlias)))
+        '            End If
+        '        Next
+        '        'sel.Add(New SelectExpression(ostt, MappingEngine.GetPrimaryKeys(secondType, types(ostt))(0).PropertyAlias))
+        '    Else
+        '        For Each p As MapField2Column In secondSchema.FieldColumnMap
+        '            sel.Add(New SelectExpression(New ObjectProperty(ostt, p.PropertyAlias)))
+        '        Next
+        '        'sel.AddRange(MappingEngine.GetSortedFieldList(secondType).ConvertAll(Function(ep As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(ep, secondType)))
+        '    End If
 
-            'Dim typesDic As New Dictionary(Of EntityUnion, Type)
-            'typesDic.Add(ost, firstType)
-            'typesDic.Add(ostt, secondType)
-            QueryMultiTypeObjects(Nothing, cmd, v, types, sel)
+        '    'Dim typesDic As New Dictionary(Of EntityUnion, Type)
+        '    'typesDic.Add(ost, firstType)
+        '    'typesDic.Add(ostt, secondType)
+        '    QueryMultiTypeObjects(Nothing, cmd, v, types, sel)
 
-            For Each r As ReadOnlyCollection(Of _IEntity) In v
-                values.Add(r(0))
-            Next
-        End Sub
+        '    For Each r As ReadOnlyCollection(Of _IEntity) In v
+        '        values.Add(r(0))
+        '    Next
+        'End Sub
 
         'Protected Friend Sub LoadMultipleObjects(ByVal createType As Type, _
         '    ByVal cmd As System.Data.Common.DbCommand, _
@@ -1611,20 +1628,20 @@ l1:
             'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Public Or Reflection.BindingFlags.Instance
 
-            If _LoadMultipleObjectsMI Is Nothing Then
+            If _QueryObjectsMethodInfo Is Nothing Then
                 For Each mi2 As Reflection.MethodInfo In Me.GetType.GetMethods(flags)
                     If mi2.Name = "QueryObjects" AndAlso mi2.IsGenericMethod AndAlso mi2.GetParameters.Length = 5 Then
-                        _LoadMultipleObjectsMI = mi2
+                        _QueryObjectsMethodInfo = mi2
                         Exit For
                     End If
                 Next
 
-                If _LoadMultipleObjectsMI Is Nothing Then
+                If _QueryObjectsMethodInfo Is Nothing Then
                     Throw New OrmManagerException("Cannot find method QueryObjects")
                 End If
             End If
 
-            Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI.MakeGenericMethod(New Type() {createType})
+            Dim mi_real As Reflection.MethodInfo = _QueryObjectsMethodInfo.MakeGenericMethod(New Type() {createType})
 
             mi_real.Invoke(Me, flags, Nothing, _
                 New Object() {cmd, values, selectList, oschema, fields_idx}, Nothing)
@@ -1791,7 +1808,7 @@ l1:
                         obj.BeginLoading()
                         'ParseValueFromDb(dr, att, i, obj, pi, se.PropertyAlias, oschema, value, ce, _
                         '                 False, Nothing, c)
-                        ObjectMappingEngine.AssignValue2PK(obj, dr.IsDBNull(i), oschema, map, ll, m, propertyAlias, value)
+                        ObjectMappingEngine.AssignValue2PK(obj, dr.IsDBNull(i), oschema, ll, m, propertyAlias, value)
 
                         obj.EndLoading()
 
@@ -1909,31 +1926,39 @@ l1:
                         End If
                         Dim isNull As Boolean = True
 
-                        Dim sv(m.SourceFields.Count - 1) As PKDesc
-                        For k As Integer = 0 To sv.Length - 1
-                            Dim value As Object = dr.GetValue(i + k)
-                            If fv IsNot Nothing Then
-                                value = fv.CreateValue(oschema, m, propertyAlias, value)
-                            End If
-                            sv(k) = New PKDesc(m.SourceFields(k).PrimaryKey, value)
-                            If isNull AndAlso Not dr.IsDBNull(i + k) Then
-                                isNull = False
-                            End If
-                            'If String.IsNullOrEmpty(propertyAlias) Then
-                            '    propertyAlias = c.Column
-                            'End If
+                        Dim pi As Reflection.PropertyInfo = m.PropertyInfo
 
-                            'If String.IsNullOrEmpty(propertyAlias) Then
-                            '    'Continue For
-                            '    Throw New OrmManagerException(String.Format("Expression {0} has no PropertyAlias", se.GetStaticString(MappingEngine, GetContextInfo)))
-                            'End If
+                        Dim sv(m.SourceFields.Count - 1) As PKDesc
+
+                        If pi.PropertyType.IsAssignableFrom(GetType(IO.Stream)) Then
+                            'sv(0) = dr.getstream(i)
+                        Else
+
+                            For k As Integer = 0 To sv.Length - 1
+                                Dim value As Object = dr.GetValue(i + k)
+                                If fv IsNot Nothing Then
+                                    value = fv.CreateValue(oschema, m, propertyAlias, value)
+                                End If
+                                sv(k) = New PKDesc(m.SourceFields(k).PrimaryKey, value)
+                                If isNull AndAlso Not dr.IsDBNull(i + k) Then
+                                    isNull = False
+                                End If
+                                'If String.IsNullOrEmpty(propertyAlias) Then
+                                '    propertyAlias = c.Column
+                                'End If
+
+                                'If String.IsNullOrEmpty(propertyAlias) Then
+                                '    'Continue For
+                                '    Throw New OrmManagerException(String.Format("Expression {0} has no PropertyAlias", se.GetStaticString(MappingEngine, GetContextInfo)))
+                                'End If
 
 #If TRACELOADING Then
                         If Not obj.IsLoading Then
                             Throw New OrmManagerException("object is not in loading: [STACK]" & CType(obj, Entity)._lstack & "[/STACK][ESTACK]" & CType(obj, Entity)._estack & "[/ESTACK]")
                         End If
 #End If
-                        Next
+                            Next
+                        End If
 
                         Using obj.AcquareLock
                             obj.BeginLoading()
@@ -1973,10 +1998,10 @@ l1:
                     Dim os As EntityUnion = CType(de.Key, EntityUnion)
                     Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
                     Dim oschema As IEntitySchema = types(os)
-                    Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+                    'Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
 
                     If ll IsNot Nothing Then
-                        CheckIsAllLoaded(ll, MappingEngine, pkdic(os), map)
+                        CheckIsAllLoaded(ll, MappingEngine, pkdic(os), oschema.GetAutoLoadFields)
                     End If
 
                     RaiseObjectLoaded(obj)
@@ -2345,7 +2370,7 @@ l1:
                 'Dim pi_cache(selectList.Count - 1) As Reflection.PropertyInfo
                 'Dim attrs(selectList.Count - 1) As Field2DbRelations
                 Dim oldpk As IEnumerable(Of PKDesc) = Nothing
-                If ce IsNot Nothing AndAlso modificationSync Then oldpk = GetPKValues(ce, Nothing)
+                If ce IsNot Nothing AndAlso modificationSync Then oldpk = ce.GetPKValues(Nothing)
                 Dim d As IDisposable = New BlankSyncHelper(Nothing)
                 If entity IsNot Nothing Then
                     d = entity.AcquareLock
@@ -2456,7 +2481,7 @@ l2:
                                 value = fv.CreateValue(oschema, m, propertyAlias, value)
                             End If
 
-                            ObjectMappingEngine.AssignValue2PK(obj, isnull, oschema, propertyMap, ll, m, propertyAlias, value)
+                            ObjectMappingEngine.AssignValue2PK(obj, isnull, oschema, ll, m, propertyAlias, value)
                         End If
                     Next
                 End Using
@@ -3941,10 +3966,8 @@ l2:
             'End If
 
             Dim sel As New List(Of SelectExpression)
-            For Each p As MapField2Column In firstSchema.FieldColumnMap
-                If p.IsPK Then
-                    sel.Add(New SelectExpression(New ObjectProperty(ost, p.PropertyAlias)))
-                End If
+            For Each p As MapField2Column In firstSchema.GetPKs
+                sel.Add(New SelectExpression(New ObjectProperty(ost, p.PropertyAlias)))
             Next
             For Each p As MapField2Column In secondSchema.FieldColumnMap
                 If p.IsPK OrElse withLoad Then
@@ -4005,7 +4028,7 @@ l2:
             Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(original_type)
 
             Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
-            Dim pks As IEnumerable(Of PKDesc) = GetPKValues(obj, oschema)
+            Dim pks As IEnumerable(Of PKDesc) = obj.GetPKValues(oschema)
 
             For Each p As PKDesc In pks
                 c.AddFilter(New cc.EntityFilter(original_type, p.PropertyAlias, New ScalarValue(p.Value), Worm.Criteria.FilterOperation.Equal))
@@ -4127,5 +4150,94 @@ l2:
                                       Optional lockType As LockTypeEnum = LockTypeEnum.Exclusive) As AppLockManager
             Return New AppLockManager(Me, name, lockTimeout, lockType)
         End Function
+        Public Overrides Sub LoadProperty(obj As _IEntity, propertyAlias As String, stream As IO.Stream, Optional bufSize As Integer = 4096)
+            Invariant()
+
+            If obj Is Nothing Then
+                Throw New ArgumentNullException("obj")
+            End If
+
+            Dim original_type As Type = obj.GetType
+
+            Dim eudic As New Dictionary(Of String, EntityUnion)
+            Dim js As New List(Of QueryJoin)
+            Dim selDic As New Dictionary(Of EntityUnion, LoadTypeDescriptor)
+            Dim selOS As New EntityUnion(original_type)
+            Dim oschema As IEntitySchema = obj.GetEntitySchema(MappingEngine)
+
+            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
+                With cmd
+                    .CommandType = System.Data.CommandType.Text
+                End With
+
+                Dim almgr As AliasMgr = AliasMgr.Create
+                Dim params As New ParamMgr(SQLGenerator, "p")
+                Dim sb As New StringBuilder
+
+                Dim ctx As New ExecutorCtx(original_type, oschema)
+
+                Dim [from] As New QueryCmd.FromClauseDef(selOS)
+
+                Query.Database.DbQueryExecutor.FormTypeTables(MappingEngine, ContextInfo, params, almgr, _
+                    sb, SQLGenerator, selOS, Nothing, ctx, [from], _
+                    True, Nothing, Nothing)
+
+                Dim prd As New Criteria.PredicateLink
+
+                Query.Database.DbQueryExecutor.FormJoins(MappingEngine, ContextInfo, Nothing, params, _
+                    [from], js, almgr, sb, SQLGenerator, ctx, Nothing, prd, selOS)
+
+                Dim se As New SelectExpression(New ObjectProperty(selOS, propertyAlias))
+                Dim selSb As New StringBuilder
+                selSb.Append("select ").Append(se.MakeStatement(MappingEngine, [from], StmtGenerator, params, almgr, ContextInfo,
+                                                                MakeStatementMode.Select Or MakeStatementMode.AddColumnAlias,
+                                                                ctx)
+                                                            )
+                selSb.Append(" from ")
+                sb.Insert(0, selSb.ToString)
+
+                Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
+                Dim pks As IEnumerable(Of PKDesc) = obj.GetPKValues(oschema)
+
+                If pks.Count = 0 Then
+                    Throw New OrmManagerException(String.Format("Entity {0} has no primary key", original_type))
+                End If
+
+                For Each pk As PKDesc In pks
+                    c.AddFilter(New cc.EntityFilter(selOS, pk.PropertyAlias, New ScalarValue(pk.Value), Worm.Criteria.FilterOperation.Equal))
+                Next
+                SQLGenerator.AppendWhere(MappingEngine, original_type, c.Condition, almgr, sb, ContextInfo, params)
+
+                params.AppendParams(cmd.Parameters)
+                cmd.CommandText = sb.ToString
+
+                Dim ec As OrmCache = TryCast(_cache, OrmCache)
+                Dim b As ConnAction = TestConn(cmd)
+                Try
+                    Dim et As New PerfCounter
+                    Using dr As System.Data.Common.DbDataReader = ExecuteReaderCmd(cmd)
+
+                        Do While dr.Read
+                            Dim writer As New IO.BinaryWriter(stream)
+                            Dim buffer As Byte() = New Byte(bufSize - 1) {}
+                            Dim currPos As Long = 0
+                            Dim blobSize As Long = 0
+                            Do
+                                blobSize = dr.GetBytes(0, currPos, buffer, 0, bufSize)
+                                currPos += blobSize
+                                writer.Write(buffer, 0, CInt(blobSize))
+                            Loop While blobSize = bufSize
+                            Exit Do
+                        Loop
+
+                    End Using
+
+                    _cache.LogLoadTime(obj, et.GetTime)
+                Finally
+                    CloseConn(b)
+                End Try
+
+            End Using
+        End Sub
     End Class
 End Namespace

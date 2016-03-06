@@ -4,6 +4,7 @@ Imports Worm.Cache
 Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports Worm.Query
+Imports CoreFramework.Debugging
 
 Namespace Database.Storedprocs
 
@@ -13,11 +14,11 @@ Namespace Database.Storedprocs
         Private _exec As TimeSpan
 
         Protected Sub New(ByVal cache As Boolean)
-            MyBase.new(cache)
+            MyBase.New(cache)
         End Sub
 
         Protected Sub New()
-            MyBase.new(False)
+            MyBase.New(False)
         End Sub
 
         Protected Sub New(ByVal timeout As TimeSpan)

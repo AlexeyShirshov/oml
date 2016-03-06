@@ -329,49 +329,49 @@ Public Class TypeWrap(Of T)
     End Function
 End Class
 
-''' <summary>
-''' Класс, повзволяющий точно замерять промежутки времени
-''' </summary>
-''' <remarks></remarks>
-Public Class PerfCounter
-    Private _start As Long
+' ''' <summary>
+' ''' Класс, повзволяющий точно замерять промежутки времени
+' ''' </summary>
+' ''' <remarks></remarks>
+'Public Class PerfCounter
+'    Private _start As Long
 
-    ''' <summary>
-    ''' The QueryPerformanceCounter function retrieves the current value of the high-resolution performance counter
-    ''' </summary>
-    ''' <param name="X">Variable that receives the current performance-counter value, in counts</param>
-    ''' <returns>If the function succeeds, the return value is <b>true</b></returns>
-    ''' <remarks>Делегация системному вызову</remarks>
-    Declare Function QueryPerformanceCounter Lib "Kernel32" (ByRef X As Long) As Boolean
-    ''' <summary>
-    ''' The QueryPerformanceFrequency function retrieves the frequency of the high-resolution performance counter, if one exists. The frequency cannot change while the system is running
-    ''' </summary>
-    ''' <param name="X">variable that receives the current performance-counter frequency, in counts per second. If the installed hardware does not support a high-resolution performance counter, this parameter can be zero.</param>
-    ''' <returns>If the function succeeds, the return value is <b>true</b></returns>
-    ''' <remarks>Делегация системному вызову</remarks>
-    Declare Function QueryPerformanceFrequency Lib "Kernel32" (ByRef X As Long) As Boolean
+'    ''' <summary>
+'    ''' The QueryPerformanceCounter function retrieves the current value of the high-resolution performance counter
+'    ''' </summary>
+'    ''' <param name="X">Variable that receives the current performance-counter value, in counts</param>
+'    ''' <returns>If the function succeeds, the return value is <b>true</b></returns>
+'    ''' <remarks>Делегация системному вызову</remarks>
+'    Declare Function QueryPerformanceCounter Lib "Kernel32" (ByRef X As Long) As Boolean
+'    ''' <summary>
+'    ''' The QueryPerformanceFrequency function retrieves the frequency of the high-resolution performance counter, if one exists. The frequency cannot change while the system is running
+'    ''' </summary>
+'    ''' <param name="X">variable that receives the current performance-counter frequency, in counts per second. If the installed hardware does not support a high-resolution performance counter, this parameter can be zero.</param>
+'    ''' <returns>If the function succeeds, the return value is <b>true</b></returns>
+'    ''' <remarks>Делегация системному вызову</remarks>
+'    Declare Function QueryPerformanceFrequency Lib "Kernel32" (ByRef X As Long) As Boolean
 
-    ''' <summary>
-    ''' Констуктор
-    ''' </summary>
-    ''' <remarks>Начала отсчета</remarks>
-    Public Sub New()
-        QueryPerformanceCounter(_start)
-    End Sub
+'    ''' <summary>
+'    ''' Констуктор
+'    ''' </summary>
+'    ''' <remarks>Начала отсчета</remarks>
+'    Public Sub New()
+'        QueryPerformanceCounter(_start)
+'    End Sub
 
-    ''' <summary>
-    ''' Функция окончания отсчета времени
-    ''' </summary>
-    ''' <returns>Временой промежуток прошедщий с момента создания данного экземпляра</returns>
-    ''' <remarks></remarks>
-    Public Function GetTime() As TimeSpan
-        Dim [end] As Long
-        QueryPerformanceCounter([end])
-        Dim f As Long
-        QueryPerformanceFrequency(f)
-        Return TimeSpan.FromSeconds(([end] - _start) / f)
-    End Function
-End Class
+'    ''' <summary>
+'    ''' Функция окончания отсчета времени
+'    ''' </summary>
+'    ''' <returns>Временой промежуток прошедщий с момента создания данного экземпляра</returns>
+'    ''' <remarks></remarks>
+'    Public Function GetTime() As TimeSpan
+'        Dim [end] As Long
+'        QueryPerformanceCounter([end])
+'        Dim f As Long
+'        QueryPerformanceFrequency(f)
+'        Return TimeSpan.FromSeconds(([end] - _start) / f)
+'    End Function
+'End Class
 
 Public NotInheritable Class DbTypeConvertor
     ' Methods

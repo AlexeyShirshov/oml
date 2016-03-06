@@ -303,7 +303,7 @@ Namespace Database
                 If uc IsNot Nothing Then
                     AddHandler uc.OriginalCopyRemoved, AddressOf ObjRejected
 #If DEBUG Then
-                    If OrmManager.HasBodyChanges(uc) Then
+                    If uc.HasBodyChanges() Then
                         'Dim mo As ObjectModification = _mgr.Cache.ShadowCopy(o.GetType, o)
                         ''Dim oc As ICachedEntity = o.OriginalCopy
                         'If o.ObjectState = ObjectState.Deleted Then
@@ -578,7 +578,7 @@ l1:
                         pp = New Pair(Of ICachedEntity)(o, CType(_mgr.MappingEngine.CloneFullEntity(o, o.GetEntitySchema(_mgr.MappingEngine)), ICachedEntity))
                         pp.Second.SetObjectState(o.ObjectState)
                         copies.Add(pp)
-                    ElseIf (o.ObjectState = ObjectState.None OrElse o.ObjectState = ObjectState.NotLoaded) AndAlso Not OrmManager.HasChanges(o) Then
+                    ElseIf (o.ObjectState = ObjectState.None OrElse o.ObjectState = ObjectState.NotLoaded) AndAlso Not o.HasChanges() Then
                         saved.Add(New Pair(Of ObjectState, _ICachedEntity)(o.ObjectState, o))
                         Continue For
                     End If

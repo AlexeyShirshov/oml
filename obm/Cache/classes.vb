@@ -23,7 +23,7 @@ Namespace Cache
         End Sub
 
         Public Sub New(ByVal o As ICachedEntity)
-            _id = OrmManager.GetPKValues(o, Nothing)
+            _id = o.GetPKValues(Nothing)
             _t = o.GetType
         End Sub
 
@@ -213,7 +213,7 @@ Namespace Cache
         Private _key As Integer
 
         Public Sub New(ByVal o As ICachedEntity)
-            MyBase.New(OrmManager.GetPKValues(o, Nothing))
+            MyBase.New(o.GetPKValues(Nothing))
             _key = o.Key
         End Sub
 

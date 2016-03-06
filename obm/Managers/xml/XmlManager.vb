@@ -5,6 +5,7 @@ Imports System.Xml.XPath
 Imports Worm.Entities
 Imports Worm.Criteria.Joins
 Imports Worm.Query.Sorting
+Imports CoreFramework.Debugging
 
 Namespace Xml
     Partial Public Class QueryManager
@@ -250,7 +251,7 @@ Namespace Xml
             Dim orm As _ICachedEntity = TryCast(obj, _ICachedEntity)
             Using obj.AcquareLock()
                 obj.BeginLoading()
-                Dim pk As IEnumerable(Of PKDesc) = GetPKValues(orm, oschema)
+                Dim pk As IEnumerable(Of PKDesc) = orm.GetPKValues(oschema)
                 If LoadPK(oschema, node, orm) Then
                     obj = CType(NormalizeObject(orm, dic, True, True, oschema), T)
                     If obj.ObjectState = ObjectState.Created Then
@@ -282,25 +283,22 @@ Namespace Xml
         Protected Function LoadPK(ByVal oschema As IEntitySchema, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
             Dim original_type As Type = obj.GetType
             Dim cnt As Integer
-            Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
             Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
-            For Each m As MapField2Column In map
-                If m.IsPK Then
-                    Dim attr As String = m.SourceFieldExpression
-                    Dim n As XPathNavigator = node.Clone
-                    Dim nodes As XPathNodeIterator = n.Select(attr)
-                    Dim sn As Boolean
-                    Do While nodes.MoveNext
-                        If sn Then
-                            Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
-                        End If
+            For Each m As MapField2Column In oschema.GetPKs
+                Dim attr As String = m.SourceFieldExpression
+                Dim n As XPathNavigator = node.Clone
+                Dim nodes As XPathNodeIterator = n.Select(attr)
+                Dim sn As Boolean
+                Do While nodes.MoveNext
+                    If sn Then
+                        Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
+                    End If
 
-                        ObjectMappingEngine.AssignValue2PK(obj, False, oschema, map, ll, m, m.PropertyAlias, nodes.Current.Value)
-                        'ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
-                        sn = True
-                        cnt += 1
-                    Loop
-                End If
+                    ObjectMappingEngine.AssignValue2PK(obj, False, oschema, ll, m, m.PropertyAlias, nodes.Current.Value)
+                    'ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
+                    sn = True
+                    cnt += 1
+                Loop
             Next
             obj.PKLoaded(cnt, oschema)
             Return cnt > 0
@@ -340,5 +338,8 @@ Namespace Xml
         Public Overrides Function GetEntityCloneFromStorage(ByVal obj As Entities._ICachedEntity) As Entities.ICachedEntity
             Throw New NotImplementedException
         End Function
+        Public Overrides Sub LoadProperty(cachedEntity As _IEntity, propertyAlias As String, stream As IO.Stream, Optional bufSize As Integer = 4096)
+            Throw New NotImplementedException
+        End Sub
     End Class
 End Namespace

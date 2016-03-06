@@ -457,7 +457,7 @@ Namespace Query
         Public Function GetPropertyAlias(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema) As String
             If mpe IsNot Nothing AndAlso PropertyAlias = PrimaryKeyReference Then
                 Dim eu As EntityUnion = Entity
-                Return mpe.GetSinglePK(oschema, Function() eu.GetRealType(mpe))
+                Return oschema.GetSinglePK(Function() eu.GetRealType(mpe))
             End If
 
             Return PropertyAlias

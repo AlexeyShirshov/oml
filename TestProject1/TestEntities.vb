@@ -212,7 +212,7 @@ Public Class EntitySchema1v2Implementation
 
     Public Overrides ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment
         Get
-            Return GetTables(0)
+            Return GetTables()(0)
         End Get
     End Property
 
@@ -361,7 +361,7 @@ Public Class EntitySchema2v2Implementation
 
     Public Overrides ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment
         Get
-            Return GetTables(0)
+            Return GetTables()(0)
         End Get
     End Property
 End Class
@@ -595,7 +595,7 @@ Public Class EntitySchema4v2Implementation
 
     Public Overrides ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment
         Get
-            Return GetTables(0)
+            Return GetTables()(0)
         End Get
     End Property
 End Class

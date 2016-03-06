@@ -147,14 +147,14 @@ Namespace Criteria.Values
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             ElseIf GetType(ICachedEntity).IsAssignableFrom(vt) Then
-                                Dim pks As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(CType(evaluatedValue, ICachedEntity), Nothing)
+                                Dim pks As IEnumerable(Of PKDesc) = CType(evaluatedValue, ICachedEntity).GetPKValues(Nothing)
                                 If pks.count <> 1 Then
                                     Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
                                 End If
                                 If Equals(pks(0).Value, filterValue) Then
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
-                            ElseIf ObjectMappingEngine.IsEntityType(vt, mpe) Then
+                            ElseIf ObjectMappingEngine.IsEntityType(vt) Then
                                 If Equals(mpe.GetPropertyValue(evaluatedValue, mpe.GetSinglePK(vt)), filterValue) Then
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
@@ -163,14 +163,14 @@ Namespace Criteria.Values
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             ElseIf GetType(ICachedEntity).IsAssignableFrom(valt) Then
-                                Dim pks As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(CType(filterValue, ICachedEntity), Nothing)
+                                Dim pks As IEnumerable(Of PKDesc) = CType(filterValue, ICachedEntity).GetPKValues(Nothing)
                                 If pks.Count <> 1 Then
                                     Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
                                 End If
                                 If Equals(pks(0).Value, evaluatedValue) Then
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
-                            ElseIf ObjectMappingEngine.IsEntityType(valt, mpe) Then
+                            ElseIf ObjectMappingEngine.IsEntityType(valt) Then
                                 If Equals(mpe.GetPropertyValue(filterValue, mpe.GetSinglePK(valt)), evaluatedValue) Then
                                     r = IEvaluableValue.EvalResult.Found
                                 End If

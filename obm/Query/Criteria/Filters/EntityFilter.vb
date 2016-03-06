@@ -276,7 +276,7 @@ l1:
                     'End If
 
                     If o Is Nothing Then
-                        o = mpe.GetJoinObj(oschema, obj, rt)
+                        o = obj.GetJoinObj(rt, oschema)
                     End If
 
                     If o IsNot Nothing Then
@@ -319,7 +319,7 @@ l1:
                 _pa = pa
             End Sub
             Public Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object 'Implements IEntityFilter.PrepareValue
-                Return schema.ChangeValueType(_s, _pa, v)
+                Return _s.ChangeValueType(_pa, v)
             End Function
         End Class
         'Public Overrides Function Equals(ByVal obj As Object) As Boolean
@@ -434,9 +434,9 @@ l1:
 
             Dim v As IEvaluableValue = TryCast(val(), IEvaluableValue)
             If v IsNot Nothing AndAlso v.Value Is DBNull.Value Then
-                If schema.GetPropertyTypeByName(rt, oschema, Template.PropertyAlias) Is GetType(Byte()) Then
+                If oschema.GetPropertyTypeByName(rt, Template.PropertyAlias) Is GetType(Byte()) Then
                     pname.GetParameter(prname).DbType = System.Data.DbType.Binary
-                ElseIf schema.GetPropertyTypeByName(rt, oschema, Template.PropertyAlias) Is GetType(Decimal) Then
+                ElseIf oschema.GetPropertyTypeByName(rt, Template.PropertyAlias) Is GetType(Decimal) Then
                     pname.GetParameter(prname).DbType = System.Data.DbType.Decimal
                 End If
             End If
@@ -547,7 +547,7 @@ l1:
             If Not roots.TryGetValue(entity, oo) Then
                 Dim rt As Type = entity.GetRealType(mpe)
                 Dim lschema As IEntitySchema = mpe.GetEntitySchema(rt)
-                Dim pks As IEnumerable(Of MapField2Column) = ObjectMappingEngine.GetPKs(lschema)
+                Dim pks As IEnumerable(Of MapField2Column) = lschema.GetPKs()
                 Dim o As _IEntity = Nothing
                 If joins IsNot Nothing Then
                     Dim join As QueryJoin = joins.FirstOrDefault(Function(it) it.ObjectSource = entity)
@@ -565,7 +565,7 @@ l1:
                                 Dim id As Object = ObjectMappingEngine.GetPropertyValue(obj, jf.Right.Property.PropertyAlias, oschema)
                                 Dim r As _ICachedEntity = TryCast(id, _ICachedEntity)
                                 If r IsNot Nothing Then
-                                    pk.AddRange(OrmManager.GetPKValues(r, lschema))
+                                    pk.AddRange(r.GetPKValues(lschema))
                                     Exit For
                                 Else
                                     pk.Add(New PKDesc(jf.Left.Property.PropertyAlias, id))
@@ -578,7 +578,7 @@ l1:
                                 Dim id As Object = ObjectMappingEngine.GetPropertyValue(obj, jf.Left.Property.PropertyAlias, oschema)
                                 Dim r As _ICachedEntity = TryCast(id, _ICachedEntity)
                                 If r IsNot Nothing Then
-                                    pk.AddRange(OrmManager.GetPKValues(r, lschema))
+                                    pk.AddRange(r.GetPKValues(lschema))
                                     Exit For
                                 Else
                                     pk.Add(New PKDesc(jf.Right.Property.PropertyAlias, id))

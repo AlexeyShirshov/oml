@@ -794,7 +794,7 @@ l1:
                     pkTable = fromOS.Table
                 Else
                     tables = mts.GetTables()
-                    pkTable = mpe.GetPKTable(osrc.GetRealType(mpe), fromOS)
+                    pkTable = fromOS.GetPKTable(osrc.GetRealType(mpe))
                 End If
             Else
                 pkTable = from.Table

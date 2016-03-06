@@ -27,11 +27,6 @@
           <NewMemberFileName>Mapping\MappingEngine.vb</NewMemberFileName>
         </TypeIdentifier>
       </Delegate>
-      <Delegate Name="Worm.ObjectMappingEngine.GetTypeDelegate" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Mapping\MappingEngine.vb</NewMemberFileName>
-        </TypeIdentifier>
-      </Delegate>
       <Enum Name="Worm.ObjectMappingEngine.JoinFieldType" Collapsed="true">
         <TypeIdentifier>
           <NewMemberFileName>Mapping\MappingEngine.vb</NewMemberFileName>
@@ -44,14 +39,14 @@
       </Delegate>
     </NestedTypes>
     <TypeIdentifier>
-      <HashCode>IFCQMgwgBBE2JAIWEpQQ4YNDESgQAbGMSSWESABBAEA=</HashCode>
+      <HashCode>IlCQMg4gBRE2pAIWEoQR4YdDEQgAAbGMSSWEaABBAEA=</HashCode>
       <FileName>Mapping\MappingEngine.vb</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Worm.Database.MSSQL2005Generator">
     <Position X="0.75" Y="1.75" Width="2.25" />
     <TypeIdentifier>
-      <HashCode>AEAAAAAAAAAAAAAAACAAAAYACAAEIBCCAAAAEAAAACA=</HashCode>
+      <HashCode>AEAAAAAAIAAAAAAAACACAAYACAEEIBCCAAAAEAAAACA=</HashCode>
       <FileName>StmtGenerators\db\MSSQL\SQL2005Generator.vb</FileName>
     </TypeIdentifier>
   </Class>
@@ -78,19 +73,19 @@
       <Compartment Name="Methods" Collapsed="true" />
     </Compartments>
     <NestedTypes>
-      <Struct Name="Worm.Database.DbGenerator.TableUpdate" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>StmtGenerators\db\DbGenerator.vb</NewMemberFileName>
-        </TypeIdentifier>
-      </Struct>
       <Delegate Name="Worm.Database.DbGenerator.InfoMessageDelagate" Collapsed="true">
         <TypeIdentifier>
           <NewMemberFileName>StmtGenerators\db\DbGenerator.vb</NewMemberFileName>
         </TypeIdentifier>
       </Delegate>
+      <Struct Name="Worm.Database.DbGenerator.TableUpdate" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>StmtGenerators\db\DbGenerator.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
     </NestedTypes>
     <TypeIdentifier>
-      <HashCode>BMQAAEAMQAAAAAEQhCYQBYZAIgNFMIAAjgABQQQAIgA=</HashCode>
+      <HashCode>BMQAAEAMYAIAAAEQhCYSBYZAIgNFMIAAjgABQQQAIgA=</HashCode>
       <FileName>StmtGenerators\db\DbGenerator.vb</FileName>
     </TypeIdentifier>
   </Class>
@@ -107,7 +102,7 @@
       </Delegate>
     </NestedTypes>
     <TypeIdentifier>
-      <HashCode>BMAABAAINIEAAAFQBAYAAAZACAAAIIIIBAEREAAAACA=</HashCode>
+      <HashCode>BMAABAAINIEAAAFQBAYCAAZACAAAIIIIBAEREAAAACA=</HashCode>
       <FileName>StmtGenerators\db\MSSQL\SQL2000Generator.vb</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
