@@ -2003,7 +2003,7 @@ l1:
         If o IsNot Nothing Then
             Using o.AcquareLock
                 If (Not check_loaded OrElse Not o.IsLoaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
-                    If (cache Is Nothing OrElse Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), GetPKValues(o, Nothing)))) _
+                    If (cache Is Nothing OrElse Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), o.GetPKValues(Nothing)))) _
                         AndAlso Not entityDictionary.Contains(o) Then
                         entityDictionary.Add(o)
                     End If
@@ -2019,7 +2019,7 @@ l1:
         If o IsNot Nothing Then
             Using o.AcquareLock
                 If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
-                    If cache Is Nothing OrElse Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), GetPKValues(o, Nothing))) Then
+                    If cache Is Nothing OrElse Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), o.GetPKValues(Nothing))) Then
                         For Each p As EntityExpression In properties
                             If Not IsPropertyLoaded(o, p.ObjectProperty.PropertyAlias) AndAlso Not entityDictionary.Contains(o) Then
                                 entityDictionary.Add(o)
@@ -3986,29 +3986,29 @@ l1:
         Return l.Length + 1
     End Function
 
-    Public Shared Sub AppendJoin(ByVal schema As ObjectMappingEngine, ByVal selectType As Type, _
+    Public Shared Sub AppendJoin(ByVal mpe As ObjectMappingEngine, ByVal selectType As Type, _
         ByRef filter As IFilter, ByVal contextInfo As IDictionary, ByVal l As List(Of QueryJoin), _
         ByVal selSchema As IEntitySchema, ByVal types As List(Of Type), ByVal type2join As System.Type, _
         ByVal t2jSchema As IEntitySchema, ByVal joinOS As EntityUnion, ByVal selectOS As EntityUnion)
 
-        Dim field As String = schema.GetJoinFieldNameByType(type2join, selSchema)
+        Dim field As String = selSchema.GetJoinFieldNameByType(type2join)
 
         If String.IsNullOrEmpty(field) Then
 
-            field = schema.GetJoinFieldNameByType(selectType, t2jSchema)
+            field = t2jSchema.GetJoinFieldNameByType(selectType)
 
             If String.IsNullOrEmpty(field) Then
-                Dim m2m As M2MRelationDesc = schema.GetM2MRelation(type2join, selectType, True)
+                Dim m2m As M2MRelationDesc = mpe.GetM2MRelation(type2join, selectType, True)
                 If m2m IsNot Nothing Then
-                    l.AddRange(MakeM2MJoin(schema, m2m, type2join))
+                    l.AddRange(MakeM2MJoin(mpe, m2m, type2join))
                 Else
                     Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
                 End If
             Else
-                l.Add(MakeJoin(schema, selectOS, selectType, joinOS, field, FilterOperation.Equal, JoinType.Join, True))
+                l.Add(MakeJoin(mpe, selectOS, selectType, joinOS, field, FilterOperation.Equal, JoinType.Join, True))
             End If
         Else
-            l.Add(MakeJoin(schema, joinOS, type2join, selectOS, field, FilterOperation.Equal, JoinType.Join))
+            l.Add(MakeJoin(mpe, joinOS, type2join, selectOS, field, FilterOperation.Equal, JoinType.Join))
         End If
 
         If types IsNot Nothing Then
@@ -4169,7 +4169,7 @@ l1:
             Dim oschema As IEntitySchema = obj.GetEntitySchema(MappingEngine)
             'Dim props As IDictionary = MappingEngine.GetProperties(obj.GetType, oschema)
             'Dim cols As Generic.List(Of EntityPropertyAttribute) = MappingEngine.GetSortedFieldList(obj.GetType, oschema)
-            Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+            Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetAutoLoadMap
             Dim lock As IDisposable = Nothing
             Try
                 If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse ec Is Nothing OrElse Not ec.IsDeleted(ce)) Then
@@ -4239,7 +4239,7 @@ l1:
                     '    idic = MappingEngine.GetProperties(pit, ntp.Schema)
                     'End If
                     loader(an, ntp.Properties2Load.ConvertAll(Function(e) New SelectExpression(e)), Nothing, False, Nothing, _
-                        ntp.EntitySchema, ntp.EntitySchema.FieldColumnMap, 0, idx)
+                        ntp.EntitySchema, ntp.EntitySchema.GetAutoLoadMap, 0, idx)
                 End If
             Next
             Return idx
@@ -4273,7 +4273,7 @@ l1:
     Private Function GetSelList(ByVal original_type As Type, ByVal oschema As IEntitySchema, _
                              ByVal propertyAlias As String, ByVal selOS As EntityUnion) As LoadTypeDescriptor
         Dim arr As New List(Of String)
-        For Each m As MapField2Column In oschema.FieldColumnMap
+        For Each m As MapField2Column In oschema.GetAutoLoadFields
             arr.Add(m.PropertyAlias)
         Next
         Dim load As Boolean = True
@@ -4287,11 +4287,12 @@ l1:
                         If Array.Exists(loadProperties, Function(pr As String) pr = propertyAlias) Then
                             'arr = New List(Of EntityPropertyAttribute)(MappingEngine.GetPrimaryKeys(original_type, oschema))
                             arr.Clear()
-                            For Each m As MapField2Column In oschema.FieldColumnMap
-                                If m.IsPK Then arr.Add(m.PropertyAlias)
-                            Next
+                            arr.AddRange(oschema.GetPKs.Select(Function(it) it.PropertyAlias))
+
                             For Each pr As String In loadProperties
-                                arr.Add(pr)
+                                If Not arr.Contains(pr) Then
+                                    arr.Add(pr)
+                                End If
                             Next
                         End If
                     Next
@@ -4328,7 +4329,7 @@ l1:
             Dim mPropertyAlias As String = m.PropertyAlias
             If p.Properties2Load.Exists(Function(se As EntityExpression) se.ObjectProperty.PropertyAlias = mPropertyAlias) Then
                 Dim pit As Type = pi.PropertyType
-                If ObjectMappingEngine.IsEntityType(pit, MappingEngine) _
+                If ObjectMappingEngine.IsEntityType(pit) _
                     AndAlso Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
                     Dim eu As EntityUnion = Nothing
                     If Not eudic.TryGetValue(mPropertyAlias & "$" & pit.ToString, eu) Then
@@ -4363,18 +4364,13 @@ l1:
         ByVal selOS As EntityUnion, ByVal oschema As IEntitySchema) As Condition.ConditionConstructor
 
         Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
-        Dim pks As IEnumerable(Of PKDesc) = Nothing
-        If GetType(ICachedEntity).IsAssignableFrom(original_type) Then
-            pks = GetPKValues(CType(obj, ICachedEntity), oschema)
-        Else
-            Dim l As New List(Of PKDesc)
-            For Each m As MapField2Column In oschema.FieldColumnMap
-                If m.IsPK Then
-                    l.Add(New PKDesc(m.PropertyAlias, ObjectMappingEngine.GetPropertyValue(obj, m.PropertyAlias, oschema)))
-                End If
-            Next
-            pks = l.ToArray
-        End If
+        Dim pks As IEnumerable(Of PKDesc) = obj.GetPKValues(oschema)
+        'If GetType(ICachedEntity).IsAssignableFrom(original_type) Then
+        '    pks = obj.GetPKValues(oschema)
+        'Else
+        '    pks = oschema.GetPKs(obj)
+        'End If
+
         If pks.Count = 0 Then
             Throw New OrmManagerException(String.Format("Entity {0} has no primary key", original_type))
         End If
@@ -4420,7 +4416,7 @@ l1:
                     If ll IsNot Nothing AndAlso ll.IsLoaded Then
 l1:
                         OrmManager.CopyBody(robj, e, oschema)
-                        Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
+                        Dim map = oschema.GetAutoLoadFields
                         For Each m As MapField2Column In map
                             SetLoaded(ll, m.PropertyAlias, True)
                         Next
@@ -4673,7 +4669,7 @@ l1:
 
                 Dim newid As IEnumerable(Of PKDesc) = Nothing
                 If oc IsNot Nothing Then
-                    newid = GetPKValues(oc, oschema)
+                    newid = oc.GetPKValues(oschema)
                 End If
 
                 If olds <> Entities.ObjectState.Created Then
@@ -4900,7 +4896,9 @@ l1:
             If Not e.IsLoaded AndAlso (e.ObjectState = Entities.ObjectState.NotLoaded OrElse e.ObjectState = Entities.ObjectState.None) Then
                 If String.IsNullOrEmpty(propertyAlias) Then
                     Using mc As IGetManager = e.GetMgr
-                        mc.Manager.Load(e, propertyAlias)
+                        If mc IsNot Nothing Then
+                            mc.Manager.Load(e, propertyAlias)
+                        End If
                     End Using
                 Else
                     If ll IsNot Nothing Then
@@ -4929,7 +4927,7 @@ l1:
                     If o IsNot Nothing AndAlso o.ObjectState <> Entities.ObjectState.Created AndAlso Not mc.Manager.IsInCachePrecise(o) Then
                         Dim ov As IOptimizedValues = TryCast(e, IOptimizedValues)
                         If ov IsNot Nothing Then
-                            Dim eo As ICachedEntity = mc.Manager.GetEntityFromCacheOrCreate(GetPKValues(o, Nothing), o.GetType)
+                            Dim eo As ICachedEntity = mc.Manager.GetEntityFromCacheOrCreate(o.GetPKValues(Nothing), o.GetType)
                             If eo.GetICreateManager Is Nothing Then eo.SetCreateManager(e.GetICreateManager)
                             ov.SetValueOptimized(propertyAlias, oschema, eo)
                         Else
@@ -5020,7 +5018,7 @@ l1:
     End Function
 
     Friend Shared Function CheckIsAllLoaded(ByVal ll As IPropertyLazyLoad, ByVal mpe As ObjectMappingEngine, _
-            ByVal loadedColumns As Integer, ByVal map As Collections.IndexedCollection(Of String, MapField2Column)) As Boolean
+            ByVal loadedColumns As Integer, ByVal map As IEnumerable(Of MapField2Column)) As Boolean
         'Using SyncHelper(False)
         Dim allloaded As Boolean = True
         For i As Integer = 0 To map.Count - 1
@@ -5107,37 +5105,8 @@ l1:
         If op IsNot Nothing Then
             Return op.GetPKValues()
         Else
-            Return ObjectMappingEngine.GetPKs(e, oschema)
+            Return oschema.GetPKs(e)
         End If
-    End Function
-
-    Public Shared Function GetPKValues(ByVal e As IEntity, ByVal oschema As IEntitySchema) As IEnumerable(Of PKDesc)
-        Dim op As IOptimizePK = TryCast(e, IOptimizePK)
-        If op IsNot Nothing Then
-            Return op.GetPKValues()
-        Else
-            If oschema Is Nothing Then
-                Dim mpe As ObjectMappingEngine = e.GetMappingEngine
-                oschema = e.GetEntitySchema(mpe)
-            End If
-            Return GetPKValues(CType(e, Object), oschema)
-        End If
-    End Function
-
-    Public Shared Function HasBodyChanges(ByVal e As IEntity) As Boolean
-        Return e.ObjectState = Entities.ObjectState.Modified OrElse e.ObjectState = Entities.ObjectState.Deleted OrElse e.ObjectState = Entities.ObjectState.Created
-    End Function
-
-    Public Shared Function HasChanges(ByVal e As IEntity) As Boolean
-        If e.ObjectState = Entities.ObjectState.Modified OrElse e.ObjectState = Entities.ObjectState.Deleted OrElse e.ObjectState = Entities.ObjectState.Created Then
-            Return True
-        Else
-            Dim r As IRelations = TryCast(e, IRelations)
-            If r IsNot Nothing Then
-                Return r.HasChanges
-            End If
-        End If
-        Return False
     End Function
 
     Public Shared Sub CopyBody(ByVal [from] As Object, ByVal [to] As Object, ByVal oschema As IEntitySchema)
@@ -5229,6 +5198,7 @@ l1:
             Return _mpe
         End Get
     End Property
+    Public MustOverride Sub LoadProperty(cachedEntity As _IEntity, propertyAlias As String, stream As IO.Stream, Optional bufSize As Integer = 4096)
 
 End Class
 

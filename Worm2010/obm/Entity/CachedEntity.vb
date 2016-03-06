@@ -95,7 +95,7 @@ Namespace Entities
                     Dim dt As Type = _dst.GetType
                     Dim mpe As ObjectMappingEngine = mgr.MappingEngine
                     Dim oschema As IEntitySchema = mpe.GetEntitySchema(dt)
-                    Dim pk As Boolean, pk_old As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(_dst, oschema)
+                    Dim pk As Boolean, pk_old As IEnumerable(Of PKDesc) = _dst.GetPKValues(oschema)
                     For i As Integer = 0 To _srcProps.Length - 1
                         Dim srcProp As String = _srcProps(i)
                         Dim dstProp As String = _dstProps(i)
@@ -288,7 +288,7 @@ Namespace Entities
 
             Public ReadOnly Property HasChanges() As Boolean
                 Get
-                    Return OrmManager.HasChanges(_o)
+                    Return _o.HasChanges()
                 End Get
             End Property
 
@@ -328,7 +328,7 @@ Namespace Entities
 
         Protected Overridable Function GetCacheKey() As Integer
             Dim r As Integer
-            For Each pk As PKDesc In OrmManager.GetPKValues(Me, Nothing)
+            For Each pk As PKDesc In Me.GetPKValues(Nothing)
                 r = r Xor pk.Value.GetHashCode
             Next
             Return r
@@ -341,10 +341,8 @@ Namespace Entities
         Protected Overridable Sub PKLoaded(ByVal pkCount As Integer, props As IPropertyMap) Implements _ICachedEntityEx.PKLoaded
             _key = GetCacheKey()
             _hasPK = True
-            For Each p In props.FieldColumnMap
-                If p.IsPK Then
-                    SetLoaded(p.PropertyAlias, True)
-                End If
+            For Each p In props.GetPKs
+                SetLoaded(p.PropertyAlias, True)
             Next
         End Sub
 
@@ -479,7 +477,15 @@ Namespace Entities
                 mc.Manager.Load(Me, propertyAlias)
             End Using
         End Sub
+        Public Sub LoadProperty(ByVal propertyAlias As String, stream As IO.Stream, Optional bufSize As Integer = 4096)
+            Using mc As IGetManager = GetMgr()
+                If mc Is Nothing Then
+                    Throw New InvalidOperationException("OrmManager required")
+                End If
 
+                mc.Manager.LoadProperty(Me, propertyAlias, stream, bufSize)
+            End Using
+        End Sub
         'Public Sub Load(ByVal mgr As OrmManager, Optional ByVal propertyAlias As String = Nothing) Implements _ICachedEntity.Load
         '    Throw New NotSupportedException
         'End Sub
@@ -759,11 +765,10 @@ l1:
 
                 CType(Me, _IEntity).EndLoading()
 
-
                 If mpe IsNot Nothing Then
                     Dim ll As IPropertyLazyLoad = TryCast(Me, IPropertyLazyLoad)
                     If ll IsNot Nothing Then
-                        OrmManager.CheckIsAllLoaded(ll, mpe, Integer.MaxValue, map)
+                        OrmManager.CheckIsAllLoaded(ll, mpe, Integer.MaxValue, oschema.GetAutoLoadFields)
                     End If
                 End If
             End Using
@@ -788,7 +793,7 @@ l1:
                             If GetType(ICachedEntity).IsAssignableFrom(tt) Then
                                 '.WriteAttributeString(c.FieldName, CType(v, ICachedEntity).Identifier.ToString)
                                 If v IsNot Nothing Then
-                                    objs.Add(New Pair(Of String, IEnumerable(Of PKDesc))(propertyAlias, OrmManager.GetPKValues(CType(v, _ICachedEntity), Nothing)))
+                                    objs.Add(New Pair(Of String, IEnumerable(Of PKDesc))(propertyAlias, CType(v, _ICachedEntity).GetPKValues(Nothing)))
                                 Else
                                     objs.Add(New Pair(Of String, IEnumerable(Of PKDesc))(propertyAlias, Nothing))
                                 End If
@@ -1559,8 +1564,8 @@ l1:
             If Me.GetType IsNot obj.GetType Then
                 Return False
             End If
-            Dim pks As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(Me, Nothing)
-            Dim pks2 As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(obj, Nothing)
+            Dim pks As IEnumerable(Of PKDesc) = Me.GetPKValues(Nothing)
+            Dim pks2 As IEnumerable(Of PKDesc) = obj.GetPKValues(Nothing)
             For i As Integer = 0 To pks.Count - 1
                 Dim pk As PKDesc = pks(i)
                 If pk.PropertyAlias <> pks2(i).PropertyAlias OrElse Not pk.Value.Equals(pks2(i).Value) Then
@@ -1619,7 +1624,7 @@ l1:
                 Dim pi As Reflection.PropertyInfo = m.PropertyInfo
                 If GetType(ICachedEntity).IsAssignableFrom(pi.PropertyType) Then
                     Dim o As ICachedEntity = CType(ObjectMappingEngine.GetPropertyValue(Me, m.PropertyAlias, oschema, m.PropertyInfo), ICachedEntity)
-                    If o IsNot Nothing AndAlso OrmManager.HasChanges(o) Then
+                    If o IsNot Nothing AndAlso o.HasChanges() Then
                         l.Add(o)
                     End If
                 End If
@@ -1657,7 +1662,7 @@ l1:
 
         Protected Friend Function GetChangedObjectListWithSelf() As List(Of _ICachedEntity)
             Dim l As List(Of _ICachedEntity) = GetChangedObjectList()
-            If OrmManager.HasChanges(Me) AndAlso Not l.Contains(Me) Then
+            If Me.HasChanges() AndAlso Not l.Contains(Me) Then
                 l.Add(Me)
             End If
             Return l
@@ -1675,7 +1680,7 @@ l1:
                 If String.IsNullOrEmpty(_us) Then
                     If Not IsPKLoaded Then Throw New OrmObjectException(String.Format("Entity of type {0} has no primary key", Me.GetType))
                     Dim r As New StringBuilder
-                    For Each pk As PKDesc In OrmManager.GetPKValues(Me, Nothing)
+                    For Each pk As PKDesc In Me.GetPKValues(Nothing)
                         r.Append(pk.PropertyAlias).Append(":").Append(pk.Value.ToString).Append(",")
                     Next
                     _us = r.ToString

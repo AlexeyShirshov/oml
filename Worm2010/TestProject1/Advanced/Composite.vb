@@ -126,7 +126,7 @@ Public Class CompositeSchema
 
     Public Overrides ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment
         Get
-            Return GetTables(0)
+            Return GetTables()(0)
         End Get
     End Property
 End Class

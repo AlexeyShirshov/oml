@@ -140,7 +140,7 @@ Namespace Criteria.Core
             End If
 
             If obj.GetType IsNot lt Then
-                Dim o As _IEntity = mpe.GetJoinObj(oschema, obj, lt)
+                Dim o As _IEntity = obj.GetJoinObj(lt, oschema)
                 If o Is Nothing Then
                     Throw New ArgumentException(String.Format("Template type {0} is not match {1}", lt.ToString, obj.GetType))
                 End If

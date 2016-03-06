@@ -357,6 +357,7 @@ Namespace Entities.Meta
         PrimaryKey = 37
         NotSerialized = 64
         Factory = 128
+        Hidden = CInt(2 ^ 8)
     End Enum
 
     <AttributeUsage(AttributeTargets.Class, allowmultiple:=True, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _

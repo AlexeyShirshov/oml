@@ -2,7 +2,7 @@ Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports Worm.Cache
 
-<Entity(GetType(Table2Implementation), "1")> _
+<Entity(GetType(Table2Implementation), "1"), Entity(GetType(Table2Hidden), "Hidden")> _
 Public Class Table2
     Inherits SinglePKEntity
     Implements IOptimizedValues, ICopyProperties

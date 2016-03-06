@@ -820,7 +820,7 @@ Namespace Cache
             '    Dim pkd As New PKDesc(e.PropertyAlias, ObjectMappingEngine.GetPropertyValue(o, e.PropertyAlias, oschema))
             '    pk.Add(pkd)
             'Next
-            Dim pks As IEnumerable(Of PKDesc) = ObjectMappingEngine.GetPKs(o, oschema)
+            Dim pks As IEnumerable(Of PKDesc) = oschema.GetPKs(o)
             Dim c As _ICachedEntity = CachedEntity.CreateEntity(pks.ToArray, GetType(AnonymousCachedEntity), Me, mpe)
             Dim cc As IKeyProvider = TryCast(o, IKeyProvider)
             If cc IsNot Nothing Then

@@ -531,4 +531,5 @@ Partial Public Class OrmManager
             Me.EntitySchema = oschema
         End Sub
     End Class
+
 End Class

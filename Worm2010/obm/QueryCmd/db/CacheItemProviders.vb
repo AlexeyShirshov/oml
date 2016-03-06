@@ -113,7 +113,7 @@ Namespace Query.Database
                 Dim oschema As IEntitySchema = _q.GetSchemaForSelectType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
-                    fields = oschema.FieldColumnMap
+                    fields = oschema.GetAutoLoadMap
                 Else
                     fields = _q.GetFieldsIdx()
                 End If
@@ -199,7 +199,7 @@ Namespace Query.Database
             Public Overrides Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As CachedItemBase
                 'Dim args As QueryCmd.ModifyResultArgs = _q.RaiseModifyResult(_mgr, GetEntities())
                 'Return New CachedItemBase(args.ReadOnlyList, _mgr.Cache) With {.CustomInfo = args.CustomInfo}
-                Return New CachedItemBase(GetEntities, _mgr.Cache)
+                Return New CachedItemBase(GetEntities, _mgr)
             End Function
         End Class
 
@@ -221,13 +221,13 @@ Namespace Query.Database
                 Dim oschema As IEntitySchema = _q.GetSchemaForSelectType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
-                    fields = oschema.FieldColumnMap
+                    fields = oschema.GetAutoLoadMap
                 Else
                     fields = _q.GetFieldsIdx()
                     If fields.Count = 0 AndAlso _q._pocoType IsNot Nothing Then
                         oschema = _mgr.MappingEngine.GetEntitySchema(_q._pocoType)
                         If oschema IsNot Nothing Then
-                            fields = oschema.FieldColumnMap
+                            fields = oschema.GetAutoLoadMap
                         End If
                     End If
                 End If
@@ -645,7 +645,7 @@ Namespace Query.Database
                 Dim oschema As IEntitySchema = _q.GetSchemaForSelectType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
-                    fields = oschema.FieldColumnMap
+                    fields = oschema.GetAutoLoadMap
                 Else
                     If Not GetType(AnonymousEntity).IsAssignableFrom(_q.CreateType.GetRealType(_mgr.MappingEngine)) Then
                         oschema = dbm.MappingEngine.GetEntitySchema(_q.CreateType.GetRealType(_mgr.MappingEngine), False)
@@ -660,7 +660,7 @@ Namespace Query.Database
                         '        End If
                         '    End If
                         'Next
-                        fields = oschema.FieldColumnMap
+                        fields = oschema.GetAutoLoadMap
                     Else
                         fields = _q.GetFieldsIdx()
                     End If

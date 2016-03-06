@@ -568,10 +568,8 @@ l1:
                                 AddTypeFields(mpe, _sl, SelectedEntities(0), Nothing, isAnonym, stmt)
                                 'Dim selt As EntityUnion = SelectTypes(0).First
                             Else
-                                For Each mp As MapField2Column In oschema.FieldColumnMap
-                                    If mp.IsPK Then
-                                        _sl.Add(New SelectExpression(New ObjectProperty(m2mEU, mp.PropertyAlias)))
-                                    End If
+                                For Each mp As MapField2Column In oschema.GetPKs
+                                    _sl.Add(New SelectExpression(New ObjectProperty(m2mEU, mp.PropertyAlias)))
                                 Next
                             End If
                         End If
@@ -657,7 +655,7 @@ l1:
 
                 If _rel.Relation Is Nothing OrElse _rel.Relation.Entity Is Nothing OrElse String.IsNullOrEmpty(_rel.Relation.Column) Then
                     Dim oschema As IEntitySchema = schema.GetEntitySchema(selectedType)
-                    field = schema.GetJoinFieldNameByType(filteredType, oschema)
+                    field = oschema.GetJoinFieldNameByType(filteredType)
                     needReplace = New RelationDesc(selectOS, field)
                 ElseIf Not TypeOf _rel.Relation Is M2MRelationDesc Then
                     field = _rel.Relation.Column

@@ -56,7 +56,7 @@ Namespace Query.Database
                 Dim m As ReadonlyMatrix = GetMatrix()
                 'Dim args As QueryCmd.ModifyResultArgs = _q.RaiseModifyResult(_mgr, m)
                 'Return New Cache.CachedItemBase(args.Matrix, _mgr.Cache) With {.CustomInfo = args.CustomInfo}
-                Return New Cache.CachedItemBase(m, _mgr.Cache)
+                Return New Cache.CachedItemBase(m, _mgr)
             End Function
 
             Protected Function GetMatrix() As ReadonlyMatrix
@@ -257,7 +257,7 @@ Namespace Query.Database
                 Dim col As ICollection = CType(GetSimpleValues(Of T)(), ICollection)
                 'Dim args As QueryCmd.ModifyResultArgs = _q.RaiseModifyResult(_mgr, col)
                 'Return New Cache.CachedItemBase(args.SimpleList, _mgr.Cache) With {.CustomInfo = args.CustomInfo}
-                Return New Cache.CachedItemBase(col, _mgr.Cache)
+                Return New Cache.CachedItemBase(col, _mgr)
             End Function
         End Class
     End Class

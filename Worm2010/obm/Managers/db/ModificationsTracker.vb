@@ -331,7 +331,7 @@ Namespace Database
                     Else
 #If DEBUG Then
                         Dim uc As IUndoChanges = TryCast(o, IUndoChanges)
-                        If uc IsNot Nothing AndAlso OrmManager.HasChanges(uc) Then
+                        If uc IsNot Nothing AndAlso uc.HasChanges() Then
                             'Debug.Assert(_mgr.Cache.Modified(o) IsNot Nothing)
                             'Dim sc As ObjectModification = _mgr.Cache.ShadowCopy(o.GetType, o, TryCast(o.GetEntitySchema(_mgr.MappingEngine), ICacheBehavior))
                             'If sc IsNot Nothing Then

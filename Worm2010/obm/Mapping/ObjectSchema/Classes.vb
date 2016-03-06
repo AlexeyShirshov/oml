@@ -309,20 +309,18 @@ Namespace Entities.Meta
         Private Sub InitFK(ByVal oschema As IEntitySchema)
             If oschema IsNot Nothing Then
                 Dim pk As MapField2Column = Nothing
-                For Each pm As MapField2Column In oschema.FieldColumnMap
-                    If pm.IsPK Then
-                        If pk IsNot Nothing Then
-                            Throw New NotSupportedException("Multiple pks not supported")
-                        End If
-                        pk = pm
+                For Each pm As MapField2Column In oschema.GetPKs
+                    If pk IsNot Nothing Then
+                        Throw New NotSupportedException("Multiple pks not supported")
                     End If
+                    pk = pm
                 Next
                 SourceFields(0).PrimaryKey = pk.PropertyAlias
             End If
         End Sub
 
         Friend Sub ApplyForeignKey(ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, ByVal names As IDictionary)
-            If SourceFields.Count = 1 AndAlso String.IsNullOrEmpty(SourceFields(0).PrimaryKey) AndAlso Worm.ObjectMappingEngine.IsEntityType(PropertyType, mpe) AndAlso mpe IsNot Nothing Then
+            If SourceFields.Count = 1 AndAlso String.IsNullOrEmpty(SourceFields(0).PrimaryKey) AndAlso Worm.ObjectMappingEngine.IsEntityType(PropertyType) AndAlso mpe IsNot Nothing Then
                 Dim oschema As IEntitySchema = CType(idic(PropertyType), IEntitySchema)
                 If oschema Is Nothing Then
                     'oschema = ObjectMappingEngine.GetEntitySchema(PropertyType, mpe, idic, names)
@@ -540,10 +538,8 @@ Namespace Entities.Meta
                     rcmd.WithLoad(True)
                 Else
                     Dim se As New List(Of SelectExpression)
-                    For Each mp As MapField2Column In oschema.FieldColumnMap
-                        If mp.IsPK Then
-                            se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
-                        End If
+                    For Each mp As MapField2Column In oschema.GetPKs
+                        se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
                     Next
                     se.Add(FCtor.prop(op))
                     rcmd.Select(se.ToArray)
@@ -673,10 +669,8 @@ Namespace Entities.Meta
                     rcmd.WithLoad(True)
                 Else
                     Dim se As New List(Of SelectExpression)
-                    For Each mp As MapField2Column In oschema.FieldColumnMap
-                        If mp.IsPK Then
-                            se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
-                        End If
+                    For Each mp As MapField2Column In oschema.GetPKs
+                        se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
                     Next
                     se.Add(FCtor.prop(op))
                     rcmd.Select(se.ToArray)
@@ -804,10 +798,8 @@ Namespace Entities.Meta
                     rcmd.WithLoad(True)
                 Else
                     Dim se As New List(Of SelectExpression)
-                    For Each mp As MapField2Column In oschema.FieldColumnMap
-                        If mp.IsPK Then
-                            se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
-                        End If
+                    For Each mp As MapField2Column In oschema.GetPKs
+                        se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
                     Next
                     se.Add(FCtor.prop(op))
                     rcmd.Select(se.ToArray)

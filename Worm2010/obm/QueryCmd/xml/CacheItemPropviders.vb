@@ -30,7 +30,7 @@ Namespace Query.Xml
             End Function
 
             Public Overrides Function GetCacheItem(ByVal ctx As TypeWrap(Of Object)) As CachedItemBase
-                Return New UpdatableCachedItem(GetEntities(), _mgr.Cache)
+                Return New UpdatableCachedItem(GetEntities(), _mgr)
             End Function
 
             Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal q As QueryCmd)

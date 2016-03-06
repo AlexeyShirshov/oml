@@ -4,6 +4,7 @@ Imports Worm.Cache
 Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports Worm.Query
+Imports CoreFramework.Debugging
 
 Namespace Database.Storedprocs
 
@@ -15,7 +16,7 @@ Namespace Database.Storedprocs
         Private _out As Dictionary(Of String, Object)
 
         Protected Sub New(ByVal cache As Boolean)
-            MyBase.new(cache)
+            MyBase.New(cache)
         End Sub
 
         Protected Sub New(ByVal timeout As TimeSpan)
@@ -23,7 +24,7 @@ Namespace Database.Storedprocs
         End Sub
 
         Public Sub New()
-            MyBase.new(True)
+            MyBase.New(True)
         End Sub
 
         Public ReadOnly Property OutParams() As Dictionary(Of String, Object)

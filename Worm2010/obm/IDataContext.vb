@@ -129,7 +129,7 @@ Public MustInherit Class DataContextBase
             If obj IsNot Nothing Then
                 list.Add(obj)
             ElseIf mgr.Cache.NewObjectManager IsNot Nothing Then
-                obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, OrmManager.GetPKValues(obj, Nothing)), T)
+                obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, obj.GetPKValues(Nothing)), T)
                 If obj IsNot Nothing Then list.Add(obj)
             End If
         Next
@@ -143,7 +143,7 @@ Public MustInherit Class DataContextBase
             If obj IsNot Nothing Then
                 list.Add(obj)
             ElseIf mgr.Cache.NewObjectManager IsNot Nothing Then
-                obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, OrmManager.GetPKValues(obj, Nothing)), ISinglePKEntity)
+                obj = CType(mgr.Cache.NewObjectManager.GetNew(rt, obj.GetPKValues(Nothing)), ISinglePKEntity)
                 If obj IsNot Nothing Then list.Add(obj)
             End If
         Next

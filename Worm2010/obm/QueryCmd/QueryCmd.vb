@@ -841,7 +841,7 @@ Namespace Query
             Dim i As New Dictionary(Of String, List(Of Object))
 
             For Each o As ICachedEntity In e2load
-                Dim pk As IEnumerable(Of PKDesc) = OrmManager.GetPKValues(o, Nothing)
+                Dim pk As IEnumerable(Of PKDesc) = o.GetPKValues(Nothing)
                 If pk.Count = 1 Then
                     pa = pk(0).PropertyAlias
                     ids.Add(pk(0).Value)
@@ -1254,16 +1254,14 @@ Namespace Query
                                     Dim createType As EntityUnion = Nothing
                                     If Not _createTypes.TryGetValue(de.Key, createType) Then
 l2:
-                                        For Each m As MapField2Column In oschema.FieldColumnMap
-                                            If m.IsPK Then
-                                                Dim pa As String = m.PropertyAlias
-                                                If Not col.Exists(Function(c) c.GetIntoPropertyAlias = pa) Then
-                                                    Dim se As New SelectExpression(de.Key, pa)
-                                                    If Not _sl.Contains(se) Then
-                                                        se.Attributes = m.Attributes
-                                                        cols.Add(se)
-                                                        AddExpression2SelectList(se, mpe, isAnonym)
-                                                    End If
+                                        For Each m As MapField2Column In oschema.GetPKs
+                                            Dim pa As String = m.PropertyAlias
+                                            If Not col.Exists(Function(c) c.GetIntoPropertyAlias = pa) Then
+                                                Dim se As New SelectExpression(de.Key, pa)
+                                                If Not _sl.Contains(se) Then
+                                                    se.Attributes = m.Attributes
+                                                    cols.Add(se)
+                                                    AddExpression2SelectList(se, mpe, isAnonym)
                                                 End If
                                             End If
                                         Next
@@ -1490,7 +1488,7 @@ l1:
                                 Dim parentType As Type = pi.PropertyType
 
                                 'если тип парента не сущность, продолжаем цикл
-                                If Not ObjectMappingEngine.IsEntityType(parentType, mpe) Then Continue For
+                                If Not ObjectMappingEngine.IsEntityType(parentType) Then Continue For
 
                                 Dim pa As String = m.PropertyAlias
 
@@ -1782,7 +1780,7 @@ l1:
                             End If
                             Dim sortType As System.Type = se.EntityUnion.GetRealType(schema)
                             If sortType IsNot selectType AndAlso sortType IsNot Nothing AndAlso Not types.Contains(sortType) Then
-                                Dim field As String = schema.GetJoinFieldNameByType(sortType, oschema)
+                                Dim field As String = oschema.GetJoinFieldNameByType(sortType)
 
                                 If Not String.IsNullOrEmpty(field) Then
                                     types.Add(sortType)
@@ -1792,7 +1790,7 @@ l1:
 
                                 If String.IsNullOrEmpty(field) Then
                                     Dim sortSchema As IEntitySchema = schema.GetEntitySchema(sortType)
-                                    field = schema.GetJoinFieldNameByType(selectType, sortSchema)
+                                    field = sortSchema.GetJoinFieldNameByType(selectType)
 
                                     If Not String.IsNullOrEmpty(field) Then
                                         types.Add(sortType)
@@ -1933,7 +1931,7 @@ l1:
                     '        .IntoPropertyAlias = c.PropertyAlias _
                     '    } _
                     '))
-                    For Each mp As MapField2Column In oschema.FieldColumnMap
+                    For Each mp As MapField2Column In oschema.GetAutoLoadFields
                         l.Add(New SelectExpression(New PropertyAliasExpression(mp.PropertyAlias)) With { _
                             .Into = tp.First, _
                             .Attributes = mp.Attributes, _
@@ -1941,7 +1939,7 @@ l1:
                         })
                     Next
                 Else
-                    For Each mp As MapField2Column In oschema.FieldColumnMap
+                    For Each mp As MapField2Column In oschema.GetAutoLoadFields
                         l.Add(New SelectExpression(New ObjectProperty(tp.First, mp.PropertyAlias)))
                     Next
                     'l.AddRange(mpe.GetSortedFieldList(t, oschema).ConvertAll(Function(c As EntityPropertyAttribute) ObjectMappingEngine.ConvertColumn2SelExp(c, tp.First)))
@@ -1986,14 +1984,12 @@ l1:
                 Next
             Else
                 If FromClause IsNot Nothing AndAlso FromClause.QueryEU IsNot Nothing AndAlso FromClause.QueryEU.IsQuery Then
-                    For Each c As MapField2Column In oschema.FieldColumnMap
-                        If c.IsPK Then
-                            Dim se As New SelectExpression(New PropertyAliasExpression(c.PropertyAlias)) With { _
+                    For Each c As MapField2Column In oschema.GetPKs
+                        Dim se As New SelectExpression(New PropertyAliasExpression(c.PropertyAlias)) With { _
                                 .Into = tp.First, .IntoPropertyAlias = c.PropertyAlias _
                             }
-                            se.Attributes = c.Attributes
-                            cl.Add(se)
-                        End If
+                        se.Attributes = c.Attributes
+                        cl.Add(se)
                     Next
                 Else
                     If IsFTS Then
@@ -2003,12 +1999,10 @@ l1:
                         se.Attributes = Field2DbRelations.PK
                         _sl.Add(se)
                     Else
-                        For Each c As MapField2Column In oschema.FieldColumnMap
-                            If c.IsPK Then
-                                Dim se As New SelectExpression(tp.First, c.PropertyAlias)
-                                se.Attributes = c.Attributes
-                                cl.Add(se)
-                            End If
+                        For Each c As MapField2Column In oschema.GetPKs
+                            Dim se As New SelectExpression(tp.First, c.PropertyAlias)
+                            se.Attributes = c.Attributes
+                            cl.Add(se)
                         Next
                     End If
                 End If
@@ -4178,7 +4172,7 @@ l1:
             Dim rt As Type = GetType(T)
             Dim mpe As ObjectMappingEngine = mgr.MappingEngine
 
-            Dim hasPK As Boolean
+            Dim hasPK As Boolean = False
             Dim selSchema As IEntitySchema = mpe.GetEntitySchema(rt, False)
 
             If selSchema Is Nothing AndAlso _poco IsNot Nothing Then
@@ -4194,12 +4188,7 @@ l1:
                 If FromClause Is Nothing Then
                     Me.From(selSchema.Table)
                 End If
-                For Each m As MapField2Column In selSchema.FieldColumnMap
-                    If (m.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                        hasPK = True
-                        Exit For
-                    End If
-                Next
+                hasPK = selSchema.GetPKs.Any
                 _pocoType = rt
             End If
 
@@ -5020,12 +5009,7 @@ l1:
                 '                End If
                 '                s = mpe.CreateAndInitSchemaAndNames(t, New EntityAttribute(mpe.Version) With {._tbl = tbl, .RawProperties = True})
             End If
-            For Each m As MapField2Column In s.FieldColumnMap
-                If m.IsPK Then
-                    hasPK = True
-                    Exit For
-                End If
-            Next
+            hasPK = s.GetPKs.Any
             Return s
         End Function
 

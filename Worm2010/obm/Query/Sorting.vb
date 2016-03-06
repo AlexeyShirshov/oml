@@ -596,7 +596,7 @@ Namespace Query
                     If _getobj IsNot Nothing Then
                         xo = _getobj(xo, st)
                     Else
-                        xo = mpe.GetJoinObj(tos, xo, st)
+                        xo = xo.GetJoinObj(st, tos)
                     End If
                     Dim ss As IOrmSorting = TryCast(tos, IOrmSorting)
                     If ss IsNot Nothing Then

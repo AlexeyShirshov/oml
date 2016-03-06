@@ -43,6 +43,10 @@ Namespace Database
                 Using conn = mgr.GetConnection(),
                     bulkcpy As New System.Data.SqlClient.SqlBulkCopy(CType(conn.Connection, SqlClient.SqlConnection))
 
+                    If options.Timeout.HasValue Then
+                        bulkcpy.BulkCopyTimeout = options.Timeout.Value
+                    End If
+
                     If options.ColumnMappings IsNot Nothing Then
                         For Each cm In options.ColumnMappings
                             bulkcpy.ColumnMappings.Add(New SqlClient.SqlBulkCopyColumnMapping With {

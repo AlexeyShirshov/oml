@@ -290,7 +290,7 @@ Namespace Entities
             End Function
         End Class
 #End If
-
+        <EditorBrowsable(EditorBrowsableState.Never)> _
         Public Class InternalClass2
             Inherits InternalClass
 
@@ -717,7 +717,7 @@ Namespace Entities
                     l.Add(e)
                 Next
                 For Each e As ICachedEntity In GetCmd(rl.Relation).ToEntityList(Of _ICachedEntity)()
-                    If OrmManager.HasChanges(e) AndAlso Not l.Contains(e) Then
+                    If e.HasChanges() AndAlso Not l.Contains(e) Then
                         l.Add(e)
                     End If
                 Next

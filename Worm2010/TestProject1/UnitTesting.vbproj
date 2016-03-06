@@ -94,6 +94,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Web.ApplicationServices" />
     <Reference Include="System.Web.Services" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Web" />
@@ -153,6 +154,7 @@
     <Compile Include="TestCriteria.vb" />
     <Compile Include="TestRealSchema\Table1to1.vb" />
     <Compile Include="TestRealSchema\TestExFilter.vb" />
+    <Compile Include="TestRealSchema\TestHidden.vb" />
     <Compile Include="TestRealSchema\TestListManager.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="OrmBaseTest.vb" />

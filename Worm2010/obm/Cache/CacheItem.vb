@@ -12,9 +12,9 @@ Namespace Cache
     <Serializable()> _
     Public Class CachedItemBase
         Friend _expires As Date
-        Protected _execTime As TimeSpan
-        Protected _fetchTime As TimeSpan
-        Protected _sort As OrderByClause
+        Private _execTime As TimeSpan
+        Private _fetchTime As TimeSpan
+        Private _sort As OrderByClause
         Private _customInfo As Object
 
         Protected _col As ICollection
@@ -22,15 +22,27 @@ Namespace Cache
         Friend Sub New()
         End Sub
 
-        Friend Sub New(ByVal col As ICollection, ByVal cache As CacheBase)
-            _col = CType(cache.ListConverter.ToWeakList(col), System.Collections.ICollection)
+        Friend Sub New(ByVal col As ICollection, ByVal mgr As OrmManager)
+            Dim cache = mgr.Cache
+            _col = CType(Cache.ListConverter.ToWeakList(col), System.Collections.ICollection)
             '_cache = cache
             If col IsNot Nothing Then cache.RegisterCreationCacheItem(Me.GetType)
+
+            _expires = mgr._expiresPattern
+            _execTime = mgr.Exec
+            _fetchTime = mgr.Fecth
+
         End Sub
 
-        Friend Sub New(ByVal r As ReadonlyMatrix, ByVal cache As CacheBase)
-            _col = CType(cache.ListConverter.ToWeakList(r), System.Collections.ICollection)
+        Friend Sub New(ByVal r As ReadonlyMatrix, ByVal mgr As OrmManager)
+            Dim cache = mgr.Cache
+            _col = CType(Cache.ListConverter.ToWeakList(r), System.Collections.ICollection)
             If r IsNot Nothing Then cache.RegisterCreationCacheItem(Me.GetType)
+
+            _expires = mgr._expiresPattern
+            _execTime = mgr.Exec
+            _fetchTime = mgr.Fecth
+
         End Sub
 
         Public Overridable Function GetCount(ByVal cache As CacheBase) As Integer
@@ -276,12 +288,12 @@ Namespace Cache
         '    _fetchTime = mgr.Fecth
         'End Sub
 
-        Friend Sub New(ByVal obj As ICollection, ByVal cache As CacheBase)
-            MyBase.New(obj, cache)
-            '_obj = obj
-            '_cache = cache
-            'If obj IsNot Nothing Then cache.RegisterCreationCacheItem(Me.GetType)
-        End Sub
+        'Friend Sub New(ByVal obj As ICollection, ByVal cache As CacheBase)
+        '    MyBase.New(obj, cache)
+        '    '_obj = obj
+        '    '_cache = cache
+        '    'If obj IsNot Nothing Then cache.RegisterCreationCacheItem(Me.GetType)
+        'End Sub
 
         'Public Sub New(ByVal filter As IFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManager)
         Public Sub New(ByVal obj As ICollection, ByVal mgr As OrmManager)
@@ -293,10 +305,7 @@ Namespace Cache
             '_cache = mgr.Cache
             'If obj IsNot Nothing Then mgr.Cache.RegisterCreationCacheItem(Me.GetType)
             '_f = Filter
-            MyBase.New(obj, mgr.Cache)
-            _expires = mgr._expiresPattern
-            _execTime = mgr.Exec
-            _fetchTime = mgr.Fecth
+            MyBase.New(obj, mgr)
         End Sub
 
         Public Overridable ReadOnly Property CanRenewAfterSort() As Boolean
@@ -409,7 +418,7 @@ Namespace Cache
         'End Sub
 
         Public Overridable Function Add(ByVal mgr As OrmManager, ByVal obj As ICachedEntity) As Boolean
-            Return mgr.ListConverter.Add(_col, mgr, obj, _sort)
+            Return mgr.ListConverter.Add(_col, mgr, obj, Sort)
         End Function
 
         Public Overridable Sub Delete(ByVal mgr As OrmManager, ByVal obj As ICachedEntity)
