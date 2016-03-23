@@ -60,7 +60,11 @@ Namespace Query
             f.AppendExpression(New CustomExpression(expression, params))
             Return f
         End Function
-
+        'Public Shared Function custom(ByVal expression As String, ByVal ParamArray params() As IExpression) As Int
+        '    Dim f As New Int
+        '    f.AppendExpression(New CustomExpression(expression, params))
+        '    Return f
+        'End Function
         Public Shared Function count() As Int
             Dim f As New Int
             f.AppendExpression(New AggregateExpression(AggregateExpression.AggregateFunction.Count))
