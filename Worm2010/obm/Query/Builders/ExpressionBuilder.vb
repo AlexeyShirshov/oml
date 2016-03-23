@@ -109,10 +109,9 @@ Namespace Query
 
     Public Class ExpCtor(Of T As {New, Int})
 
-        <EditorBrowsable(EditorBrowsableState.Never)> _
+        <EditorBrowsable(EditorBrowsableState.Never)>
         Public Class Int
             Inherits ExpCtorBase(Of T).IntBase
-
             Public Function param(value As Object) As T
                 If value Is Nothing Then
                     AppendExpression(New DBNullExpression())
@@ -250,8 +249,8 @@ Namespace Query
             Public Function Add(ByVal value As IGetExpression) As T
                 If value IsNot Nothing Then
                     Dim lastIdx As Integer = GetExpressions.Count - 1
-                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx), _
-                        BinaryOperationType.Add, _
+                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx),
+                        BinaryOperationType.Add,
                         value.Expression))
                 End If
 
@@ -283,8 +282,8 @@ Namespace Query
             Public Function Subtract(ByVal value As IGetExpression) As T
                 If value IsNot Nothing Then
                     Dim lastIdx As Integer = GetExpressions.Count - 1
-                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx), _
-                        BinaryOperationType.Subtract, _
+                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx),
+                        BinaryOperationType.Subtract,
                         value.Expression))
                 End If
 
@@ -316,8 +315,8 @@ Namespace Query
             Public Function Divide(ByVal value As IGetExpression) As T
                 If value IsNot Nothing Then
                     Dim lastIdx As Integer = GetExpressions.Count - 1
-                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx), _
-                        BinaryOperationType.Divide, _
+                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx),
+                        BinaryOperationType.Divide,
                         value.Expression))
                 End If
 
@@ -349,8 +348,8 @@ Namespace Query
             Public Function Multiply(ByVal value As IGetExpression) As T
                 If value IsNot Nothing Then
                     Dim lastIdx As Integer = GetExpressions.Count - 1
-                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx), _
-                        BinaryOperationType.Multiply, _
+                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx),
+                        BinaryOperationType.Multiply,
                         value.Expression))
                 End If
 
@@ -382,8 +381,8 @@ Namespace Query
             Public Function Modulo(ByVal value As IGetExpression) As T
                 If value IsNot Nothing Then
                     Dim lastIdx As Integer = GetExpressions.Count - 1
-                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx), _
-                        BinaryOperationType.Modulo, _
+                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx),
+                        BinaryOperationType.Modulo,
                         value.Expression))
                 End If
 
@@ -415,8 +414,8 @@ Namespace Query
             Public Function [Xor](ByVal value As IGetExpression) As T
                 If value IsNot Nothing Then
                     Dim lastIdx As Integer = GetExpressions.Count - 1
-                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx), _
-                        BinaryOperationType.ExclusiveOr, _
+                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx),
+                        BinaryOperationType.ExclusiveOr,
                         value.Expression))
                 End If
 
@@ -448,8 +447,8 @@ Namespace Query
             Public Function BitAnd(ByVal value As IGetExpression) As T
                 If value IsNot Nothing Then
                     Dim lastIdx As Integer = GetExpressions.Count - 1
-                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx), _
-                        BinaryOperationType.BitAnd, _
+                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx),
+                        BinaryOperationType.BitAnd,
                         value.Expression))
                 End If
 
@@ -481,8 +480,8 @@ Namespace Query
             Public Function BitOr(ByVal value As IGetExpression) As T
                 If value IsNot Nothing Then
                     Dim lastIdx As Integer = GetExpressions.Count - 1
-                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx), _
-                        BinaryOperationType.BitOr, _
+                    GetExpressions(lastIdx) = Wrap(New BinaryExpression(GetExpressions(lastIdx),
+                        BinaryOperationType.BitOr,
                         value.Expression))
                 End If
 
@@ -546,7 +545,7 @@ Namespace Query
             'End Operator
 #End Region
 
-            Public Shared Widening Operator CType(ByVal f As Int) As IExpression()
+            Public Shared Narrowing Operator CType(ByVal f As Int) As IExpression()
                 Return f.GetExpressions.ToArray
             End Operator
 
@@ -728,7 +727,7 @@ Namespace Query
         Class Int
             Inherits ExpCtor(Of Int).Int
 
-            Public Overloads Shared Widening Operator CType(ByVal f As Int) As IExpression()
+            Public Overloads Shared Narrowing Operator CType(ByVal f As Int) As IExpression()
                 Return f.GetExpressions.ToArray
             End Operator
 

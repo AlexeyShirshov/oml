@@ -6210,7 +6210,8 @@ l1:
 
                 Dim s As SelectExpression = Nothing
                 If so IsNot Nothing Then
-                    s = FCtor.custom(String.Format(mgr.StmtGenerator.Left, "{0}", level), ECtor.prop(so, propertyAlias)).into("Pref")
+                    Dim a As IGetExpression = ECtor.prop(so, propertyAlias)
+                    s = FCtor.custom(String.Format(mgr.StmtGenerator.Left, "{0}", level), a).into("Pref")
                 Else
                     s = FCtor.custom(String.Format(mgr.StmtGenerator.Left, "{0}", level), ECtor.prop(tt, propertyAlias)).into("Pref")
                 End If

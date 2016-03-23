@@ -425,120 +425,126 @@ Namespace Database
             ByVal saved As List(Of Pair(Of ObjectState, _ICachedEntity)), _
             Optional ByVal col2save As IList = Nothing) As Boolean
             Dim owr As ObjectWrap(Of ICachedEntity) = Nothing
-            Try
-l1:
-                Dim args As New CancelEventArgs(o)
-                RaiseEvent ObjectSaving(Me, args)
-                Dim adv As IAdvSave = TryCast(o, IAdvSave)
-                If adv IsNot Nothing Then
-                    adv.Saving(Me)
-                End If
-                If Not args.Cancel Then
-                    Dim dep = From k In _dependencies
-                              Where k.Value IsNot Nothing AndAlso k.Value.Any(Function(it) it.First Is o)
-
-                    If dep.Any AndAlso Not dep.All(Function(it) saved.Any(Function(it2) it2.Second Is it.Key)) Then
-                        RaiseEvent ObjectPostponed(Me, o)
-                        need2save.Add(o)
-                        Return False
+            Dim retry = False
+            Do
+                retry = False
+                Try
+                    Dim args As New CancelEventArgs(o)
+                    RaiseEvent ObjectSaving(Me, args)
+                    Dim adv As IAdvSave = TryCast(o, IAdvSave)
+                    If adv IsNot Nothing Then
+                        adv.Saving(Me)
                     End If
+                    If Not args.Cancel Then
+                        Dim dep = From k In _dependencies
+                                  Where k.Value IsNot Nothing AndAlso k.Value.Any(Function(it) it.First Is o)
 
-                    If Not CanSaveObj(o, col2save) Then
-                        RaiseEvent ObjectPostponed(Me, o)
-                        need2save.Add(o)
-                        Return False
-                    Else
-                        For Each ns As Pair(Of ICachedEntity, Action(Of ICachedEntity)) In args._new2Save
-                            need2save.Add(ns.First)
-                            If ns.Second IsNot Nothing Then
-                                Using New CoreFramework.AutoCleanup(Sub()
-                                                                        _dontCheckOnAdd = True
-                                                                    End Sub,
-                                                                    Sub()
-                                                                        _dontCheckOnAdd = False
-                                                                    End Sub)
-
-                                    ns.Second()(ns.First)
-                                End Using
-                            End If
-                        Next
-
-                        owr = New ObjectWrap(Of ICachedEntity)(o)
-                        _lockList.Add(owr, _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
-                        Dim os As ObjectState = o.ObjectState
-                        Dim oldME As ObjectMappingEngine = Nothing
-                        Dim blb As Boolean
-                        Try
-                            If Not _mgr.MappingEngine.Equals(o.GetMappingEngine) Then
-                                oldME = _mgr._schema
-                                _mgr._schema = o.GetMappingEngine
-                            End If
-                            blb = _mgr.SaveChanges(o, False)
-                        Finally
-                            If oldME IsNot Nothing Then
-                                _mgr._schema = oldME
-                            End If
-                        End Try
-                        If blb Then
-                            _lockList(owr).Dispose()
-                            _lockList.Remove(owr)
+                        If dep.Any AndAlso Not dep.All(Function(it) saved.Any(Function(it2) it2.Second Is it.Key)) Then
                             RaiseEvent ObjectPostponed(Me, o)
                             need2save.Add(o)
-                        Else
-                            saved.Add(New Pair(Of ObjectState, _ICachedEntity)(os, o))
-                            RaiseEvent ObjectSaved(Me, o)
-                            Dim depList As List(Of Pair(Of ICachedEntity, OnSavedDependency)) = Nothing
-                            If _dependencies.TryGetValue(o, depList) AndAlso depList IsNot Nothing Then
-                                For Each d In depList
-                                    If d.Second IsNot Nothing Then
-                                        Using New CoreFramework.AutoCleanup(Sub()
-                                                                                _dontCheckOnAdd = True
-                                                                            End Sub,
-                                                                            Sub()
-                                                                                _dontCheckOnAdd = False
-                                                                            End Sub)
-                                            Dim r = d.Second()(Me, o, d.First)
-                                            If r IsNot Nothing Then
-                                                For Each tosave In r
-                                                    If tosave IsNot Nothing Then
-                                                        need2save.Add(tosave)
-                                                    End If
-                                                Next
-                                            End If
-                                        End Using
-                                    End If
-                                Next
-                            End If
+                            Return False
                         End If
-                    End If
-                End If
-                Return args.Cancel
-            Catch ex As Exception
-                If owr IsNot Nothing Then
-                    Dim dsp As IDisposable = Nothing
-                    If _lockList.TryGetValue(owr, dsp) Then
-                        Dim args As New SaveErrorEventArgs(o, ex)
-                        RaiseEvent ObjectSavingError(Me, args)
-                        Select Case args.FurtherAction
-                            Case FurtherActionEnum.Retry
-                                dsp.Dispose()
-                                _lockList.Remove(owr)
-                                GoTo l1
-                            Case FurtherActionEnum.Skip
-                                dsp.Dispose()
-                                _lockList.Remove(owr)
-                                Return True
-                            Case FurtherActionEnum.RetryLater
-                                dsp.Dispose()
+
+                        If Not CanSaveObj(o, col2save) Then
+                            RaiseEvent ObjectPostponed(Me, o)
+                            need2save.Add(o)
+                            Return False
+                        Else
+                            For Each ns As Pair(Of ICachedEntity, Action(Of ICachedEntity)) In args._new2Save
+                                need2save.Add(ns.First)
+                                If ns.Second IsNot Nothing Then
+                                    Using New CoreFramework.AutoCleanup(Sub()
+                                                                            _dontCheckOnAdd = True
+                                                                        End Sub,
+                                                                        Sub()
+                                                                            _dontCheckOnAdd = False
+                                                                        End Sub)
+
+                                        ns.Second()(ns.First)
+                                    End Using
+                                End If
+                            Next
+
+                            owr = New ObjectWrap(Of ICachedEntity)(o)
+                            _lockList.Add(owr, _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
+                            Dim os As ObjectState = o.ObjectState
+                            Dim oldME As ObjectMappingEngine = Nothing
+                            Dim blb As Boolean
+                            Try
+                                If Not _mgr.MappingEngine.Equals(o.GetMappingEngine) Then
+                                    oldME = _mgr._schema
+                                    _mgr._schema = o.GetMappingEngine
+                                End If
+                                blb = _mgr.SaveChanges(o, False)
+                            Finally
+                                If oldME IsNot Nothing Then
+                                    _mgr._schema = oldME
+                                End If
+                            End Try
+                            If blb Then
+                                _lockList(owr).Dispose()
                                 _lockList.Remove(owr)
                                 RaiseEvent ObjectPostponed(Me, o)
                                 need2save.Add(o)
-                                Return False
-                        End Select
+                            Else
+                                saved.Add(New Pair(Of ObjectState, _ICachedEntity)(os, o))
+                                RaiseEvent ObjectSaved(Me, o)
+                                Dim depList As List(Of Pair(Of ICachedEntity, OnSavedDependency)) = Nothing
+                                If _dependencies.TryGetValue(o, depList) AndAlso depList IsNot Nothing Then
+                                    For Each d In depList
+                                        If d.Second IsNot Nothing Then
+                                            Using New CoreFramework.AutoCleanup(Sub()
+                                                                                    _dontCheckOnAdd = True
+                                                                                End Sub,
+                                                                                Sub()
+                                                                                    _dontCheckOnAdd = False
+                                                                                End Sub)
+                                                Dim r = d.Second()(Me, o, d.First)
+                                                If r IsNot Nothing Then
+                                                    For Each tosave In r
+                                                        If tosave IsNot Nothing Then
+                                                            need2save.Add(tosave)
+                                                        End If
+                                                    Next
+                                                End If
+                                            End Using
+                                        End If
+                                    Next
+                                End If
+                            End If
+                        End If
                     End If
-                End If
-                Throw New OrmManagerException("Error during save " & o.ObjName, ex)
-            End Try
+                    Return args.Cancel
+                Catch ex As Exception
+                    If owr IsNot Nothing Then
+                        Dim dsp As IDisposable = Nothing
+                        If _lockList.TryGetValue(owr, dsp) Then
+                            Dim args As New SaveErrorEventArgs(o, ex)
+                            RaiseEvent ObjectSavingError(Me, args)
+                            Select Case args.FurtherAction
+                                Case FurtherActionEnum.Retry
+                                    dsp.Dispose()
+                                    _lockList.Remove(owr)
+                                    retry = True
+                                Case FurtherActionEnum.Skip
+                                    dsp.Dispose()
+                                    _lockList.Remove(owr)
+                                    Return True
+                                Case FurtherActionEnum.RetryLater
+                                    dsp.Dispose()
+                                    _lockList.Remove(owr)
+                                    RaiseEvent ObjectPostponed(Me, o)
+                                    need2save.Add(o)
+                                    Return False
+                            End Select
+                        End If
+                    End If
+                    If Not retry Then
+                        Throw New OrmManagerException("Error during save " & o.ObjName, ex)
+                    End If
+                End Try
+            Loop While retry
+
         End Function
 
         Protected Sub Commit()
