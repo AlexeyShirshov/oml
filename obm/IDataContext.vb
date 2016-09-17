@@ -1,6 +1,7 @@
 ﻿Imports Worm.Query
 Imports Worm.Entities
 Imports System.Collections.Generic
+Imports Worm
 
 Public Delegate Function CreateCmdDelegate() As Query.QueryCmd
 
@@ -12,8 +13,8 @@ Public Interface IDataContext
 
     Function [GetByID](Of T As {New, ISinglePKEntity})(ByVal id As Object) As T
     Function [GetByID](Of T As {New, ISinglePKEntity})(ByVal id As Object, ByVal options As GetByIDOptions) As T
-    Function [GetByIds](Of T As {New, ISinglePKEntity})( _
-                ByVal ids As IEnumerable(Of Object), _
+    Function [GetByIds](Of T As {New, ISinglePKEntity})(
+                ByVal ids As IEnumerable(Of Object),
                 ByVal options As GetByIDOptions) As ReadOnlyList(Of T)
 
     Function [GetByIds](Of T As {New, ISinglePKEntity})(ByVal ids As IEnumerable(Of Object)) As ReadOnlyList(Of T)
@@ -24,7 +25,7 @@ Public Interface IDataContext
     ReadOnly Property Cache As Cache.CacheBase
     ReadOnly Property StmtGenerator As StmtGenerator
     ReadOnly Property MappingEngine As ObjectMappingEngine
-
+    ReadOnly Property IsReadOnly As Boolean
     Property Context As IDictionary
 End Interface
 
@@ -121,7 +122,7 @@ Public MustInherit Class DataContextBase
         End Using
     End Function
 
-    Friend Shared Sub ConvertIdsToObjects(Of T As {New, ISinglePKEntity})(ByVal rt As Type, ByVal list As IListEdit, _
+    Friend Shared Sub ConvertIdsToObjects(Of T As {New, ISinglePKEntity})(ByVal rt As Type, ByVal list As IListEdit,
         ByVal ids As IEnumerable(Of Object), ByVal mgr As OrmManager)
         For Each id As Object In ids
             Dim obj As T = mgr.GetKeyEntityFromCacheOrCreate(Of T)(id, True)
@@ -135,7 +136,7 @@ Public MustInherit Class DataContextBase
         Next
     End Sub
 
-    Friend Shared Sub ConvertIdsToObjects(ByVal rt As Type, ByVal list As IListEdit, _
+    Friend Shared Sub ConvertIdsToObjects(ByVal rt As Type, ByVal list As IListEdit,
         ByVal ids As IEnumerable(Of Object), ByVal mgr As OrmManager)
         For Each id As Object In ids
             Dim obj As ISinglePKEntity = mgr.GetKeyEntityFromCacheOrCreate(id, rt, True)
@@ -149,8 +150,8 @@ Public MustInherit Class DataContextBase
         Next
     End Sub
 
-    Public Function [GetByIds](Of T As {New, ISinglePKEntity})( _
-                ByVal ids As IEnumerable(Of Object), _
+    Public Function [GetByIds](Of T As {New, ISinglePKEntity})(
+                ByVal ids As IEnumerable(Of Object),
                 ByVal options As GetByIDOptions) As ReadOnlyList(Of T) Implements IDataContext.GetByIds
 
         Using gm = GetManager()
@@ -265,6 +266,14 @@ Public MustInherit Class DataContextBase
     Public Overridable ReadOnly Property StmtGenerator As StmtGenerator Implements IDataContext.StmtGenerator
         Get
             Return _stmtGen
+        End Get
+    End Property
+
+    Public ReadOnly Property IsReadOnly As Boolean Implements IDataContext.IsReadOnly
+        Get
+            Using mgr = CreateManager(Nothing)
+                Return mgr.IsReadOnly
+            End Using
         End Get
     End Property
 
