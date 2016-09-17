@@ -21,7 +21,7 @@ Imports System.Runtime
 <Assembly: CLSCompliant(False)> 
 
 'The following GUID is for the ID of the typelib if this project is exposed to COM
-<Assembly: Guid("da3d66f3-2d20-4258-b71d-1e4eb84d0f39")> 
+<Assembly: Guid("da3d66f3-2d20-4258-b71d-1e4eb84d0f39")>
 
 ' Version information for an assembly consists of the following four values:
 '
@@ -33,8 +33,8 @@ Imports System.Runtime
 ' You can specify all the values or you can default the Build and Revision Numbers 
 ' by using the '*' as shown below:
 
-<Assembly: AssemblyVersion("4.0.8.24")> 
-<Assembly: AssemblyFileVersion("4.0.8.72")> 
+<Assembly: AssemblyVersion("4.1.3.1")>
+<Assembly: AssemblyFileVersion("4.1.3.16261")>
 
 '<Assembly: FileIOPermission(SecurityAction.RequestRefuse)> 
 <Assembly: ConstrainedExecution.ReliabilityContract(ConstrainedExecution.Consistency.MayCorruptInstance, ConstrainedExecution.Cer.MayFail)> 

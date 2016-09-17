@@ -3896,7 +3896,7 @@ l2:
 #End If
 
         Public Overrides Function UpdateObject(ByVal obj As _ICachedEntity) As Boolean
-            Throw New NotImplementedException()
+            Throw New NotImplementedException("Manager is readonly")
         End Function
 
         'Public Overrides Function AddObject(ByVal obj As OrmBase) As OrmBase
@@ -3904,11 +3904,11 @@ l2:
         'End Function
 
         Protected Overrides Function InsertObject(ByVal obj As _ICachedEntity) As Boolean
-            Throw New NotImplementedException()
+            Throw New NotImplementedException("Manager is readonly")
         End Function
 
         Protected Friend Overrides Sub DeleteObject(ByVal obj As ICachedEntity)
-            Throw New NotImplementedException()
+            Throw New NotImplementedException("Manager is readonly")
         End Sub
 
         'Protected Overrides Sub Obj2ObjRelationSave2(ByVal obj As OrmBase, ByVal dt As System.Data.DataTable, ByVal sync As String, ByVal t As System.Type)
@@ -3916,7 +3916,7 @@ l2:
         'End Sub
 
         Protected Overrides Sub M2MSave(ByVal obj As Entities.ISinglePKEntity, ByVal t As System.Type, ByVal key As String, ByVal el As M2MRelation)
-            Throw New NotImplementedException
+            Throw New NotImplementedException("Manager is readonly")
         End Sub
 
         'Public Overrides Function SaveChanges(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean

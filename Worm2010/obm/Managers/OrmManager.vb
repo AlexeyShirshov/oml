@@ -5199,7 +5199,11 @@ l1:
         End Get
     End Property
     Public MustOverride Sub LoadProperty(cachedEntity As _IEntity, propertyAlias As String, stream As IO.Stream, Optional bufSize As Integer = 4096)
-
+    Public Overridable ReadOnly Property IsReadOnly As Boolean
+        Get
+            Return True
+        End Get
+    End Property
 End Class
 
 'End Namespace
