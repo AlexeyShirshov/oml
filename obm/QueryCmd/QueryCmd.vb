@@ -5801,7 +5801,7 @@ l1:
             Using New SetManagerHelper(mgr, CreateManager, _schema, ContextInfo)
                 Dim oldSch As ObjectMappingEngine = mgr.MappingEngine
                 If SpecificMappingEngine IsNot Nothing AndAlso Not oldSch.Equals(SpecificMappingEngine) Then
-                    mgr.SetSchema(SpecificMappingEngine)
+                    mgr.SetMapping(SpecificMappingEngine)
                 End If
 
                 Try
@@ -5848,7 +5848,7 @@ l1:
                     'UnsubscribeFromCommandEvents(Query, dbm, cmdHandler)
                     'UnsubscribeFromConnectionEvents(Query, dbm, connHandler)
 
-                    mgr.SetSchema(oldSch)
+                    mgr.SetMapping(oldSch)
                 End Try
             End Using
 
@@ -5906,7 +5906,7 @@ l1:
             Using New SetManagerHelper(mgr, CreateManager, _schema, ContextInfo)
                 Dim oldSch As ObjectMappingEngine = mgr.MappingEngine
                 If SpecificMappingEngine IsNot Nothing AndAlso Not oldSch.Equals(SpecificMappingEngine) Then
-                    mgr.SetSchema(SpecificMappingEngine)
+                    mgr.SetMapping(SpecificMappingEngine)
                 End If
 
                 Try
@@ -5964,7 +5964,7 @@ l1:
                         End If
                     Next
                 Finally
-                    mgr.SetSchema(oldSch)
+                    mgr.SetMapping(oldSch)
                 End Try
             End Using
 
@@ -6044,7 +6044,7 @@ l1:
             Using New SetManagerHelper(mgr, CreateManager, _schema, ContextInfo)
                 Dim oldSch As ObjectMappingEngine = mgr.MappingEngine
                 If SpecificMappingEngine IsNot Nothing AndAlso Not oldSch.Equals(SpecificMappingEngine) Then
-                    mgr.SetSchema(SpecificMappingEngine)
+                    mgr.SetMapping(SpecificMappingEngine)
                 End If
                 Try
                     Using GetExecutor(mgr).SubscribeToErrorHandling(mgr, Me)
@@ -6060,7 +6060,7 @@ l1:
                         End Select
                     End Using
                 Finally
-                    mgr.SetSchema(oldSch)
+                    mgr.SetMapping(oldSch)
                 End Try
             End Using
 

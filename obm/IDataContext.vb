@@ -271,7 +271,7 @@ Public MustInherit Class DataContextBase
 
     Public ReadOnly Property IsReadOnly As Boolean Implements IDataContext.IsReadOnly
         Get
-            Using mgr = CreateManager(Nothing)
+            Using mgr = CreateManager(Context)
                 Return mgr.IsReadOnly
             End Using
         End Get
@@ -279,6 +279,9 @@ Public MustInherit Class DataContextBase
 
     Public Function CreateManager(ctx As Object) As OrmManager Implements ICreateManager.CreateManager
         Dim mgr As OrmManager = CreateOrmManager()
+        If mgr IsNot Nothing AndAlso mgr.GetCreateManager Is Nothing Then
+            mgr.GetCreateManager = New CreateManager(AddressOf CreateOrmManager)
+        End If
         Try
             RaiseEvent CreateManagerEvent(Me, New ICreateManager.CreateManagerEventArgs(mgr, Context))
         Catch ex As Exception
@@ -295,10 +298,10 @@ Public MustInherit Class DataContextBase
     Protected Function GetManager() As IGetManager
         Dim mgr As OrmManager = OrmManager.CurrentManager
         If mgr Is Nothing Then
-            Return New GetManagerDisposable(CreateOrmManager(), Nothing)
+            Return New GetManagerDisposable(CreateManager(Context))
         Else
             'don't dispose
-            Return New ManagerWrapper(mgr, mgr.MappingEngine)
+            Return New ManagerWrapper(mgr)
         End If
     End Function
 
@@ -372,7 +375,7 @@ Public Class DataContext
 
     Public Overrides Function CreateOrmManager() As OrmManager
         If _del IsNot Nothing Then
-            Dim m As OrmManager = _del.CreateManager(Me)
+            Dim m As OrmManager = _del.CreateManager(Context)
             m.GetCreateManager = Me
             Return m
         ElseIf _delEx IsNot Nothing Then

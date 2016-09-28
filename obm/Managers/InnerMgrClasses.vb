@@ -142,7 +142,7 @@ Partial Public Class OrmManager
         Public Sub New(ByVal schema As ObjectMappingEngine, ByVal mgr As OrmManager)
             _mgr = mgr
             _oldSchema = mgr.MappingEngine
-            mgr.SetSchema(schema)
+            mgr.SetMapping(schema)
             '_r = mgr.RaiseObjectCreation
             If Not _oldSchema.Equals(schema) Then
                 'mgr.RaiseObjectCreation = True
@@ -153,7 +153,7 @@ Partial Public Class OrmManager
         ' IDisposable
         Protected Overridable Sub Dispose(ByVal disposing As Boolean)
             If Not Me._disposedValue Then
-                _mgr.SetSchema(_oldSchema)
+                _mgr.SetMapping(_oldSchema)
                 '_mgr.RaiseObjectCreation = _r
                 RemoveHandler _mgr.ObjectLoaded, AddressOf ObjectCreated
             End If

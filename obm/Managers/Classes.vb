@@ -76,11 +76,11 @@ Class GetManagerDisposable
     Private _mgr As OrmManager
     Private _oldSchema As ObjectMappingEngine
 
-    Public Sub New(ByVal mgr As OrmManager, ByVal schema As ObjectMappingEngine)
+    Public Sub New(ByVal mgr As OrmManager, Optional ByVal mpeOverride As ObjectMappingEngine = Nothing)
         _mgr = mgr
-        If Not mgr.MappingEngine.Equals(schema) AndAlso schema IsNot Nothing Then
+        If Not mgr.MappingEngine.Equals(mpeOverride) AndAlso mpeOverride IsNot Nothing Then
             _oldSchema = mgr.MappingEngine
-            mgr.SetSchema(schema)
+            mgr.SetMapping(mpeOverride)
         End If
     End Sub
 
@@ -100,7 +100,7 @@ Class GetManagerDisposable
             End If
 
             If _oldSchema IsNot Nothing Then
-                _mgr.SetSchema(_oldSchema)
+                _mgr.SetMapping(_oldSchema)
             End If
 
             _mgr.Dispose()
@@ -125,11 +125,11 @@ Class ManagerWrapper
     Private _mgr As OrmManager
     Private _oldSchema As ObjectMappingEngine
 
-    Public Sub New(ByVal mgr As OrmManager, ByVal schema As ObjectMappingEngine)
+    Public Sub New(ByVal mgr As OrmManager, Optional ByVal mpeOverride As ObjectMappingEngine = Nothing)
         _mgr = mgr
-        If Not mgr.MappingEngine.Equals(schema) AndAlso schema IsNot Nothing Then
+        If Not mgr.MappingEngine.Equals(mpeOverride) AndAlso mpeOverride IsNot Nothing Then
             _oldSchema = mgr.MappingEngine
-            mgr.SetSchema(schema)
+            mgr.SetMapping(mpeOverride)
             AddHandler mgr.ObjectLoaded, AddressOf OnObjectLoaded
         End If
     End Sub
@@ -157,7 +157,7 @@ Class ManagerWrapper
             RemoveHandler _mgr.ObjectLoaded, AddressOf OnObjectLoaded
 
             If _oldSchema IsNot Nothing Then
-                _mgr.SetSchema(_oldSchema)
+                _mgr.SetMapping(_oldSchema)
             End If
         End If
         Me.disposedValue = True
