@@ -169,10 +169,16 @@ Namespace Database
                 o.GetType, oschema, CType(sender, ComponentModel.ICustomTypeDescriptor), _
                 _mgr.MappingEngine, sender, o, _mgr.Cache, _mgr.ContextInfo, crMan:=_mgr.GetCreateManager)
         End Sub
+        Public Overridable Sub Delete(ByVal obj As _ICachedEntity)
+            If obj Is Nothing Then
+                Throw New ArgumentNullException("obj")
+            End If
 
+            obj.Delete(_mgr)
+        End Sub
         Public Overridable Sub Delete(ByVal obj As Object)
             If obj Is Nothing Then
-                Throw New ArgumentNullException("object")
+                Throw New ArgumentNullException("obj")
             End If
 
             Dim t As Type = obj.GetType

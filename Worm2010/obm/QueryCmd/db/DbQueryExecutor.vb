@@ -249,7 +249,7 @@ Namespace Query.Database
 
             If query.SpecificMappingEngine IsNot Nothing Then
                 'mgr.RaiseObjectCreation = True
-                mgr.SetSchema(query.SpecificMappingEngine)
+                mgr.SetMapping(query.SpecificMappingEngine)
                 AddHandler mgr.ObjectLoaded, AddressOf SetSchema4Object
                 AddHandler mgr.ObjectRestoredFromCache, AddressOf SetSchema4Object
             End If
@@ -324,7 +324,7 @@ Namespace Query.Database
                 mgr._op = op
                 mgr._list = oldList
                 mgr._expiresPattern = oldExp
-                mgr.SetSchema(oldSchema)
+                mgr.SetMapping(oldSchema)
                 RaiseOnRestoreDefaults(mgr)
 
                 RemoveHandler mgr.ObjectLoaded, AddressOf SetSchema4Object

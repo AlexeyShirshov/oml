@@ -219,8 +219,8 @@ Partial Public MustInherit Class OrmManager
     '    End Set
     'End Property
 
-    Protected Friend Overridable Sub SetSchema(ByVal schema As ObjectMappingEngine)
-        _schema = schema
+    Protected Friend Overridable Sub SetMapping(ByVal mpe As ObjectMappingEngine)
+        _schema = mpe
     End Sub
 
     Public ReadOnly Property MappingEngine() As ObjectMappingEngine
