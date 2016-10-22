@@ -77,22 +77,33 @@ namespace CoreFramework
 
         public static bool Between<T>(this T target, T beg, T end) where T : IComparable<T>
         {
-            if (target == null)
+            if (Object.Equals(target, default(T)))
             {
-                throw new ArgumentNullException("target");
+                throw new ArgumentNullException(nameof(target));
             }
 
-            if (beg == null)
+            if (Object.Equals(beg, default(T)))
             {
-                throw new ArgumentNullException("beg");
+                throw new ArgumentNullException(nameof(beg));
             }
 
-            if (end == null)
+            if (Object.Equals(end, default(T)))
             {
-                throw new ArgumentNullException("end");
+                throw new ArgumentNullException(nameof(end));
             }
 
             return beg.CompareTo(target) <= 0 && target.CompareTo(end) <= 0;
         }
+
+        public static T Do<T>(this T item, Action<T> work)
+        {
+            work(item);
+            return item;
+        }
+        public static T Do<T>(this T item, Func<T, T> work)
+        {
+            return work(item);
+        }
+
     }
 }

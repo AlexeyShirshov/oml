@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 
@@ -45,6 +46,30 @@ namespace CoreFramework.Collections
                 }
             }
             return bytes;
+        }
+        public static NameValueCollection ToNameValueCollection(this string str, char pairSeparator, char valueSeparator)
+        {
+            return ToNameValueCollection(str, new[] { pairSeparator }, new[] { valueSeparator });
+        }
+        public static NameValueCollection ToNameValueCollection(this string str, char[] pairSeparators = null, char[] valueSeparators = null)
+        {
+            if (string.IsNullOrEmpty(str)) return null;
+            if (pairSeparators == null) pairSeparators = new[] { ';' };
+            if (valueSeparators == null) valueSeparators = new[] { '=' };
+            var r = new NameValueCollection();
+            foreach (var p in str.Split(pairSeparators))
+            {
+                //var s = Uri.UnescapeDataString(p);
+                var ss = p.Split(valueSeparators);
+                if (ss.Length == 2)
+                {
+                    var key = Uri.UnescapeDataString(ss[0]);
+                    var val = Uri.UnescapeDataString(ss[1]);
+                    r.Add(key, val);
+                }
+            }
+
+            return r;
         }
     }
 }
