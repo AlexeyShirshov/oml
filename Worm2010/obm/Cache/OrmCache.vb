@@ -7,6 +7,7 @@ Imports Worm.Criteria.Values
 Imports Worm.Query.Sorting
 Imports Worm.Query
 Imports Worm.Expressions2
+Imports System.Linq
 
 #Const TraceCreation = False
 
@@ -806,8 +807,8 @@ Namespace Cache
             End Using
         End Sub
 #End If
-        Protected Friend Function UpdateCacheDeferred(ByVal mpe As ObjectMappingEngine, _
-            ByVal ts As IList(Of Type), ByVal f As IEntityFilter, ByVal s As OrderByClause, ByVal g As GroupExpression) As Boolean
+        Protected Friend Function UpdateCacheDeferred(ByVal mpe As ObjectMappingEngine,
+            ByVal ts As IEnumerable(Of Type), ByVal f As IEntityFilter, ByVal s As OrderByClause, ByVal g As GroupExpression) As Boolean
 
             For Each t As Type In ts
                 Dim wasAdded, wasDeleted As Boolean
@@ -910,11 +911,11 @@ Namespace Cache
                                     Using SyncHelper.AcquireDynamicLock(SortGroupFilterLock)
 #End If
 
-                                    If _sortedFields.Remove(t, prop, Me) Then
-                                        _filteredFields.Remove(t, prop, Me)
-                                        'ResetFieldDepends(New Pair(Of String, Type)(prop, t))
-                                        RemoveUpdatedFields(t, prop)
-                                        Return False
+                                        If _sortedFields.Remove(t, prop, Me) Then
+                                            _filteredFields.Remove(t, prop, Me)
+                                            'ResetFieldDepends(New Pair(Of String, Type)(prop, t))
+                                            RemoveUpdatedFields(t, prop)
+                                            Return False
                                         End If
                                     End Using
                                 End If
@@ -1062,7 +1063,68 @@ Namespace Cache
             End If
 
         End Sub
+        Public Sub UpdateCacheByType(ByVal tt As Type, ByVal oschema As IEntitySchema, ByVal mpe As ObjectMappingEngine,
+            ByVal callbacks As IUpdateCacheCallbacks2)
 
+            If callbacks IsNot Nothing Then
+                callbacks.BeginUpdate()
+            End If
+
+            Dim tkey As Object = tt
+            'Dim oschema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(tt)
+            Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
+            If c IsNot Nothing Then
+                tkey = c.GetEntityKey()
+            End If
+
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug(ImmidiateDynamicLock,"d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock(ImmediateDynamicLock)
+#End If
+                Dim hashs As TemplateHashs = _immediateValidate.GetFilters(tkey)
+
+                For Each p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)) In hashs
+                    Dim dic As IDictionary = _GetDictionary(p.Key)
+
+                    If dic IsNot Nothing Then
+                        dic.Clear()
+                    End If
+                Next
+            End Using
+
+            Dim removed As Boolean
+#If DebugLocks Then
+                                Using SyncHelper.AcquireDynamicLock_Debug(AddDeleteTypeLock,"d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock(AddDeleteTypeLock)
+#End If
+                removed = _addDeleteTypes.Remove(tt, Me)
+            End Using
+
+#If DebugLocks Then
+                                Using SyncHelper.AcquireDynamicLock_Debug(UpdateTypeLock,"d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock(UpdateTypeLock)
+#End If
+                removed = _updateTypes.Remove(tt, Me) OrElse removed
+            End Using
+
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug(SortGroupLock,"d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock(SortGroupFilterLock)
+#End If
+                _sortedFields.Remove(tt, Me)
+                _groupedFields.Remove(tt, Me)
+                _filteredFields.Remove(tt, Me)
+            End Using
+
+            If callbacks IsNot Nothing Then
+                callbacks.EndUpdate()
+            End If
+
+        End Sub
         Protected Friend Sub UpdateCache(ByVal schema As ObjectMappingEngine, _
             ByVal objs As IList, ByVal mgr As OrmManager, ByVal afterDelegate As OnUpdated, _
             ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks, _

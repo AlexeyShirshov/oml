@@ -1,6 +1,7 @@
 ﻿Imports Microsoft.VisualBasic.FileIO
 Imports System.Data
 Imports System.Linq
+Imports Worm.Cache
 
 Namespace Database
     Public Class SqlServerBuildLoader
@@ -49,12 +50,23 @@ Namespace Database
 
                     If options.ColumnMappings IsNot Nothing Then
                         For Each cm In options.ColumnMappings
-                            bulkcpy.ColumnMappings.Add(New SqlClient.SqlBulkCopyColumnMapping With {
-                                                       .DestinationColumn = cm.DestinationColumn,
-                                                       .DestinationOrdinal = cm.DestinationOrdinal,
-                                                       .SourceColumn = cm.SourceColumn,
-                                                       .SourceOrdinal = cm.SourceOrdinal
-                                                       })
+                            Dim sqlcm As New SqlClient.SqlBulkCopyColumnMapping
+                            With sqlcm
+                                If Not String.IsNullOrEmpty(cm.DestinationColumn) Then
+                                    .DestinationColumn = cm.DestinationColumn
+                                End If
+                                If cm.DestinationOrdinal.HasValue Then
+                                    .DestinationOrdinal = cm.DestinationOrdinal.Value
+                                End If
+                                If Not String.IsNullOrEmpty(cm.SourceColumn) Then
+                                    .SourceColumn = cm.SourceColumn
+                                End If
+                                If cm.SourceOrdinal.HasValue Then
+                                    .SourceOrdinal = cm.SourceOrdinal.Value
+                                End If
+                            End With
+
+                            bulkcpy.ColumnMappings.Add(sqlcm)
                         Next
                     End If
 
@@ -160,6 +172,12 @@ Namespace Database
 
 [exit]:
                 End Using
+
+                If added > 0 AndAlso options.Entity IsNot Nothing Then
+                    Dim wc = TryCast(mgr.Cache, OrmCache)
+                    wc.UpdateCacheDeferred(mgr.MappingEngine, {options.Entity.GetRealType(mgr.MappingEngine)}, Nothing, Nothing, Nothing)
+                    wc.UpdateCacheByType(options.Entity.GetRealType(mgr.MappingEngine), mgr.MappingEngine.GetEntitySchema(options.Entity), mgr.MappingEngine, Nothing)
+                End If
                 Return New BulkResults(added)
             End Using
         End Function
