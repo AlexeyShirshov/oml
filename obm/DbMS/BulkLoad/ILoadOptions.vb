@@ -1,5 +1,6 @@
 ﻿Imports System.Collections.Generic
 Imports System.Data
+Imports Worm.Query
 
 Namespace Database
     Public Interface IBulkLoadOptions
@@ -24,6 +25,7 @@ Namespace Database
         Property AutoColumns As Boolean
         Property AutoMapColumns As Boolean
         Property Timeout As Integer?
+        Property Entity As EntityUnion
     End Interface
 
     Public Class BulkLoadOptions
@@ -81,5 +83,8 @@ Namespace Database
         Public Property TrimWhiteSpace As Boolean Implements IBulkLoadOptions.TrimWhiteSpace
 
         Public Property Timeout As Integer? Implements IBulkLoadOptions.Timeout
+
+        Public Property Entity As EntityUnion Implements IBulkLoadOptions.Entity
+
     End Class
 End Namespace

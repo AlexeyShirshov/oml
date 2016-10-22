@@ -23,9 +23,9 @@
 
         ' Properties
         Public Property DestinationColumn As String
-        Public Property DestinationOrdinal As Integer
+        Public Property DestinationOrdinal As Integer?
         Public Property SourceColumn As String
-        Public Property SourceOrdinal As Integer
+        Public Property SourceOrdinal As Integer?
     End Class
 
 
