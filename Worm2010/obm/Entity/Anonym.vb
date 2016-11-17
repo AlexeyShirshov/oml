@@ -605,8 +605,8 @@ Namespace Entities
         Public Sub UpdateCache(ByVal mgr As OrmManager, ByVal oldObj As ICachedEntity) Implements _ICachedEntity.UpdateCache
             Dim c As OrmCache = TryCast(mgr.Cache, OrmCache)
             If c IsNot Nothing Then
-                c.UpdateCache(mgr.MappingEngine, New Pair(Of _ICachedEntity)() { _
-                              New Pair(Of _ICachedEntity)(Me, CType(oldObj, _ICachedEntity))}, _
+                c.UpdateCache(mgr.MappingEngine, New UpdatedEntity() {
+                              New UpdatedEntity(Me, CType(oldObj, _ICachedEntity))},
                     mgr, AddressOf OrmManager.ClearCacheFlags, Nothing, Nothing, False, _upd.UpdatedFields IsNot Nothing)
             End If
             UpdateCacheAfterUpdate(c)

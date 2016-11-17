@@ -4,6 +4,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Entities.Meta
 Imports System.Collections.Generic
 Imports Worm.Query
+Imports System.Linq
 
 Namespace Criteria.Joins
 
@@ -682,7 +683,42 @@ Namespace Criteria.Joins
             Next
             Return Nothing
         End Function
+        Protected Shared Function ChangeTableJoinToValue(gen As StmtGenerator, ByVal schema As ObjectMappingEngine, ByVal source As IFilter,
+                                                         ByVal sf As SourceFragment, ByVal fields As IEnumerable(Of SourceField),
+                                                         ByVal values As IEnumerable(Of IFilterValue)) As IFilter
+            Dim l As New List(Of Pair(Of JoinFilter, IFilter))
+            For Each _fl As IFilter In source.GetAllFilters()
+                Dim fl As JoinFilter = TryCast(_fl, JoinFilter)
+                If fl IsNot Nothing Then
+                    Dim f As IFilter = Nothing
+                    For i = 0 To fields.Count - 1
+                        Dim fld = fields(i).SourceFieldExpression
+                        Dim v = values(i)
+                        If fl._l.Column IsNot Nothing AndAlso fl._l.Column.First Is sf AndAlso fl._l.Column.Second.Equals(fld, If(gen.CaseSensitive, StringComparison.InvariantCulture, StringComparison.InvariantCultureIgnoreCase)) Then
+                            f = SetJF(fl._r, v, fl._oper)
+                        ElseIf fl._r.Column IsNot Nothing AndAlso fl._r.Column.First Is sf AndAlso fl._r.Column.Second.Equals(fld, If(gen.CaseSensitive, StringComparison.InvariantCulture, StringComparison.InvariantCultureIgnoreCase)) Then
+                            f = SetJF(fl._l, v, fl._oper)
+                        End If
 
+                        If f IsNot Nothing Then
+                            l.Add(New Pair(Of JoinFilter, IFilter)(fl, f))
+                            Exit For
+                        End If
+                    Next
+                End If
+
+            Next
+
+            If l.Count > 0 Then
+                For Each p In l
+                    source = source.ReplaceFilter(p.First, p.Second)
+                Next
+
+                Return source
+            End If
+
+            Return Nothing
+        End Function
         Private Shared Function SetJF(ByVal fr As FieldReference, _
                                ByVal value As IFilterValue, ByVal oper As FilterOperation) As IFilter
             If fr.Property.Entity IsNot Nothing Then
@@ -708,7 +744,10 @@ Namespace Criteria.Joins
         Public Shared Function ChangeEntityJoinToLiteral(ByVal schema As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal literal As String) As IFilter
             Return ChangeEntityJoinToValue(schema, source, t, propertyAlias, New LiteralValue(literal))
         End Function
-
+        Public Shared Function ChangeTableJoinToLiteral(gen As StmtGenerator, ByVal schema As ObjectMappingEngine, ByVal source As IFilter,
+                                                        ByVal sf As SourceFragment, ByVal fields As IEnumerable(Of SourceField), ByVal literal As String) As IFilter
+            Return ChangeTableJoinToValue(gen, schema, source, sf, fields, {New LiteralValue(literal)})
+        End Function
         Public Shared Function ChangeEntityJoinToParam(ByVal schema As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal value As TypeWrap(Of Object)) As IFilter
             Return ChangeEntityJoinToValue(schema, source, t, propertyAlias, New ScalarValue(value.Value))
         End Function

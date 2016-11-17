@@ -198,9 +198,18 @@ Namespace Cache
             RemoveEntry(p.First, p.Second)
         End Sub
 
-        Protected Function _GetDictionary(ByVal key As String) As IDictionary
-            Return CType(_filters(key), IDictionary)
-        End Function
+        'Protected Function _GetDictionary(ByVal key As String) As IDictionary
+        '    Return CType(_filters(key), IDictionary)
+        'End Function
+        Protected Sub RemoveIfEmpty(dic As IDictionary, key As String)
+            If dic.Count = 0 Then
+                Using SyncHelper.AcquireDynamicLock(key)
+                    If dic.Count = 0 Then
+                        _filters.Remove(key)
+                    End If
+                End Using
+            End If
+        End Sub
 
         Public Function GetAnonymDictionary(ByVal key As String) As IDictionary
             Dim dic As IDictionary = CType(_filters(key), IDictionary)
@@ -905,9 +914,9 @@ Namespace Cache
         End Function
 
         Public Overrides Function GetOrmDictionary(ByVal t As System.Type, ByVal mpe As ObjectMappingEngine) As System.Collections.IDictionary
-            If Not GetType(_ICachedEntity).IsAssignableFrom(t) Then
-                Return Nothing
-            End If
+            'If Not GetType(_ICachedEntity).IsAssignableFrom(t) Then
+            '    Return Nothing
+            'End If
 
             Dim k As Object = t
             If mpe IsNot Nothing Then
@@ -930,9 +939,9 @@ Namespace Cache
         Public Overrides Function GetOrmDictionary(ByVal t As System.Type, _
             ByVal cb As ICacheBehavior) As System.Collections.IDictionary
 
-            If Not GetType(_ICachedEntity).IsAssignableFrom(t) Then
-                Return Nothing
-            End If
+            'If Not GetType(_ICachedEntity).IsAssignableFrom(t) Then
+            '    Return Nothing
+            'End If
 
             Dim k As Object = ObjectMappingEngine.GetEntityTypeKey(t, cb)
 
@@ -975,6 +984,14 @@ Namespace Cache
             _rootObjectsDictionary = Hashtable.Synchronized(New Hashtable)
             MyBase.Reset()
         End Sub
+        Public Overridable Iterator Function GetEntityTypes() As IEnumerable(Of Type)
+            Using SyncRoot
+                For Each v As DictionaryEntry In _rootObjectsDictionary
+                    Dim t = v.Value.GetType
+                    Yield t.GetGenericArguments.First
+                Next
+            End Using
+        End Function
     End Class
 
     Public Class ReadonlyWebCache

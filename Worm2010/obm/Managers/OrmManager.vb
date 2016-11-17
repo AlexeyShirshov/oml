@@ -4563,7 +4563,7 @@ l1:
                 If e.UpdateCtx.Deleted Then
                     '_valProcs = False
                     If updateCache AndAlso c IsNot Nothing Then
-                        c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(e, mo)}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, False)
+                        c.UpdateCache(mc.MappingEngine, New UpdatedEntity() {New UpdatedEntity(e, mo)}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, False)
                         'mc.Cache.UpdateCacheOnDelete(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing)
                     End If
                     Accept_AfterUpdateCacheDelete(e, mc)
@@ -4580,14 +4580,14 @@ l1:
                     c.RemoveNonExistent(e.GetType, kw)
                     If updateCache AndAlso c IsNot Nothing Then
                         'mc.Cache.UpdateCacheOnAdd(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing)
-                        c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(e, mo)}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, False)
+                        c.UpdateCache(mc.MappingEngine, New UpdatedEntity() {New UpdatedEntity(e, mo)}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, False)
                     End If
                     Accept_AfterUpdateCacheAdd(e, mc.Cache, mo)
                     e.RaiseAdded(EventArgs.Empty)
                 Else
                     If updateCache Then
                         If c IsNot Nothing Then
-                            c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(e, mo)}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, True)
+                            c.UpdateCache(mc.MappingEngine, New UpdatedEntity() {New UpdatedEntity(e, mo)}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, True)
                         End If
                         e.UpdateCacheAfterUpdate(c)
                     End If
@@ -4662,9 +4662,9 @@ l1:
                     olds = oc.ObjectState
                 End If
 
-                Dim oldkey As Integer?
+                Dim oldkey As CacheKey = Nothing
                 If e.IsPKLoaded Then
-                    oldkey = e.Key
+                    oldkey = New CacheKey(e)
                 End If
 
                 Dim newid As IEnumerable(Of PKDesc) = Nothing
@@ -4689,7 +4689,7 @@ l1:
                 e.SetObjectStateClear(olds)
 #End If
                 If e.ObjectState = Entities.ObjectState.Created Then
-                    If oldkey.HasValue Then
+                    If oldkey IsNot Nothing Then
                         If cache Is Nothing Then
                             Throw New InvalidOperationException("Cache required")
                         End If

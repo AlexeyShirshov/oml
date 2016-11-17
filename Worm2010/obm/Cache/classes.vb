@@ -683,4 +683,13 @@ Namespace Cache
         End Function
     End Class
 
+    Public Class UpdatedEntity
+        Public Sub New(current As _ICachedEntity, old As _ICachedEntity)
+            CurrentState = current
+            OldState = old
+        End Sub
+
+        Public CurrentState As _ICachedEntity
+        Public OldState As _ICachedEntity
+    End Class
 End Namespace

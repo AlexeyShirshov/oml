@@ -307,13 +307,18 @@ Public Class ObjectMappingEngine
             If columns.Length = 0 AndAlso raw AndAlso pi.CanRead AndAlso (pi.CanWrite OrElse GetType(IOptimizedValues).IsAssignableFrom(t)) Then
                 Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
                 Do While bd IsNot Nothing AndAlso bd.IsVirtual
-                    If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(SinglePKEntityBase), GetType(SinglePKEntity)}, bd.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
+                    If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(SinglePKEntityBase),
+                                     GetType(SinglePKEntity), GetType(QueryCmd), GetType(RelationCmd)}, bd.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
                         Continue For
                     ElseIf pi.DeclaringType Is bd.DeclaringType Then
                         Exit Do
                     End If
                     bd = bd.GetBaseDefinition
                 Loop
+
+                If Array.IndexOf(New Type() {GetType(QueryCmd), GetType(RelationCmd)}, bd.ReturnType) >= 0 Then ', GetType(EntityLazyLoad)
+                    Continue For
+                End If
 
                 column = New EntityPropertyAttribute() With {.PropertyAlias = pi.Name, ._raw = True}
             Else

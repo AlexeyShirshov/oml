@@ -928,9 +928,13 @@ Namespace Cache
             Return True
         End Function
 
-        Private Sub UpdateCacheImmediate(ByVal tt As Type, ByVal oschema As IEntitySchema, ByVal schema As ObjectMappingEngine, _
-            ByVal objs As IList, ByVal mgr As OrmManager, ByVal afterDelegate As OnUpdated, _
+        Private Sub UpdateCacheImmediate(ByVal tt As Type, ByVal oschema As IEntitySchema, ByVal schema As ObjectMappingEngine,
+            ByVal objs As IEnumerable(Of UpdatedEntity), ByVal mgr As OrmManager, ByVal afterDelegate As OnUpdated,
             ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks2)
+
+            If objs Is Nothing OrElse Not objs.Any Then
+                Return
+            End If
 
             If callbacks IsNot Nothing Then
                 callbacks.BeginUpdate()
@@ -953,10 +957,10 @@ Namespace Cache
                 Dim hashs As TemplateHashs = _immediateValidate.GetFilters(tkey)
 
                 For Each p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)) In hashs
-                    Dim dic As IDictionary = _GetDictionary(p.Key)
+                    Dim dic As IDictionary = GetQueryDictionary(p.Key)
 
-                    For Each op As Pair(Of _ICachedEntity) In objs
-                        Dim obj As _ICachedEntity = op.First
+                    For Each op In objs
+                        Dim obj As _ICachedEntity = op.CurrentState
                         If obj Is Nothing Then
                             Throw New ArgumentException("At least one element in objs is nothing")
                         End If
@@ -966,7 +970,7 @@ Namespace Cache
                         End If
 
                         If dic IsNot Nothing Then
-                            UpdateFilters(p, schema, oschema, obj, op.Second, dic, Nothing, callbacks, True, mgr)
+                            UpdateFilters(p, schema, oschema, obj, op.OldState, dic, Nothing, callbacks, True, mgr)
                         ElseIf oneLoop Then
                             Exit For
                         End If
@@ -1013,8 +1017,8 @@ Namespace Cache
             End Using
 
             If Not oneLoop Then
-                For Each op As Pair(Of _ICachedEntity) In objs
-                    Dim obj As _ICachedEntity = op.First
+                For Each op In objs
+                    Dim obj As _ICachedEntity = op.CurrentState
                     If obj Is Nothing Then
                         Throw New ArgumentException("At least one element in objs is nothing")
                     End If
@@ -1048,8 +1052,8 @@ Namespace Cache
 #Else
                                 Using SyncHelper.AcquireDynamicLock(SortGroupFilterLock)
 #End If
-                                _filteredFields.Remove(rt, f.Template.PropertyAlias, Me)
-                                _groupedFields.Remove(rt, f.Template.PropertyAlias, Me)
+                                    _filteredFields.Remove(rt, f.Template.PropertyAlias, Me)
+                                    _groupedFields.Remove(rt, f.Template.PropertyAlias, Me)
                                     _sortedFields.Remove(rt, f.Template.PropertyAlias, Me)
                                 End Using
                             Next
@@ -1085,7 +1089,7 @@ Namespace Cache
                 Dim hashs As TemplateHashs = _immediateValidate.GetFilters(tkey)
 
                 For Each p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)) In hashs
-                    Dim dic As IDictionary = _GetDictionary(p.Key)
+                    Dim dic As IDictionary = GetQueryDictionary(p.Key)
 
                     If dic IsNot Nothing Then
                         dic.Clear()
@@ -1125,26 +1129,78 @@ Namespace Cache
             End If
 
         End Sub
-        Protected Friend Sub UpdateCache(ByVal schema As ObjectMappingEngine, _
-            ByVal objs As IList, ByVal mgr As OrmManager, ByVal afterDelegate As OnUpdated, _
-            ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks, _
-            ByVal forseEval As Boolean, ByVal fromUpdate As Boolean)
+        Protected Friend Sub UpdateCache(ByVal mpe As ObjectMappingEngine,
+            ByVal objs As IEnumerable(Of UpdatedEntity), ByVal mgr As OrmManager, ByVal afterDelegate As OnUpdated,
+            ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks,
+            ByVal forseEval As Boolean, ByVal fromUpdate As Boolean, Optional processedTypes As List(Of Type) = Nothing)
+
+            If objs Is Nothing OrElse Not objs.Any Then
+                Return
+            End If
 
             Dim tt As Type = Nothing
             Dim addType As Type = Nothing
             Dim delType As Type = Nothing
             Dim oschema As IEntitySchema = Nothing
 
-            For Each p As Pair(Of _ICachedEntity) In objs
-                Dim obj As _ICachedEntity = p.First
+            Dim relatedObjs As New List(Of UpdatedEntity)
+            Dim entTypes = (From k In GetEntityTypes()
+                            Where processedTypes Is Nothing OrElse Not processedTypes.Contains(k)
+                        ).ToArray
+            For Each p In objs
+                Dim obj As _ICachedEntity = p.CurrentState
                 If obj Is Nothing Then
                     Throw New ArgumentException("At least one element in objs is nothing")
                 End If
                 tt = obj.GetType
 
                 If oschema Is Nothing Then
-                    oschema = obj.GetEntitySchema(schema)
+                    oschema = obj.GetEntitySchema(mpe)
                 End If
+
+                If processedTypes Is Nothing Then
+                    processedTypes = New List(Of Type)
+                End If
+                If Not processedTypes.Contains(tt) Then
+                    processedTypes.Add(tt)
+                End If
+
+                For Each rt In GetRelatedTypes(tt, entTypes)
+                    Dim dic = GetOrmDictionary(rt, mpe)
+                    Dim pkw = New CacheKey(obj)
+                    Dim ro = TryCast(dic(pkw), _ICachedEntity)
+                    If ro IsNot Nothing Then
+                        If Not relatedObjs.Any(Function(it) it.CurrentState.Equals(ro)) Then
+                            relatedObjs.Add(New UpdatedEntity(ro, Nothing))
+                            dic.Remove(pkw)
+                        End If
+                    Else
+                        Dim osc = mpe.GetEntitySchema(rt)
+                        Dim tkey As Object = rt
+                        Dim c As ICacheBehavior = TryCast(osc, ICacheBehavior)
+                        If c IsNot Nothing Then
+                            tkey = c.GetEntityKey()
+                        End If
+                        Dim hashs As TemplateHashs = _immediateValidate.GetFilters(tkey)
+                        If hashs IsNot Nothing Then
+
+                            For Each h In hashs
+                                Dim ldic = GetQueryDictionary(h.Key)
+                                If ldic IsNot Nothing Then
+                                    For Each de As DictionaryEntry In New Hashtable(ldic)
+
+                                        Dim ce As CachedItemBase = TryCast(de.Value, CachedItemBase)
+                                        ldic.Remove(de.Key)
+                                        If ce IsNot Nothing Then
+                                            RegisterRemovalCacheItem(ce)
+                                        End If
+                                    Next
+                                    RemoveIfEmpty(ldic, h.Key)
+                                End If
+                            Next
+                        End If
+                    End If
+                Next
 
                 If ValidateBehavior = Cache.ValidateBehavior.Immediate _
                     OrElse (addType IsNot Nothing AndAlso delType IsNot Nothing) _
@@ -1176,7 +1232,7 @@ Namespace Cache
             End Using
 
             If ValidateBehavior = Cache.ValidateBehavior.Immediate Then
-                UpdateCacheImmediate(tt, oschema, schema, objs, mgr, afterDelegate, contextKey, TryCast(callbacks, IUpdateCacheCallbacks2))
+                UpdateCacheImmediate(tt, oschema, mpe, objs, mgr, afterDelegate, contextKey, TryCast(callbacks, IUpdateCacheCallbacks2))
             End If
 
             If Not fromUpdate Then
@@ -1253,12 +1309,32 @@ l1:
 
                 'UpdateJoins(tt, objs, schema, oschema, mgr, contextKey, afterDelegate, callbacks)
             End If
+
+            UpdateCache(mpe, relatedObjs, mgr, afterDelegate, contextKey, callbacks, forseEval, fromUpdate, processedTypes)
         End Sub
 
-        Private Sub UpdateFilters(ByVal p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)), _
-                                  ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema, _
-                                  ByVal obj As _ICachedEntity, ByVal oldObj As _ICachedEntity, ByVal dic As IDictionary, _
-                                  ByVal callbacks As IUpdateCacheCallbacks, ByVal callbacks2 As IUpdateCacheCallbacks2, _
+        Private Iterator Function GetRelatedTypes(tt As Type, rels As IEnumerable(Of Type)) As IEnumerable(Of Type)
+            For Each bt In GetBaseTypes(tt)
+                If Not {GetType(Object), GetType(Entity), GetType(CachedEntity), GetType(AnonymousCachedEntity), GetType(AnonymousEntity),
+                    GetType(SinglePKEntityBase), GetType(SinglePKEntity), GetType(CachedLazyLoad)}.Contains(bt) AndAlso rels.Contains(bt) Then
+                    Yield bt
+                End If
+            Next
+            For Each bt In rels
+                If bt.IsSubclassOf(tt) Then
+                    Yield bt
+                End If
+            Next
+        End Function
+        Private Iterator Function GetBaseTypes(tt As Type) As IEnumerable(Of Type)
+            If tt.BaseType IsNot Nothing Then
+                Yield tt.BaseType
+            End If
+        End Function
+        Private Sub UpdateFilters(ByVal p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)),
+                                  ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema,
+                                  ByVal obj As _ICachedEntity, ByVal oldObj As _ICachedEntity, ByVal dic As IDictionary,
+                                  ByVal callbacks As IUpdateCacheCallbacks, ByVal callbacks2 As IUpdateCacheCallbacks2,
                                   ByVal forseEval As Boolean, ByVal mgr As OrmManager)
             Dim hash As String = EntityFilter.EmptyHash
             If p.Value.Second IsNot Nothing Then
@@ -1436,14 +1512,14 @@ l1:
         '            End Using
         '        End Sub
 
-        Public Sub ValidateExternal(ByVal objs As IList, _
-            ByVal mgr As OrmManager, ByVal callbacks As IUpdateCacheCallbacks, _
+        Public Sub ValidateExternal(ByVal objs As IEnumerable(Of UpdatedEntity),
+            ByVal mgr As OrmManager, ByVal callbacks As IUpdateCacheCallbacks,
             ByVal afterDelegate As OnUpdated, ByVal contextKey As Object)
             If callbacks IsNot Nothing Then
                 callbacks.BeginUpdateProcs()
             End If
-            For Each p As Pair(Of _ICachedEntity) In objs
-                Dim obj As _ICachedEntity = p.First
+            For Each p In objs
+                Dim obj As _ICachedEntity = p.CurrentState
 
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
@@ -1594,7 +1670,7 @@ l1:
                     Dim l As Dictionary(Of String, List(Of String)) = Nothing
                     If _object_depends.TryGetValue(op, l) Then
                         For Each p As KeyValuePair(Of String, List(Of String)) In l
-                            Dim dic As IDictionary = _GetDictionary(p.Key)
+                            Dim dic As IDictionary = GetQueryDictionary(p.Key)
                             If dic IsNot Nothing Then
                                 For Each id As String In p.Value
                                     'dic.Remove(id)

@@ -669,7 +669,7 @@ Namespace Database
                         RaiseEvent BeginAccepting(Me)
                         If _acceptInBatch Then
                             'Dim l As New Dictionary(Of OrmBase, OrmBase)
-                            Dim l2 As New Dictionary(Of Type, List(Of Pair(Of _ICachedEntity)))
+                            Dim l2 As New Dictionary(Of Type, List(Of UpdatedEntity))
                             Dim val As New List(Of ICachedEntity)
                             For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
                                 Dim o As _ICachedEntity = p.Second
@@ -681,15 +681,15 @@ Namespace Database
                                 If o.UpdateCtx.UpdatedFields IsNot Nothing Then
                                     val.Add(o)
                                 End If
-                                Dim ls As List(Of Pair(Of _ICachedEntity)) = Nothing
+                                Dim ls As List(Of UpdatedEntity) = Nothing
                                 If Not l2.TryGetValue(o.GetType, ls) Then
-                                    ls = New List(Of Pair(Of _ICachedEntity))
+                                    ls = New List(Of UpdatedEntity)
                                     l2.Add(o.GetType, ls)
                                 End If
-                                ls.Add(New Pair(Of _ICachedEntity)(o, CType(mo, _ICachedEntity)))
+                                ls.Add(New UpdatedEntity(o, CType(mo, _ICachedEntity)))
                             Next
                             For Each t As Type In l2.Keys
-                                Dim ls As List(Of Pair(Of _ICachedEntity)) = l2(t)
+                                Dim ls As List(Of UpdatedEntity) = l2(t)
                                 '_mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
                                 '    AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
                                 CType(_mgr.Cache, OrmCache).UpdateCache(_mgr.MappingEngine, ls, _mgr, _

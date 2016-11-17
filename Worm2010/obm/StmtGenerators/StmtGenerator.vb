@@ -79,5 +79,9 @@ Public MustInherit Class StmtGenerator
             Return True
         End Get
     End Property
-
+    Public Overridable ReadOnly Property CaseSensitive As Boolean
+        Get
+            Return False
+        End Get
+    End Property
 End Class
