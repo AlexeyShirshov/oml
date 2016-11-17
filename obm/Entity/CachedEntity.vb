@@ -1157,7 +1157,7 @@ l1:
         Protected Sub UpdateCache(ByVal mc As OrmManager, ByVal oldObj As ICachedEntity) Implements _ICachedEntity.UpdateCache
             Dim c As OrmCache = TryCast(mc.Cache, OrmCache)
             If c IsNot Nothing Then
-                c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(Me, CType(oldObj, _ICachedEntity))}, mc, AddressOf OrmManager.ClearCacheFlags, Nothing, Nothing, False, _upd.UpdatedFields IsNot Nothing)
+                c.UpdateCache(mc.MappingEngine, New UpdatedEntity() {New UpdatedEntity(Me, CType(oldObj, _ICachedEntity))}, mc, AddressOf OrmManager.ClearCacheFlags, Nothing, Nothing, False, _upd.UpdatedFields IsNot Nothing)
             End If
             UpdateCacheAfterUpdate(c)
             For Each el As M2MRelation In New List(Of M2MRelation)(_upd.Relations)
