@@ -393,7 +393,7 @@ Namespace Criteria.Conditions
         End Function
 
         Public Function Eval(mpe As ObjectMappingEngine, d As Core.GetObj4IEntityFilterDelegate,
-                              joins() As Joins.QueryJoin, objEU As EntityUnion) As Values.IEvaluableValue.EvalResult Implements Core.IEvaluableFilter.Eval
+                              joins As IEnumerable(Of Joins.QueryJoin), objEU As EntityUnion) As Values.IEvaluableValue.EvalResult Implements Core.IEvaluableFilter.Eval
             If mpe Is Nothing Then
                 Throw New ArgumentNullException("mpe")
             End If
@@ -588,7 +588,7 @@ Namespace Criteria.Conditions
         End Property
 
         Public Overloads Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IEntitySchema,
-                              joins() As Joins.QueryJoin, objEU As EntityUnion) As IEvaluableValue.EvalResult Implements IEntityFilter.EvalObj
+                              joins As IEnumerable(Of Joins.QueryJoin), objEU As EntityUnion) As IEvaluableValue.EvalResult Implements IEntityFilter.EvalObj
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If

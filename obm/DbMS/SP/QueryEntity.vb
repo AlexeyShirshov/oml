@@ -60,7 +60,7 @@ Namespace Database.Storedprocs
                 Next
             End If
             mgr.LoadMultipleObjects(Of T)(cmd, rr, cols)
-            Dim l As IListEdit = OrmManager._CreateReadOnlyList(GetType(T), rr)
+            Dim l As IListEdit = OrmManager._CreateReadOnlyList(GetType(T), rr, mgr.MappingEngine)
             _exec = mgr.Exec 'ce.ExecutionTime
             _fecth = mgr.Fecth 'ce.FetchTime
 

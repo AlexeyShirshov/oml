@@ -294,7 +294,7 @@ Namespace Query.Database
                 End If
 
                 _q.ExecCount += 1
-                Return CType(OrmManager._CreateReadOnlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
+                Return CType(OrmManager._CreateReadOnlyList(GetType(ReturnType), rr, _mgr.MappingEngine), ReadOnlyObjectList(Of ReturnType))
             End Function
         End Class
 
@@ -534,7 +534,7 @@ Namespace Query.Database
                 'Else
                 'dbm.LoadMultipleObjects(Of ReturnType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
                 'End If
-                Return CType(OrmManager._CreateReadOnlyList(GetType(ReturnType), t, rr), Global.Worm.ReadOnlyObjectList(Of ReturnType))
+                Return CType(OrmManager._CreateReadOnlyList(GetType(ReturnType), t, rr, _mgr.MappingEngine), Global.Worm.ReadOnlyObjectList(Of ReturnType))
             End Function
 
             'Protected ReadOnly Property Mgr() As OrmReadOnlyDBManager
@@ -728,7 +728,7 @@ Namespace Query.Database
                 End If
 
                 _q.ExecCount += 1
-                Return CType(OrmManager._CreateReadOnlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
+                Return CType(OrmManager._CreateReadOnlyList(GetType(ReturnType), rr, _mgr.MappingEngine), ReadOnlyObjectList(Of ReturnType))
             End Function
 
             'Protected Overrides Function _MakeStatement() As String
