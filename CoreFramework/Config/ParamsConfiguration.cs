@@ -8,16 +8,16 @@ namespace CoreFramework.Configuration
 {
     public class ParamsElementCollection : ConfigurationElementCollection
     {
-        public ParamsElement this[int index]
+        public new ParamsElement this[string key]
         {
-            get { return BaseGet(index) as ParamsElement; }
+            get { return BaseGet(key) as ParamsElement; }
             set
             {
-                if (BaseGet(index) != null)
+                if (BaseGet(key) != null)
                 {
-                    BaseRemoveAt(index);
+                    BaseRemove(key);
                 }
-                BaseAdd(index, value);
+                SetValue(key, value == null ? string.Empty : value.ToString());
             }
         }
 

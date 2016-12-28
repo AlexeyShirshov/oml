@@ -492,7 +492,7 @@ Imports Worm.Criteria
             Try
                 Using s As New ModificationsTracker(mgr)
                     Dim f As Table1 = s.CreateNewKeyEntity(Of Table1)()
-                    f.EnumStr = 4
+                    f.EnumStr = CType(4, Enum1?)
                     f.CreatedAt = Now
 
                     s.AcceptModifications()

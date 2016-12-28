@@ -52,7 +52,7 @@ Namespace Cache
                     l.Add(o)
                     rt = o.GetType
                 Next
-                c = CType(OrmManager._CreateReadOnlyList(GetType(T), rt, l), ReadOnlyEntityList(Of T))
+                c = CType(OrmManager._CreateReadOnlyList(GetType(T), rt, l, mc.MappingEngine), ReadOnlyEntityList(Of T))
             End Try
             successed = IListObjectConverter.ExtractListResult.Successed
             If withLoad AndAlso cacheHitOrForceLoad Then
@@ -115,7 +115,7 @@ Namespace Cache
                     If mc.GetRev Then
                         l.Reverse()
                     End If
-                    c = CType(OrmManager._CreateReadOnlyList(GetType(T), l), ReadOnlyEntityList(Of T))
+                    c = CType(OrmManager._CreateReadOnlyList(GetType(T), l, mc.MappingEngine), ReadOnlyEntityList(Of T))
                 End If
             End If
             Return c
@@ -472,7 +472,7 @@ Namespace Cache
                     OrmManager.WriteWarning("Unable to create " & loe.ObjName)
                 End If
             Next
-            Return CType(OrmManager._CreateReadOnlyList(GetType(T), objects), ReadOnlyEntityList(Of T))
+            Return CType(OrmManager._CreateReadOnlyList(GetType(T), objects, mgr.MappingEngine), ReadOnlyEntityList(Of T))
         End Function
 
         Public Function FromWeakList(ByVal weak_list As Object, ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer, ByVal withLoad() As Boolean,

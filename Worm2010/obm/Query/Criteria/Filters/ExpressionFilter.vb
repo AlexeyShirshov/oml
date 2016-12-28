@@ -149,7 +149,7 @@ Namespace Criteria.Core
         End Function
 
         Public Function Eval(mpe As ObjectMappingEngine, d As GetObj4IEntityFilterDelegate,
-                              joins() As Joins.QueryJoin, objEU As EntityUnion) As Values.IEvaluableValue.EvalResult Implements IEvaluableFilter.Eval
+                              joins As IEnumerable(Of Joins.QueryJoin), objEU As EntityUnion) As Values.IEvaluableValue.EvalResult Implements IEvaluableFilter.Eval
             If _right IsNot Nothing Then
                 Dim le As IEvaluableValue = TryCast(_left.Value, IEvaluableValue)
                 If le IsNot Nothing Then

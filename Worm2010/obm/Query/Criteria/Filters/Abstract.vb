@@ -41,7 +41,7 @@ Namespace Criteria.Core
 
     Public Interface IEvaluableFilter
         Function Eval(ByVal mpe As ObjectMappingEngine, d As GetObj4IEntityFilterDelegate,
-                              joins() As Joins.QueryJoin, objEU As EntityUnion) As IEvaluableValue.EvalResult
+                              joins As IEnumerable(Of Joins.QueryJoin), objEU As EntityUnion) As IEvaluableValue.EvalResult
     End Interface
 
     Public Interface IApplyFilter
@@ -55,7 +55,7 @@ Namespace Criteria.Core
     Public Interface IEntityFilterBase
         Inherits IEvaluableFilter
         Function EvalObj(ByVal mpe As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IEntitySchema,
-                              joins() As Joins.QueryJoin, objEU As EntityUnion) As IEvaluableValue.EvalResult
+                              joins As IEnumerable(Of Joins.QueryJoin), objEU As EntityUnion) As IEvaluableValue.EvalResult
         Function GetFilterTemplate() As IOrmFilterTemplate
         'Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object
         Function MakeHash() As String

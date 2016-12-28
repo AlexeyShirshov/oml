@@ -6493,8 +6493,10 @@ l1:
                         If nr Is Nothing Then
                             nr = CType(args.ReadOnlyList.Clone, IListEdit)
                         End If
-                        For Each a As IEntity In args.OrmManager.ApplyFilter(args.ReadOnlyList.RealType, s, Filter, Joins, GetSelectedOS)
-                            If Not nr.Contains(a) Then
+                        'Dim objEU = GetSelectedOS()
+                        Dim objEU As New EntityUnion(args.ReadOnlyList.RealType)
+                        For Each a As IEntity In args.OrmManager.ApplyFilter(args.ReadOnlyList.RealType, s, _f, _js, objEU)
+                            If nr Is Nothing OrElse Not nr.Contains(a) Then
                                 toAdd.Add(a)
                             End If
                         Next

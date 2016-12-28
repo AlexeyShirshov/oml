@@ -93,6 +93,7 @@
       <SpecificVersion>True</SpecificVersion>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Web.ApplicationServices" />
     <Reference Include="System.Web.Services" />

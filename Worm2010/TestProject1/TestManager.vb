@@ -1414,7 +1414,7 @@ Imports CoreFramework.Structures
     <TestMethod()>
     Public Sub TestErrorHandling()
 
-        Dim handle As Boolean
+        Dim handle As Boolean = False
 
         Using mgr As OrmReadOnlyDBManager = CreateManagerWrong(New ReadonlyCache, New Worm.ObjectMappingEngine("1"), New SQL2000Generator)
             AddHandler mgr.ConnectionException,
@@ -1423,8 +1423,12 @@ Imports CoreFramework.Structures
                     Dim cb As New System.Data.SqlClient.SqlConnectionStringBuilder(args.Connection.ConnectionString)
                     cb.DataSource = ".\sqlexpress"
                     args.Context = cb.ToString
-                    args.Action = OrmReadOnlyDBManager.ConnectionExceptionArgs.ActionEnum.RetryNewConnection
-                    handle = True
+                    If handle Then
+                        args.Action = OrmReadOnlyDBManager.ConnectionExceptionArgs.ActionEnum.Rethrow
+                    Else
+                        args.Action = OrmReadOnlyDBManager.ConnectionExceptionArgs.ActionEnum.RetryNewConnection
+                        handle = True
+                    End If
                 End Sub
 
             Dim e As Entity2 = New QueryCmd().GetByID(Of Entity2)(10, mgr)

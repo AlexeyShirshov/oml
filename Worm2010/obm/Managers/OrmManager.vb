@@ -1056,7 +1056,7 @@ l1:
                                 Using SyncHelper.AcquireDynamicLock(sync)
                                     Dim sc As IComparer(Of T) = New EntityComparer(Of T)(psort)
                                     If sc IsNot Nothing Then
-                                        Dim os As ReadOnlyEntityList(Of T) = CType(_CreateReadOnlyList(GetType(T), objs), ReadOnlyEntityList(Of T))
+                                        Dim os As ReadOnlyEntityList(Of T) = CType(_CreateReadOnlyList(GetType(T), objs, MappingEngine), ReadOnlyEntityList(Of T))
                                         os.Sort(sc)
                                         ce = del.GetCacheItem(os)
                                         dic(id) = ce
@@ -1505,7 +1505,7 @@ l1:
                         Using SyncHelper.AcquireDynamicLock(sync)
                             Dim sc As IComparer(Of T) = New EntityComparer(Of T)(psort)
                             If sc IsNot Nothing Then
-                                Dim os As ReadOnlyEntityList(Of T) = CType(_CreateReadOnlyList(GetType(T), objs), ReadOnlyEntityList(Of T))
+                                Dim os As ReadOnlyEntityList(Of T) = CType(_CreateReadOnlyList(GetType(T), objs, MappingEngine), ReadOnlyEntityList(Of T))
                                 os.Sort(sc)
                                 Dim ce2 As UpdatableCachedItem = del.GetCacheItem(os)
                                 If ce_.CanRenewAfterSort Then
@@ -2631,7 +2631,7 @@ l1:
         Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {t})), IListEdit)
     End Function
 
-    Friend Shared Function _CreateReadOnlyList(ByVal t As Type, ByVal l As IEnumerable) As IListEdit
+    Friend Shared Function _CreateReadOnlyList(ByVal t As Type, ByVal l As IEnumerable, mpe As ObjectMappingEngine) As IListEdit
         Dim rt As Type = Nothing
         If GetType(ISinglePKEntity).IsAssignableFrom(t) Then
             rt = GetType(ReadOnlyList(Of ))
@@ -2641,15 +2641,28 @@ l1:
             rt = GetType(ReadOnlyObjectList(Of ))
         End If
 
-        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {t}), New Object() {_GetUCFCList(t, l)}), IListEdit)
+        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {t}), New Object() {_GetUCFCList(t, l, mpe)}), IListEdit)
     End Function
 
-    Private Shared Function _GetUCFCList(ByVal t As Type, ByVal l As IEnumerable) As IEnumerable
+    Private Shared Function _GetUCFCList(ByVal t As Type, ByVal l As IEnumerable, mpe As ObjectMappingEngine) As IEnumerable
         Dim l1 As IEnumerable = l
 
         If Not GetType(IEnumerable(Of )).MakeGenericType(t).IsAssignableFrom(l.GetType()) Then
             Dim l2 As IList = CType(Activator.CreateInstance(GetType(List(Of )).MakeGenericType(New Type() {t})), IList)
             For Each i As Object In l
+                Dim ti = i.GetType
+                Dim e = TryCast(i, _IEntity)
+                If ti IsNot t Then
+                    Dim oschema = mpe.GetEntitySchema(ti)
+                    If e IsNot Nothing AndAlso oschema IsNot Nothing Then
+                        Dim ij = e.GetJoinObj(t, oschema)
+                        If ij IsNot Nothing Then
+                            l2.Add(ij)
+                            Continue For
+                        End If
+                    End If
+                    Throw New InvalidOperationException(String.Format("Cannot add object of type {0} to collection of type {1}", ti, l2.GetType))
+                End If
                 l2.Add(i)
             Next
             l1 = l2
@@ -2658,7 +2671,7 @@ l1:
         Return l1
     End Function
 
-    Friend Shared Function _CreateReadOnlyList(ByVal listType As Type, ByVal realType As Type, ByVal l As IEnumerable) As IListEdit
+    Friend Shared Function _CreateReadOnlyList(ByVal listType As Type, ByVal realType As Type, ByVal l As IEnumerable, mpe As ObjectMappingEngine) As IListEdit
         Dim rt As Type = Nothing
         If GetType(ISinglePKEntity).IsAssignableFrom(listType) Then
             rt = GetType(ReadOnlyList(Of ))
@@ -2667,7 +2680,7 @@ l1:
         Else
             rt = GetType(ReadOnlyObjectList(Of ))
         End If
-        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {realType, _GetUCFCList(listType, l)}), IListEdit)
+        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {realType, _GetUCFCList(listType, l, mpe)}), IListEdit)
     End Function
 
     Friend Shared Function _CreateReadOnlyList(ByVal listType As Type, ByVal realType As Type) As IListEdit
@@ -2692,7 +2705,7 @@ l1:
     'End Function
 
     Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IGetFilter,
-                              joins() As Joins.QueryJoin, objEU As EntityUnion) As ReadOnlyObjectList(Of T)
+                              joins As IEnumerable(Of Joins.QueryJoin), objEU As EntityUnion) As ReadOnlyObjectList(Of T)
         Dim evaluated As Boolean
         Dim r As ReadOnlyObjectList(Of T) = ApplyFilter(col, filter, joins, objEU, evaluated)
         If Not evaluated Then
@@ -2714,14 +2727,14 @@ l1:
     End Function
 
     Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IGetFilter,
-                              joins() As Joins.QueryJoin, objEU As EntityUnion, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
+                              joins As IEnumerable(Of Joins.QueryJoin), objEU As EntityUnion, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
         Return ApplyFilter(Of T)(col, filter, joins, objEU, _schema, evaluated, _start, _length)
     End Function
 
     Public Shared Function ApplyFilter(Of T As {_IEntity})(
                                                           ByVal col As ReadOnlyObjectList(Of T),
                                                           ByVal filter As IGetFilter,
-                                                          joins() As Joins.QueryJoin,
+                                                          joins As IEnumerable(Of Joins.QueryJoin),
                                                           objEU As EntityUnion,
                                                           mpe As ObjectMappingEngine,
                                                           ByRef evaluated As Boolean,
@@ -2778,7 +2791,7 @@ l1:
     End Function
 
     Public Function ApplyFilter(ByVal t As Type, ByVal col As IEnumerable, ByVal filter As IGetFilter,
-                              joins() As Joins.QueryJoin, objEU As EntityUnion) As IReadOnlyList
+                              joins As IEnumerable(Of Joins.QueryJoin), objEU As EntityUnion) As IReadOnlyList
         Dim evaluated As Boolean
         Dim r As IReadOnlyList = ApplyFilter(t, col, filter, joins, objEU, evaluated)
         If Not evaluated Then
@@ -2791,14 +2804,16 @@ l1:
         Return ApplyFilter(t, col, filter, Nothing, Nothing, evaluated)
     End Function
 
-    Public Function ApplyFilter(ByVal t As Type, ByVal col As IEnumerable, ByVal filter As IGetFilter,
-                              joins() As Joins.QueryJoin, objEU As EntityUnion, ByRef evaluated As Boolean) As IReadOnlyList
+    Public Shared Function ApplyFilter(ByVal t As Type, ByVal col As IEnumerable, ByVal filter As IGetFilter,
+                                       joins As IEnumerable(Of Joins.QueryJoin), mpe As ObjectMappingEngine, objEU As EntityUnion,
+                                       _start As Integer, _length As Integer,
+                                       ByRef evaluated As Boolean) As IReadOnlyList
         If filter Is Nothing Then
             evaluated = True
             If GetType(IReadOnlyList).IsAssignableFrom(col.GetType) Then
                 Return CType(col, IReadOnlyList)
             Else
-                Return _CreateReadOnlyList(t, col)
+                Return _CreateReadOnlyList(t, col, mpe)
             End If
         End If
 
@@ -2807,7 +2822,7 @@ l1:
             If GetType(IReadOnlyList).IsAssignableFrom(col.GetType) Then
                 Return CType(col, IReadOnlyList)
             Else
-                Return _CreateReadOnlyList(t, col)
+                Return _CreateReadOnlyList(t, col, mpe)
             End If
         Else
             evaluated = True
@@ -2820,9 +2835,9 @@ l1:
                 End If
 
                 If oschema Is Nothing Then
-                    oschema = _schema.GetEntitySchema(o.GetType)
+                    oschema = mpe.GetEntitySchema(o.GetType)
                 End If
-                Dim er As IEvaluableValue.EvalResult = f.EvalObj(_schema, o, oschema, joins, objEU)
+                Dim er As IEvaluableValue.EvalResult = f.EvalObj(mpe, o, oschema, joins, objEU)
                 Select Case er
                     Case IEvaluableValue.EvalResult.Found
                         If i >= _start Then
@@ -2840,7 +2855,10 @@ l1:
             Return l
         End If
     End Function
-
+    Public Function ApplyFilter(ByVal t As Type, ByVal col As IEnumerable, ByVal filter As IGetFilter,
+                              joins As IEnumerable(Of Joins.QueryJoin), objEU As EntityUnion, ByRef evaluated As Boolean) As IReadOnlyList
+        Return ApplyFilter(t, col, filter, joins, _schema, objEU, _start, _length, evaluated)
+    End Function
     Public Shared Function ApplySort(Of T As {_IEntity})(ByVal c As IEnumerable(Of T), _
         ByVal s As OrderByClause, ByVal getObj As entityComparer.GetObjectDelegate, mpe As ObjectMappingEngine) As IEnumerable(Of T)
         If c.Count > 0 Then
