@@ -26,20 +26,22 @@ namespace CoreFramework.Debugging
 
     public class HighPerfOutputTimer : IDisposable
     {
-        private PerfCounter _pf;
+        private System.Diagnostics.Stopwatch _pf;
         private string _name;
 
         public HighPerfOutputTimer(string name)
         {
             _name = name;
-            _pf = new PerfCounter();
+            _pf = new System.Diagnostics.Stopwatch();
+            _pf.Start();
         }
 
         #region IDisposable Members
 
         public void Dispose()
         {
-            System.Diagnostics.Trace.WriteLine(string.Format("{0}: {1} s", _name, _pf.GetTime().TotalSeconds));
+            _pf.Stop();
+            System.Diagnostics.Trace.WriteLine(string.Format("{0}: {1} s", _name, _pf.Elapsed.TotalSeconds));
         }
 
         #endregion
