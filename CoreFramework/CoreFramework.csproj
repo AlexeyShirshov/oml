@@ -75,7 +75,7 @@
     <Compile Include="Config\CustomElements.cs" />
     <Compile Include="Config\ParamsConfiguration.cs" />
     <Compile Include="Debug\PerfCounter.cs" />
-    <Compile Include="EncodingStringWriter.cs" />
+    <Compile Include="IO\EncodingStringWriter.cs" />
     <Compile Include="Collections\EqualityComparerOnDelegates.cs" />
     <Compile Include="Globalization\Globalization.cs" />
     <Compile Include="Config\KeylessElementCollection.cs" />
@@ -84,10 +84,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Collections\QuietDictionary.cs" />
     <Compile Include="Collections\ReadOnlyDictionary.cs" />
+    <Compile Include="System\ActivatorExtensions.cs" />
     <Compile Include="Threading\ScopeManagers.cs" />
     <Compile Include="Debug\Stack.cs" />
     <Compile Include="Threading\SyncHelper.cs" />
-    <Compile Include="Text.cs" />
+    <Compile Include="Text\Text.cs" />
     <Compile Include="Debug\Timer.cs" />
     <Compile Include="Globalization\TimeZoneInfo.cs" />
   </ItemGroup>
@@ -117,7 +118,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="True" />
+      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.None.Increment" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

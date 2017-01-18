@@ -35,8 +35,8 @@ namespace CoreFramework.Structures
     [Serializable]
     public class Pair<T1, T2>
     {
-        private T1 _first;
-        private T2 _second;
+        private readonly T1 _first;
+        private readonly T2 _second;
 
         public Pair()
         {
