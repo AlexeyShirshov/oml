@@ -11,6 +11,7 @@ namespace CoreFramework.Debugging
     /// Класс, повзволяющий точно замерять промежутки времени
     /// </summary>
     /// <remarks></remarks>
+    [Obsolete("Use System.Diagnostics.Stopwatch")]
     public class PerfCounter
     {
         private static long? _freq;

@@ -11,16 +11,16 @@ namespace CoreFramework
         private readonly Action executeOnDispose;
 
         /// <summary>
-        /// Constructs an <see cref=”AutoCleanup”/> object,
+        /// Constructs an <see cref="AutoCleanup"/> object,
         /// immediately executing a delegate function, and
         /// then guaranteeing the execution of a second
         /// deletate function when disposed.
         /// </summary>
-        /// <param name=”executeOnConstruct”>
+        /// <param name="executeOnConstruct">
         /// The delegate function to execute during
         /// construction.
         /// </param>
-        /// <param name=”executeOnDispose”>
+        /// <param name="executeOnDispose">
         /// The delegate function to execute when disposed.
         /// </param>
         public AutoCleanup(Action executeOnConstruct,
@@ -34,11 +34,11 @@ namespace CoreFramework
         }
 
         /// <summary>
-        /// Constructs an <see cref=”AutoCleanup”/> object,
+        /// Constructs an <see cref="AutoCleanup"/> object,
         /// guaranteeing the execution of a provided delegate
         /// function when disposed.
         /// </summary>
-        /// <param name=”executeOnDispose”>
+        /// <param name="executeOnDispose">
         /// The delegate function to execute when disposed.
         /// </param>
         public AutoCleanup(Action executeOnDispose)
@@ -48,7 +48,7 @@ namespace CoreFramework
 
         #region IDisposable Members
         /// <summary>
-        /// Disposes the <see cref=”AutoCleanup”/> object,
+        /// Disposes the <see cref="AutoCleanup"/> object,
         /// executing the delegate function provided in the
         /// constructor.
         /// </summary>

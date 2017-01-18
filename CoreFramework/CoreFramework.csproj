@@ -72,6 +72,7 @@
     <Compile Include="Collections\ListExtensions.cs" />
     <Compile Include="CommandLineParser.cs" />
     <Compile Include="Collections\ConcurentList.cs" />
+    <Compile Include="Config\CustomElements.cs" />
     <Compile Include="Config\ParamsConfiguration.cs" />
     <Compile Include="Debug\PerfCounter.cs" />
     <Compile Include="EncodingStringWriter.cs" />
@@ -109,6 +110,9 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Xml\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
