@@ -544,11 +544,28 @@ End Class
         End Using
     End Sub
 
-    <TestMethod()> _
+    <TestMethod()>
     Public Sub TestEquality2()
         Dim o As Object = 2
         Assert.IsTrue(Equals(o, 2))
 
         Assert.IsFalse(Equals(2, "sdf"))
     End Sub
+
+    <TestMethod>
+    Public Sub TestActivator()
+        Activator.CreateInstance(GetType(cls1))
+        Activator.CreateInstance(GetType(cls1), "1")
+        'Activator.CreateInstance(GetType(cls1), 1)
+    End Sub
+
+    Class cls1
+        Public Sub New()
+            Console.WriteLine("default ctor")
+        End Sub
+
+        Public Sub New(i As String)
+            Console.WriteLine("string ctor")
+        End Sub
+    End Class
 End Class

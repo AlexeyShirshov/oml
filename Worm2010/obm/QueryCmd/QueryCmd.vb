@@ -2970,7 +2970,7 @@ l1:
         Public Function OrderBy(ByVal ParamArray exp() As ECtor.Int) As QueryCmd
             Dim f As New List(Of SortExpression)
             For Each ei As ECtor.Int In exp
-                For Each e As IGetExpression In ei.GetExpressions
+                For Each e As IGetExpression In ei.AsEnumerable
                     If TypeOf e Is SortExpression Then
                         f.Add(CType(e, SortExpression))
                     Else
@@ -3284,7 +3284,7 @@ l1:
         Public Function [Select](ByVal ParamArray exp() As ECtor.Int) As QueryCmd
             Dim f As New List(Of SelectExpression)
             For Each ei As ECtor.Int In exp
-                For Each e As IGetExpression In ei.GetExpressions
+                For Each e As IGetExpression In ei.AsEnumerable
                     If TypeOf e Is SelectExpression Then
                         f.Add(CType(e, SelectExpression))
                     Else
