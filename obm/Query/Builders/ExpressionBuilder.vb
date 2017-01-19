@@ -24,17 +24,19 @@ Namespace Query
                 Return exp
             End Function
 
-            Public Function GetExpressions() As List(Of IExpression)
+            Protected Function GetExpressions() As List(Of IExpression)
                 If _l Is Nothing Then
                     _l = New List(Of IExpression)
                 End If
                 Return _l
             End Function
 
-            'Public Shared Widening Operator CType(ByVal f As IntBase) As IExpression()
-            '    Return f.GetAllProperties.ToArray
-            'End Operator
-
+            Public Function ToArray() As IExpression()
+                Return _l.ToArray
+            End Function
+            Public Function AsEnumerable() As IEnumerable(Of IExpression)
+                Return _l
+            End Function
 #Region " Members "
             Public Function prop(ByVal propertyAlias As String) As T
                 Return Exp(New PropertyAliasExpression(propertyAlias))
