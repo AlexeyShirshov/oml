@@ -51,11 +51,12 @@ namespace CoreFrameworkTest
             var t = typeof(cls);
             Assert.AreEqual("string int ctor", (t.CreateInstanceDyn(new { s = "", i = 1 }) as cls).str);
         }
-        //[TestMethod, ExpectedException(typeof(MissingMethodException))]
-        //public void TestActivatorError2()
-        //{
-        //    var t = typeof(cls);
-        //}
+        [TestMethod]
+        public void TestActivatorMap()
+        {
+            var t = typeof(cls);
+            Assert.AreEqual("double float ctor", (t.CreateInstance((Type mtype, Type atype)=> mtype == typeof(float)?(object)1:null, 1d) as cls).str);
+        }
         //[TestMethod, ExpectedException(typeof(MissingMethodException))]
         //public void TestActivatorError3()
         //{
