@@ -527,6 +527,16 @@ Namespace Criteria.Conditions
                 End Get
             End Property
 
+            Public Sub ReplaceDerived(mpe As ObjectMappingEngine, eu As EntityUnion) Implements IOrmFilterTemplate.ReplaceDerived
+                If Con.Left IsNot Nothing Then
+                    Con.Left.GetFilterTemplate.ReplaceDerived(mpe, eu)
+                End If
+
+                If Con.Right IsNot Nothing Then
+                    Con.Right.GetFilterTemplate.ReplaceDerived(mpe, eu)
+                End If
+            End Sub
+
             'Public Function GetStaticString() As String Implements Core.ITemplate.GetStaticString
             '    Dim s As New StringBuilder
             '    s.Append(_con.Left.Template.GetStaticString)

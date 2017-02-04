@@ -6,6 +6,7 @@ Imports Worm.Query
 Imports System.Collections.Generic
 Imports Worm.Criteria.Values
 Imports Worm.Expressions2
+Imports System.Linq
 
 Namespace Criteria
 
@@ -447,6 +448,26 @@ Namespace Criteria
         Public Shared Operator Or(ByVal a As PredicateLink, ByVal b As PredicateLink) As PredicateLink
             Return a.or(b)
         End Operator
+
+        Public Function ReplaceDerived(mpe As ObjectMappingEngine, eu As EntityUnion) As PredicateLink
+            If _con IsNot Nothing AndAlso Not _con.IsEmpty Then
+                For Each ef In _con.Condition.GetAllFilters.OfType(Of IEntityFilter)
+                    ef.GetFilterTemplate.ReplaceDerived(mpe, eu)
+                Next
+            End If
+            Return Me
+        End Function
+        Public Function ReplaceDerived(mpe As ObjectMappingEngine, entityName As String) As PredicateLink
+            Return ReplaceDerived(mpe, New EntityUnion(entityName))
+        End Function
+
+        Public Function ReplaceDerived(mpe As ObjectMappingEngine, type As Type) As PredicateLink
+            Return ReplaceDerived(mpe, New EntityUnion(type))
+        End Function
+
+        Public Function ReplaceDerived(mpe As ObjectMappingEngine, [alias] As QueryAlias) As PredicateLink
+            Return ReplaceDerived(mpe, New EntityUnion([alias]))
+        End Function
     End Class
 
 End Namespace

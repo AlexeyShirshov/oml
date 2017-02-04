@@ -667,8 +667,9 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
         End If
     End Function
 
+    <NonSerialized>
     Public Event CollectionChanged(sender As Object, e As System.Collections.Specialized.NotifyCollectionChangedEventArgs) Implements System.Collections.Specialized.INotifyCollectionChanged.CollectionChanged
-
+    <NonSerialized>
     Public Event PropertyChanged(sender As Object, e As System.ComponentModel.PropertyChangedEventArgs) Implements System.ComponentModel.INotifyPropertyChanged.PropertyChanged
 
     Protected Function GetIGetMgr() As IGetManager

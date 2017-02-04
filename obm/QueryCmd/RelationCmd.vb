@@ -359,6 +359,7 @@ Namespace Query
             End Sub
         End Class
 
+        '<NonSerialized()>
         Public Event OnModifyFilter(ByVal sender As RelationCmd, ByVal args As ModifyFilter)
 
         Protected Overrides Function _CopyTo(target As ICopyable) As Boolean

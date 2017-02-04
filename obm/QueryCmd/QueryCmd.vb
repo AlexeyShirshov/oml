@@ -587,10 +587,15 @@ Namespace Query
 
         Public Delegate Function GetDictionaryDelegate(ByVal key As String) As IDictionary
 
+        '<NonSerialized()>
         Public Event CacheDictionaryRequired(ByVal sender As QueryCmd, ByVal args As CacheDictionaryRequiredEventArgs)
+        '<NonSerialized()>
         Public Event ExternalDictionary(ByVal sender As QueryCmd, ByVal args As ExternalDictionaryEventArgs)
+        '<NonSerialized()>
         Public Event GetDynamicKey4Filter(ByVal sender As QueryCmd, ByVal args As GetDynamicKey4FilterEventArgs)
+        '<NonSerialized()>
         Public Event QueryPrepared(ByVal sender As QueryCmd, ByVal args As QueryPreparedEventArgs)
+        '<NonSerialized()>
         Public Event ModifyResult(ByVal sender As QueryCmd, ByVal args As ModifyResultArgs)
 
         Friend _sel As SelectClauseDef
@@ -652,7 +657,9 @@ Namespace Query
         Private _oldLength As Integer
         Private _oldRev As Boolean
 
+        '<NonSerialized()>
         Public Event ConnectionException(sender As QueryCmd, args As ConnectionExceptionArgs)
+        '<NonSerialized()>
         Public Event CommandException(sender As QueryCmd, args As CommandExceptionArgs)
 
 #Region " Cache "

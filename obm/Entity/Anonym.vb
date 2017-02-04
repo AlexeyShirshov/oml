@@ -225,12 +225,17 @@ Namespace Entities
         Private _loaded_members As IDictionary(Of String, Boolean)
         <NonSerialized()> _
         Private _sl As New SpinLockRef
-
+        <NonSerialized()>
         Public Event Added(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.Added
+        <NonSerialized()>
         Public Event Deleted(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.Deleted
+        <NonSerialized()>
         Public Event OriginalCopyRemoved(ByVal sender As ICachedEntity) Implements IUndoChanges.OriginalCopyRemoved
+        <NonSerialized()>
         Public Event Saved(ByVal sender As ICachedEntity, ByVal args As ObjectSavedArgs) Implements ICachedEntity.Saved
+        <NonSerialized()>
         Public Event Updated(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.Updated
+        <NonSerialized()>
         Public Event ChangesAccepted(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.ChangesAccepted
 
         'Private Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer, _
@@ -1093,7 +1098,7 @@ Namespace Entities
                 End Using
             End Set
         End Property
-
+        <NonSerialized()>
         Public Event ChangesRejected(sender As ICachedEntity, args As EventArgs) Implements ICachedEntity.ChangesRejected
 
         Public Sub RaiseChangesRejected(args As EventArgs) Implements ICachedEntity.RaiseChangesRejected

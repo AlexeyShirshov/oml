@@ -550,6 +550,9 @@ End Class
         Assert.IsTrue(Equals(o, 2))
 
         Assert.IsFalse(Equals(2, "sdf"))
+
+        'Assert.IsNull(Split(Nothing, ","))
+        Assert.IsNotNull(Split("", ","))
     End Sub
 
     <TestMethod>
@@ -557,6 +560,19 @@ End Class
         Activator.CreateInstance(GetType(cls1))
         Activator.CreateInstance(GetType(cls1), "1")
         'Activator.CreateInstance(GetType(cls1), 1)
+
+        Dim i As Integer? = 10
+        Assert.AreEqual(10, i.GetHashCode)
+        Assert.AreEqual(10, If(i?.GetHashCode, 10))
+        i = Nothing
+        Assert.AreEqual(10, If(i?.GetHashCode, 10))
+
+        Dim s As String = "hello"
+        Assert.IsTrue(s.IsNormalized)
+        s = Nothing
+        If s?.IsNormalized Then
+            Debug.Fail("Should be False")
+        End If
     End Sub
 
     Class cls1

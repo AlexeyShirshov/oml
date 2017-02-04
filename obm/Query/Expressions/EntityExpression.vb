@@ -3,6 +3,7 @@ Imports Worm.Entities.Meta
 Imports System.Collections.Generic
 
 Namespace Expressions2
+    <Serializable>
     Public Class EntityExpression
         Implements IEntityPropertyExpression
 
@@ -33,7 +34,7 @@ Namespace Expressions2
         End Sub
 
         Protected Overridable Function _Clone() As Object Implements System.ICloneable.Clone
-            Return Clone
+            Return Clone()
         End Function
 
         Public Function Clone() As EntityExpression
@@ -72,9 +73,9 @@ Namespace Expressions2
             Return New IExpression() {Me}
         End Function
 
-        Public Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, _
-            ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, _
-            ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, ByVal stmtMode As MakeStatementMode, _
+        Public Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef,
+            ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam,
+            ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, ByVal stmtMode As MakeStatementMode,
             ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
 
             Dim map As MapField2Column = Nothing
@@ -134,10 +135,10 @@ Namespace Expressions2
 
                 If args.CustomStatement IsNot Nothing Then
                     If args.CustomStatement.FromLeft Then
-                        sb.Insert(idx_beg, args.CustomStatement.MakeStatement(mpe, fromClause, stmt, paramMgr, _
+                        sb.Insert(idx_beg, args.CustomStatement.MakeStatement(mpe, fromClause, stmt, paramMgr,
                             almgr, contextInfo, stmtMode, executor, sf))
                     Else
-                        sb.Append(args.CustomStatement.MakeStatement(mpe, fromClause, stmt, paramMgr, _
+                        sb.Append(args.CustomStatement.MakeStatement(mpe, fromClause, stmt, paramMgr,
                             almgr, contextInfo, stmtMode, executor, sf))
                     End If
                     sb.Append(" and ")
@@ -199,6 +200,7 @@ Namespace Expressions2
             End Set
         End Property
 
+        <NonSerialized()>
         Public Event FormatBehaviour(ByVal sender As IEntityPropertyExpression, ByVal args As IEntityPropertyExpression.FormatBehaviourArgs) Implements IEntityPropertyExpression.FormatBehaviour
 
         Protected Overridable Function _CopyTo(target As ICopyable) As Boolean Implements ICopyable.CopyTo
