@@ -39,6 +39,7 @@ Namespace Expressions2
             End Get
         End Property
 
+        <NonSerialized()>
         Public Event ModifyValue(ByVal sender As IParameterExpression, ByVal args As IParameterExpression.ModifyValueArgs) Implements IParameterExpression.ModifyValue
 
         Protected Overrides Function _Clone() As Object

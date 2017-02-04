@@ -607,7 +607,7 @@ Namespace Expressions2
             Return Nothing
         End Function
     End Class
-
+    <Serializable>
     Public Class BetweenExpression
         Inherits BinaryExpressionBase
         Implements IParameterExpression
@@ -679,6 +679,7 @@ Namespace Expressions2
             Return False
         End Function
 
+        <NonSerialized()>
         Public Event ModifyValue(ByVal sender As IParameterExpression, ByVal args As IParameterExpression.ModifyValueArgs) Implements IParameterExpression.ModifyValue
 
         'Public Overloads Function Test(ByVal oper As BinaryOperationType, ByVal v As Object, ByVal mpe As ObjectMappingEngine) As IParameterExpression.EvalResult Implements IParameterExpression.Test

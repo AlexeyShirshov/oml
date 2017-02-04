@@ -1223,6 +1223,7 @@ Namespace Entities
         'Private _old_state As ObjectState
 
         'Public Event ChangesAccepted(ByVal sender As ICachedEntity, ByVal args As EventArgs) Implements IUndoChanges.ChangesAccepted
+        <NonSerialized()>
         Public Event OriginalCopyRemoved(ByVal sender As ICachedEntity) Implements IUndoChanges.OriginalCopyRemoved
 
         Protected Friend Sub RaiseCopyRemoved() Implements IUndoChanges.RaiseOriginalCopyRemoved

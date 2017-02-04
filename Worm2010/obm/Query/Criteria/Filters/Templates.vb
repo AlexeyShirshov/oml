@@ -239,6 +239,14 @@ Namespace Criteria.Core
         Public Overrides Function _ToString() As String
             Return ObjectSource._ToString
         End Function
+
+        Public Sub ReplaceDerived(mpe As ObjectMappingEngine, eu As EntityUnion) Implements IOrmFilterTemplate.ReplaceDerived
+            If eu IsNot Nothing Then
+                If _op.Entity.GetRealType(mpe).IsAssignableFrom(eu.GetRealType(mpe)) Then
+                    _op = New ObjectProperty(eu, _op.PropertyAlias)
+                End If
+            End If
+        End Sub
     End Class
 
     <Serializable()> _

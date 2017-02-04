@@ -60,7 +60,9 @@ Namespace Entities
         <NonSerialized()> _
         Private _mpe As ObjectMappingEngine
 
+        <NonSerialized()>
         Public Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs) Implements IEntity.ManagerRequired
+        <NonSerialized()>
         Public Event PropertyChangedEx(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs) Implements IEntity.PropertyChangedEx
 
 #If DEBUG Then
@@ -633,7 +635,7 @@ Namespace Entities
         Protected Sub RaisePropertyChanged(ByVal propertyChangedEventArgs As PropertyChangedEventArgs) Implements _IEntity.RaisePropertyChanged
             RaiseEvent PropertyChangedEx(Me, propertyChangedEventArgs)
         End Sub
-
+        <NonSerialized>
         Public Event PropertyChanged(sender As Object, e As System.ComponentModel.PropertyChangedEventArgs) Implements System.ComponentModel.INotifyPropertyChanged.PropertyChanged
 
         Protected Sub RaiseMVVMPropertyChanged(propName As String)
