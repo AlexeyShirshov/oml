@@ -12,20 +12,27 @@ namespace CoreFramework.Configuration
         void DeserializeElement(System.Xml.XmlReader reader, bool serializeCollectionKey);
     }
     public class KeylessElementCollection<T> : ConfigurationElement, ICollection<T>
-        where T : ConfigurationElement, ICustomConfigurationElement, new()
+        where T : ConfigurationElement, new()
     {
         private List<T> _list = new List<T>();
         public KeylessElementCollection()
         {
-
+            
         }
         public KeylessElementCollection(XmlReader reader)
         {
             DeserializeElement(reader, false);
         }
+        public virtual string ElementName
+        {
+            get
+            {
+                return "add";
+            }
+        }
         protected override bool OnDeserializeUnrecognizedElement(string elementName, System.Xml.XmlReader reader)
         {
-            if (elementName == "add")
+            if (elementName == ElementName)
             {
                 var el = new T();
                 el.DeserializeElement(reader, false);

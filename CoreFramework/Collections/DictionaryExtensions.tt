@@ -1,0 +1,65 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Globalization" #>
+<#@ output extension="g.cs" #>
+
+using System;
+using System.Collections.Generic;
+
+namespace CoreFramework.Collections
+{
+	public static partial class DictionaryExtensions
+    {
+<#foreach (var type in new string[] {"int", "bool", "double", "float", "short"})
+      { #>
+            
+		public static <#=type#> Get<#=CultureInfo.CurrentCulture.TextInfo.ToTitleCase(type)#>(this IDictionary<String, String> dic, string name, <#=type#> def, bool throwOnParseError = false)
+        {
+            if (dic == null)
+                throw new ArgumentNullException(nameof(dic));
+
+            string s;
+            <#=type#> i;
+            if (dic.TryGetValue(name, out s))
+			{
+				if (throwOnParseError)
+					return <#=type#>.Parse(s);
+				else if(<#=type#>.TryParse(s, out i))
+					return i;
+			}
+
+            return def;
+        }
+
+		public static <#=type#>? Get<#=CultureInfo.CurrentCulture.TextInfo.ToTitleCase(type)#>(this IDictionary<String, String> dic, string name)
+        {
+            if (dic == null)
+                throw new ArgumentNullException(nameof(dic));
+
+            string s;
+            <#=type#> i;
+            if (dic.TryGetValue(name, out s) && <#=type#>.TryParse(s, out i))
+                return i;
+
+            return null;
+        }
+
+		public static <#=type#> Get<#=CultureInfo.CurrentCulture.TextInfo.ToTitleCase(type)#>(this IDictionary<String, object> dic, string name, <#=type#> def = default(<#=type#>))
+        {
+            if (dic == null)
+                throw new ArgumentNullException(nameof(dic));
+
+            object s;
+            if (dic.TryGetValue(name, out s))
+			{
+                return (<#=type#>)Convert.ChangeType(s, typeof(<#=type#>));
+			}
+
+            return def;
+        }
+<#      }#>
+	}
+}

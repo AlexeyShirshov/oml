@@ -8,7 +8,16 @@ namespace CoreFramework
 {
     public static class ActivatorHelpers
     {
+        class ParamAndWeight
+        {
+            public object value;
+            public int weight = 0;
+            public ParamAndWeight() { }
+            public ParamAndWeight(object v) { value = v; }
+            public ParamAndWeight(object v, int w) { value = v; weight = w; }
+        }
         private static readonly object _null = new object();
+        private static readonly ParamAndWeight _pnull = new ParamAndWeight();
         public static object CreateInstance(this Type type)
         {
             return Activator.CreateInstance(type);
@@ -141,7 +150,7 @@ namespace CoreFramework
             if (type == null)
                 return null;
 
-            List<Tuple<ConstructorInfo, object[], int[]>> dic = new List<Tuple<ConstructorInfo, object[], int[]>>();
+            List<Tuple<ConstructorInfo, ParamAndWeight[], IList<int>>> dic = new List<Tuple<ConstructorInfo, ParamAndWeight[], IList<int>>>();
             foreach (var ctor in type.GetConstructors())
             {
                 var methodParams = ctor.GetParameters();
@@ -151,10 +160,10 @@ namespace CoreFramework
                 }
                 else
                 {
-                    var params2Call = new object[methodParams.Count()];
+                    var params2Call = new ParamAndWeight[methodParams.Count()];
                     var argsIdx = new List<int>();
                     for (int i = 0; i < params2Call.Length; i++)
-                        params2Call[i] = _null;
+                        params2Call[i] = _pnull;
 
                     if (args != null && args.Length > 0)
                     {
@@ -184,7 +193,7 @@ namespace CoreFramework
                                 //}
 
                                 argsIdx.Add(j);
-                                params2Call[i] = null;// Convert.ChangeType(null, mtype);
+                                params2Call[i] = new ParamAndWeight(null, 7);// Convert.ChangeType(null, mtype);
                                 j++;
                             }
                             else
@@ -192,7 +201,7 @@ namespace CoreFramework
                                 if (mtype == arg.GetType())
                                 {
                                     argsIdx.Add(j);
-                                    params2Call[i] = arg;
+                                    params2Call[i] = new ParamAndWeight(arg, 10);
                                     j++;
                                 }
                                 //else if (mapTypes != null)
@@ -214,44 +223,44 @@ namespace CoreFramework
                             }
                         }
                     }
-                    dic.Add(new Tuple<ConstructorInfo, object[], int[]>(ctor, params2Call, (from k in Enumerable.Range(0, args.Length)
+                    dic.Add(new Tuple<ConstructorInfo, ParamAndWeight[], IList<int>>(ctor, params2Call, (from k in Enumerable.Range(0, args.Length)
                                                                                                where !argsIdx.Contains(k)
-                                                                                               select k).ToArray()));
+                                                                                               select k).ToList()));
                 }
             }
 
             var bestParams = dic.First();
-            IEnumerable<Tuple<ConstructorInfo, object[], int[]>> sorted = null;
-            if (dic.Count > 1)
+            IEnumerable<Tuple<ConstructorInfo, ParamAndWeight[], IList<int>>> sorted = null;
+            //if (dic.Count > 1)
             {
-                sorted = dic.OrderByDescending(it => it.Item2.Count(it2 => it2 != _null)).ToArray();
+                sorted = dic.OrderByDescending(it => it.Item2.Sum(it2 => it2.weight)).ToArray();
                 bestParams = sorted.First();
             }
 
-            if (bestParams.Item2.Count(it => it != _null) == bestParams.Item1.GetParameters().Length && bestParams.Item3.Length == 0)
-            {
+            //if (bestParams.Item2.Count(it => it != _pnull) == bestParams.Item1.GetParameters().Length && bestParams.Item3.Count == 0)
+            //{
 
-            }
-            else if (dic.Count == 1)
+            //}
+            //else if (dic.Count == 1)
+            //{
+            //    for (int i = 0; i < bestParams.Item2.Length; i++)
+            //    {
+            //        if (bestParams.Item2[i] == _pnull)
+            //        {
+            //            bestParams.Item2[i] = new ParamAndWeight(null);
+            //        }
+            //    }
+            //}
+            //else
             {
-                for (int i = 0; i < bestParams.Item2.Length; i++)
-                {
-                    if (bestParams.Item2[i] == _null)
-                    {
-                        bestParams.Item2[i] = null;
-                    }
-                }
-            }
-            else
-            {
-                sorted = sorted.OrderByDescending(it => it.Item2.Count(it2 => it2 != _null)).ThenBy(it => it.Item1.GetParameters().Length).ToArray();
+                sorted = sorted.OrderByDescending(it => it.Item2.Sum(it2 => it2.weight)).ThenBy(it => it.Item1.GetParameters().Length).ToArray();
                 foreach (var candidate in sorted)
                 {
-                    if (candidate.Item3.Length == 0)
+                    if (candidate.Item3.Count == 0)
                     {
                         for (int i = 0; i < candidate.Item2.Length; i++)
                         {
-                            if (candidate.Item2[i] == _null)
+                            if (candidate.Item2[i] == _pnull)
                             {
                                 var p = candidate.Item1.GetParameters()[i];
                                 var mtype = p.ParameterType;
@@ -260,7 +269,7 @@ namespace CoreFramework
                                     var o = mapTypes(mtype, null);
                                     if (o != null)
                                     {
-                                        candidate.Item2[i] = o;
+                                        candidate.Item2[i] = new ParamAndWeight(o, 6);
                                     }
                                 }
                             }
@@ -268,34 +277,70 @@ namespace CoreFramework
                     }
                     else
                     {
-                        for (int i = 0, j = 0; i < candidate.Item2.Length && j < candidate.Item3.Length; i++)
+                        //for (int i = 0, j = 0; i < candidate.Item2.Length && j < candidate.Item3.Length; i++)
+                        //{
+                        //    if (candidate.Item2[i] == _pnull)
+                        //    {
+                        //        var p = candidate.Item1.GetParameters()[i];
+                        //        var mtype = p.ParameterType;
+                        //        var arg = args[candidate.Item3[j]];
+                        //        if (arg != null)
+                        //        {
+                        //            var atype = arg.GetType();
+                        //            if (mtype.IsAssignableFrom(atype))
+                        //            {
+                        //                candidate.Item2[i] = arg;
+                        //                j++;
+                        //                continue;
+                        //            }
+                        //            else if (mapTypes != null)
+                        //            {
+                        //                var o = mapTypes(mtype, atype);
+                        //                if (o != null)
+                        //                {
+                        //                    candidate.Item2[i] = o;
+                        //                    j++;
+                        //                    continue;
+                        //                }
+                        //            }
+                        //            else
+                        //            {
+                        //            }
+                        //        }
+                        //    }
+                        //}
+
+                        for (int i = 0; i < candidate.Item2.Length; i++)
                         {
-                            if (candidate.Item2[i] == _null)
+                            if (candidate.Item2[i] == _pnull)
                             {
                                 var p = candidate.Item1.GetParameters()[i];
                                 var mtype = p.ParameterType;
-                                var arg = args[candidate.Item3[j]];
-                                if (arg != null)
+                                foreach (var idx in candidate.Item3)
                                 {
-                                    var atype = arg.GetType();
-                                    if (mtype.IsAssignableFrom(atype))
+                                    var arg = args[idx];
+                                    if (arg != null)
                                     {
-                                        candidate.Item2[i] = arg;
-                                        j++;
-                                        continue;
-                                    }
-                                    else if (mapTypes != null)
-                                    {
-                                        var o = mapTypes(mtype, atype);
-                                        if (o != null)
+                                        var atype = arg.GetType();
+                                        if (mtype.IsAssignableFrom(atype))
                                         {
-                                            candidate.Item2[i] = o;
-                                            j++;
-                                            continue;
+                                            candidate.Item2[i] = new ParamAndWeight(arg, 6);
+                                            candidate.Item3.Remove(idx);
+                                            break;
                                         }
-                                    }
-                                    else
-                                    {
+                                        else if (mapTypes != null)
+                                        {
+                                            var o = mapTypes(mtype, atype);
+                                            if (o != null)
+                                            {
+                                                candidate.Item2[i] = new ParamAndWeight(o, 6);
+                                                candidate.Item3.Remove(idx);
+                                                break;
+                                            }
+                                        }
+                                        else
+                                        {
+                                        }
                                     }
                                 }
                             }
@@ -303,14 +348,14 @@ namespace CoreFramework
                     }
                 }
 
-                sorted = sorted.OrderByDescending(it => it.Item2.Count(it2 => it2 != _null)).ThenBy(it => it.Item1.GetParameters().Length).ToArray();
+                sorted = sorted.OrderByDescending(it => it.Item2.Sum(it2 => it2.weight)).ThenBy(it => it.Item1.GetParameters().Length).ToArray();
                 foreach (var candidate in sorted)
                 {
                     for (int i = 0; i < candidate.Item2.Length; i++)
                     {
-                        if (candidate.Item2[i] == _null)
+                        if (candidate.Item2[i] == _pnull)
                         {
-                            candidate.Item2[i] = null;
+                            candidate.Item2[i] = new ParamAndWeight(null);
                         }
                     }
                     bestParams = candidate;
@@ -318,7 +363,7 @@ namespace CoreFramework
                 }
             }
             
-            return bestParams.Item1.Invoke(bestParams.Item2);
+            return bestParams.Item1.Invoke(bestParams.Item2.Select(it=>it.value).ToArray());
         }
     }
 }

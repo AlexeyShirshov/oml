@@ -1,0 +1,37 @@
+﻿<#@ template debug="false" hostspecific="false" language="vb" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Xml" #>
+<#@ output extension="cs" #>
+
+using System.Runtime.CompilerServices;
+using System.Xml;
+using System;
+using CoreFramework;
+
+namespace CoreFramework
+{
+	public static class XmlHelper
+	{
+		public static IDisposable WriteElement(this XmlWriter writer, string localName, string ns) 
+		{
+			return new AutoCleanup(()=>writer.WriteStartElement(localName, ns),
+								   ()=>writer.WriteEndElement());
+		}
+		public static IDisposable WriteElement(this XmlWriter writer, string localName)
+		{
+			return new AutoCleanup(()=>writer.WriteStartElement(localName),
+								   ()=>writer.WriteEndElement());
+		}
+
+	<# for each T as string in {"int", "DateTime", "string", "DateTimeOffset", "decimal", "double", "long", "float", "object", "bool"} #>
+	public static void WriteElementValue(this XmlWriter writer, string localName, <#=T #> value)
+		{
+			using(writer.WriteElement(localName))
+			{
+				writer.WriteValue(value);
+			}
+		}
+	<# next #>
+
+	}
+}

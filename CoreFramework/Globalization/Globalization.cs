@@ -52,10 +52,14 @@ namespace CoreFramework.Globalization
             "Y", "K", "L", "M", "N", "O", "P", "R", "S", "T",
             "U", "F", "H", "c", "CH", "SH", "SCH", "", "Y", "",
             "E", "YU", "YA"};
-
-        public static string Translate(string val)
+        /// <summary>
+        /// Выполняет транслитерацию русской строки в латиницу
+        /// </summary>
+        /// <param name="cyrillicString">Строка на русском</param>
+        /// <returns></returns>
+        public static string Translate(string cyrillicString)
         {
-            byte[] arr = Encoding.Default.GetBytes(val);
+            byte[] arr = Encoding.Default.GetBytes(cyrillicString);
             StringBuilder res = new StringBuilder();
             foreach (byte b in arr)
             {

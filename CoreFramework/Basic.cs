@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Xml;
+using System.Xml.Linq;
+using System.Xml.Serialization;
 
 namespace CoreFramework
 {
@@ -103,6 +107,53 @@ namespace CoreFramework
         public static T Do<T>(this T item, Func<T, T> work)
         {
             return work(item);
+        }
+
+        public static string ToXml(this object obj)
+        {
+            if (obj != null)
+            {
+
+                XmlSerializer s = new XmlSerializer(obj.GetType());
+                using (var sw = new StringWriter())
+                {
+                    s.Serialize(sw, obj);
+                    return sw.ToString();
+                }
+            }
+            return null;
+        }
+        public static string ToXml(this object obj, XmlWriterSettings settings)
+        {
+            if (obj != null)
+            {
+                XmlSerializer s = new XmlSerializer(obj.GetType());
+                using (StringWriter sw = new StringWriter())
+                {
+                    using (dynamic xw = XmlWriter.Create(sw, settings))
+                    {
+                        s.Serialize(xw, obj);
+                        return sw.ToString();
+                    }
+                }
+            }
+
+            return null;
+        }
+        public static XElement ToXElement(this object obj)
+        {
+            if (obj != null)
+            {
+                XmlSerializer s = new XmlSerializer(obj.GetType());
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    s.Serialize(ms, obj);
+                    ms.Seek(0, SeekOrigin.Begin);
+                    return XElement.Load(ms);
+                }
+            }
+
+            return null;
         }
 
     }

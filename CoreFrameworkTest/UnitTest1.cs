@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using CoreFramework;
+using System.Text.RegularExpressions;
 
 namespace CoreFrameworkTest
 {
@@ -25,6 +26,7 @@ namespace CoreFrameworkTest
             Assert.AreEqual("int string ctor", (t.CreateInstance(1, "", 1) as cls).str);
             Assert.AreEqual("int ctor", (t.CreateInstance(1, 1f, 1) as cls).str);
             Assert.AreEqual("double float string ctor", (t.CreateInstance(1d, 1f, "", 1) as cls).str);
+            Assert.AreEqual("double float string ctor", (t.CreateInstance(1d, 1f, 1, "") as cls).str);
         }
 
         [TestMethod]
@@ -106,6 +108,20 @@ namespace CoreFrameworkTest
             {
                 str = "double float string ctor";
                 Console.WriteLine(str);
+            }
+        }
+
+        [TestMethod]
+        public void TestRe()
+        {
+            string viewName = @"F:\projects\kelix\core\sources\KX.Core\KX.Wpf.Core45\bin\sign\KX.Wpf.Core45.dll";
+            string v = "xxx";
+            var re = new Regex(@".+\\(.+)(\..+)$");
+            var m = re.Match(viewName);
+            if (m.Success)
+            {
+                var res = viewName.Substring(0, m.Groups[1].Index) + v + m.Groups[2].Value;
+                Assert.AreEqual(@"F:\projects\kelix\core\sources\KX.Core\KX.Wpf.Core45\bin\sign\xxx.dll", res);
             }
         }
     }
