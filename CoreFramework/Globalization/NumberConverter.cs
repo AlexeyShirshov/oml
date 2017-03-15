@@ -90,50 +90,50 @@ namespace CoreFramework.Globalization
         /// <summary>
         /// «07» января 2004 [+ _year(:года)]
         /// </summary>
-        /// <param name="_date"></param>
-        /// <param name="_year"></param>
+        /// <param name="date"></param>
+        /// <param name="year"></param>
         /// <returns></returns>
-        public static string DateToTextLong(DateTime _date, string _year)
+        public static string DateToTextLong(DateTime date, string year)
         {
             return String.Format("«{0}» {1} {2}",
-                                    _date.Day.ToString("D2"),
-                                    MonthName(_date.Month, TextCase.Genitive),
-                                    _date.Year.ToString()) + ((_year.Length != 0) ? " " : "") + _year;
+                                    date.Day.ToString("D2"),
+                                    MonthName(date.Month, TextCase.Genitive),
+                                    date.Year.ToString()) + ((year.Length != 0) ? " " : "") + year;
         }
 
         /// <summary>
         /// «07» января 2004
         /// </summary>
-        /// <param name="_date"></param>
+        /// <param name="date"></param>
         /// <returns></returns>
-        public static string DateToTextLong(DateTime _date)
+        public static string DateToTextLong(DateTime date)
         {
             return String.Format("«{0}» {1} {2}",
-                                    _date.Day.ToString("D2"),
-                                    MonthName(_date.Month, TextCase.Genitive),
-                                    _date.Year.ToString());
+                                    date.Day.ToString("D2"),
+                                    MonthName(date.Month, TextCase.Genitive),
+                                    date.Year.ToString());
         }
         /// <summary>
         /// II квартал 2004
         /// </summary>
-        /// <param name="_date"></param>
+        /// <param name="date"></param>
         /// <returns></returns>
-        public static string DateToTextQuarter(DateTime _date)
+        public static string DateToTextQuarter(DateTime date)
         {
-            return NumeralsRoman(DateQuarter(_date)) + " квартал " + _date.Year.ToString();
+            return NumeralsRoman(DateQuarter(date)) + " квартал " + date.Year.ToString();
         }
         /// <summary>
         /// 07.01.2004
         /// </summary>
-        /// <param name="_date"></param>
+        /// <param name="date"></param>
         /// <returns></returns>
-        public static string DateToTextSimple(DateTime _date)
+        public static string DateToTextSimple(DateTime date)
         {
-            return String.Format("{0:dd.MM.yyyy}", _date);
+            return String.Format("{0:dd.MM.yyyy}", date);
         }
-        public static int DateQuarter(DateTime _date)
+        public static int DateQuarter(DateTime date)
         {
-            return (_date.Month - 1) / 3 + 1;
+            return (date.Month - 1) / 3 + 1;
         }
 
         static int lastDigit(long _amount)
@@ -151,18 +151,18 @@ namespace CoreFramework.Globalization
         /// <summary>
         /// Десять тысяч рублей 67 копеек
         /// </summary>
-        /// <param name="_amount"></param>
-        /// <param name="_firstCapital"></param>
+        /// <param name="amount"></param>
+        /// <param name="firstCapital"></param>
         /// <returns></returns>
-        public static string CurrencyToTxt(double _amount, bool _firstCapital, DigitItems rubles, DigitItems copecks)
+        public static string CurrencyToTxt(double amount, bool firstCapital, DigitItems rubles, DigitItems copecks)
         {
             //Десять тысяч рублей 67 копеек
-            long rublesAmount = (long)Math.Floor(_amount);
-            long copecksAmount = ((long)Math.Round(_amount * 100)) % 100;
+            long rublesAmount = (long)Math.Floor(amount);
+            long copecksAmount = ((long)Math.Round(amount * 100)) % 100;
             int lastRublesDigit = lastDigit(rublesAmount);
             int lastCopecksDigit = lastDigit(copecksAmount);
 
-            string s = NumeralsToTxt(rublesAmount, TextCase.Nominative, true, _firstCapital) + " " + 
+            string s = NumeralsToTxt(rublesAmount, TextCase.Nominative, true, firstCapital) + " " + 
                 Declines.DeclineAny(lastRublesDigit, rubles) + " ";
 
             s += String.Format("{0:00} ", copecksAmount) + Declines.DeclineAny(lastCopecksDigit, copecks);
@@ -172,18 +172,18 @@ namespace CoreFramework.Globalization
         /// <summary>
         /// 10 000 (Десять тысяч) рублей 67 копеек
         /// </summary>
-        /// <param name="_amount"></param>
-        /// <param name="_firstCapital"></param>
+        /// <param name="amount"></param>
+        /// <param name="firstCapital"></param>
         /// <returns></returns>
-        public static string CurrencyToTxtFull(double _amount, bool _firstCapital, DigitItems rubles, DigitItems copecks)
+        public static string CurrencyToTxtFull(double amount, bool firstCapital, DigitItems rubles, DigitItems copecks)
         {
             //10 000 (Десять тысяч) рублей 67 копеек
-            long rublesAmount = (long)Math.Floor(_amount);
-            long copecksAmount = ((long)Math.Round(_amount * 100)) % 100;
+            long rublesAmount = (long)Math.Floor(amount);
+            long copecksAmount = ((long)Math.Round(amount * 100)) % 100;
             int lastRublesDigit = lastDigit(rublesAmount);
             int lastCopecksDigit = lastDigit(copecksAmount);
 
-            string s = String.Format("{0:N0} ({1}) ", rublesAmount, NumeralsToTxt(rublesAmount, TextCase.Nominative, true, _firstCapital)) +
+            string s = String.Format("{0:N0} ({1}) ", rublesAmount, NumeralsToTxt(rublesAmount, TextCase.Nominative, true, firstCapital)) +
                 Declines.DeclineAny(lastRublesDigit, rubles) + " ";
 
             s += String.Format("{0:00} ", copecksAmount) + Declines.DeclineAny(lastCopecksDigit, copecks);
@@ -193,14 +193,13 @@ namespace CoreFramework.Globalization
         /// <summary>
         /// 10 000 рублей 67 копеек  
         /// </summary>
-        /// <param name="_amount"></param>
-        /// <param name="_firstCapital"></param>
+        /// <param name="amount"></param>
         /// <returns></returns>
-        public static string CurrencyToTxtShort(double _amount, bool _firstCapital, DigitItems rubles, DigitItems copecks)
+        public static string CurrencyToTxtShort(double amount, DigitItems rubles, DigitItems copecks)
         {
             //10 000 рублей 67 копеек        
-            long rublesAmount = (long)Math.Floor(_amount);
-            long copecksAmount = ((long)Math.Round(_amount * 100)) % 100;
+            long rublesAmount = (long)Math.Floor(amount);
+            long copecksAmount = ((long)Math.Round(amount * 100)) % 100;
             int lastRublesDigit = lastDigit(rublesAmount);
             int lastCopecksDigit = lastDigit(copecksAmount);
 
@@ -211,50 +210,49 @@ namespace CoreFramework.Globalization
 
             return s.Trim();
         }
-        static string MakeText(int _digits, string[] _hundreds, string[] _tens, string[] _from3till19, string _second, string _first, string[] _power)
+        public static string MakeText(int digits, string[] hundreds, string[] tens, string[] from3till19, string second, string first, string[] power)
         {
             string s = "";
-            int digits = _digits;
 
             if (digits >= 100)
             {
-                s += _hundreds[digits / 100] + " ";
+                s += hundreds[digits / 100] + " ";
                 digits = digits % 100;
             }
             if (digits >= 20)
             {
-                s += _tens[digits / 10 - 1] + " ";
+                s += tens[digits / 10 - 1] + " ";
                 digits = digits % 10;
             }
 
             if (digits >= 3)
             {
-                s += _from3till19[digits - 2] + " ";
+                s += from3till19[digits - 2] + " ";
             }
             else if (digits == 2)
             {
-                s += _second + " ";
+                s += second + " ";
             }
             else if (digits == 1)
             {
-                s += _first + " ";
+                s += first + " ";
             }
 
-            if (_digits != 0 && _power.Length > 0)
+            if (digits != 0 && power.Length > 0)
             {
-                digits = lastDigit(_digits);
+                digits = lastDigit(digits);
 
                 if (Declines.IsPluralGenitive(digits))
                 {
-                    s += _power[3] + " ";
+                    s += power[3] + " ";
                 }
                 else if (Declines.IsSingularGenitive(digits))
                 {
-                    s += _power[2] + " ";
+                    s += power[2] + " ";
                 }
                 else
                 {
-                    s += _power[1] + " ";
+                    s += power[1] + " ";
                 }
             }
 
@@ -264,15 +262,15 @@ namespace CoreFramework.Globalization
         /// <summary>
         /// реализовано для падежей: именительный (nominative), родительный (Genitive),  винительный (accusative)
         /// </summary>
-        /// <param name="_sourceNumber"></param>
-        /// <param name="_case"></param>
-        /// <param name="_isMale"></param>
-        /// <param name="_firstCapital"></param>
+        /// <param name="sourceNumber"></param>
+        /// <param name="textcase"></param>
+        /// <param name="isMale"></param>
+        /// <param name="firstCapital"></param>
         /// <returns></returns>
-        public static string NumeralsToTxt(long _sourceNumber, TextCase _case, bool _isMale, bool _firstCapital)
+        public static string NumeralsToTxt(long sourceNumber, TextCase textcase, bool isMale, bool firstCapital)
         {
             string s = "";
-            long number = _sourceNumber;
+            long number = sourceNumber;
             int remainder;
             int power = 0;
 
@@ -298,7 +296,7 @@ namespace CoreFramework.Globalization
                         s = MakeText(remainder, hundreds, tens, from3till19, secondMale, firstMale, millions) + s;
                         break;
                     case 3:
-                        switch (_case)
+                        switch (textcase)
                         {
                             case TextCase.Accusative:
                                 s = MakeText(remainder, hundreds, tens, from3till19, secondFemale, firstFemaleAccusative, thousandsAccusative) + s;
@@ -310,16 +308,16 @@ namespace CoreFramework.Globalization
                         break;
                     default:
                         string[] powerArray = { };
-                        switch (_case)
+                        switch (textcase)
                         {
                             case TextCase.Genitive:
-                                s = MakeText(remainder, hundredsGenetive, tensGenetive, from3till19Genetive, _isMale ? secondMaleGenetive : secondFemaleGenetive, _isMale ? firstMaleGenetive : firstFemale, powerArray) + s;
+                                s = MakeText(remainder, hundredsGenetive, tensGenetive, from3till19Genetive, isMale ? secondMaleGenetive : secondFemaleGenetive, isMale ? firstMaleGenetive : firstFemale, powerArray) + s;
                                 break;
                             case TextCase.Accusative:
-                                s = MakeText(remainder, hundreds, tens, from3till19, _isMale ? secondMale : secondFemale, _isMale ? firstMale : firstFemaleAccusative, powerArray) + s;
+                                s = MakeText(remainder, hundreds, tens, from3till19, isMale ? secondMale : secondFemale, isMale ? firstMale : firstFemaleAccusative, powerArray) + s;
                                 break;
                             default:
-                                s = MakeText(remainder, hundreds, tens, from3till19, _isMale ? secondMale : secondFemale, _isMale ? firstMale : firstFemale, powerArray) + s;
+                                s = MakeText(remainder, hundreds, tens, from3till19, isMale ? secondMale : secondFemale, isMale ? firstMale : firstFemale, powerArray) + s;
                                 break;
                         }
                         break;
@@ -328,43 +326,43 @@ namespace CoreFramework.Globalization
                 power += 3;
             }
 
-            if (_sourceNumber == 0)
+            if (sourceNumber == 0)
             {
                 s = zero + " ";
             }
 
-            if (s != "" && _firstCapital)
+            if (s != "" && firstCapital)
                 s = s.Substring(0, 1).ToUpper() + s.Substring(1);
 
             return s.Trim();
         }
-        public static string NumeralsDoubleToTxt(double _sourceNumber, int _decimal, TextCase _case, bool _firstCapital)
+        public static string NumeralsDoubleToTxt(double sourceNumber, int _decimal, TextCase textcase, bool firstCapital)
         {
-            long decNum = (long)Math.Round(_sourceNumber * Math.Pow(10, _decimal)) % (long)(Math.Pow(10, _decimal));
+            long decNum = (long)Math.Round(sourceNumber * Math.Pow(10, _decimal)) % (long)(Math.Pow(10, _decimal));
 
-            string s = String.Format(" {0} целых {1} сотых", NumeralsToTxt((long)_sourceNumber, _case, true, _firstCapital),
-                                                  NumeralsToTxt((long)decNum, _case, true, false));
+            string s = String.Format(" {0} целых {1} сотых", NumeralsToTxt((long)sourceNumber, textcase, true, firstCapital),
+                                                  NumeralsToTxt((long)decNum, textcase, true, false));
             return s.Trim();
         }
         /// <summary>
         /// название м-ца
         /// </summary>
-        /// <param name="_month">с единицы</param>
-        /// <param name="_case"></param>
+        /// <param name="month">с единицы</param>
+        /// <param name="textcase"></param>
         /// <returns></returns>
-        public static string MonthName(int _month, TextCase _case)
+        public static string MonthName(int month, TextCase textcase)
         {
             string s = "";
 
-            if (_month > 0 && _month <= 12)
+            if (month > 0 && month <= 12)
             {
-                switch (_case)
+                switch (textcase)
                 {
                     case TextCase.Genitive:
-                        s = monthNamesGenitive[_month];
+                        s = monthNamesGenitive[month];
                         break;
                     default:
-                        throw new NotImplementedException(_case.ToString());
+                        throw new NotImplementedException(textcase.ToString());
                 }
             }
 

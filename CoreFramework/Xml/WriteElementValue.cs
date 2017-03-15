@@ -4,7 +4,7 @@ using System.Xml;
 using System;
 using CoreFramework;
 
-namespace CoreFramework
+namespace CoreFramework.Xml
 {
 	public static class XmlHelper
 	{

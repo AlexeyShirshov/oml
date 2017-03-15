@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using CoreFramework;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace CoreFrameworkTest
 {
@@ -123,6 +124,20 @@ namespace CoreFrameworkTest
                 var res = viewName.Substring(0, m.Groups[1].Index) + v + m.Groups[2].Value;
                 Assert.AreEqual(@"F:\projects\kelix\core\sources\KX.Core\KX.Wpf.Core45\bin\sign\xxx.dll", res);
             }
+        }
+        [TestMethod]
+        public void TestNull()
+        {
+            int[] i = null;
+            Assert.IsFalse(i?.Count() > 0);
+
+            Assert.IsFalse(i?.Any() == true);
+
+            string s = null;
+
+            Assert.AreEqual("x", s ?? "x");
+            //s = string.Empty;
+            //Assert.AreEqual("x", s ?? "x");
         }
     }
 }

@@ -46,5 +46,24 @@ namespace CoreFramework
 
             return s.Substring(0, length);
         }
+        public static IEnumerable<string> SplitByLength(this string stringToSplit, int length)
+        {
+            if (stringToSplit == null)
+                return null;
+
+            List<string> l = new List<string>();
+            while (stringToSplit.Length > length)
+            {
+                l.Add(stringToSplit.Substring(0, length));
+                stringToSplit = stringToSplit.Substring(length);
+            }
+
+            if (stringToSplit.Length > 0)
+            {
+                l.Add(stringToSplit);
+            }
+
+            return l;
+        }
     }
 }
