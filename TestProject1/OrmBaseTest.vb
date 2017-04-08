@@ -573,6 +573,8 @@ End Class
         If s?.IsNormalized Then
             Debug.Fail("Should be False")
         End If
+
+        Assert.IsNull(Left(s, 10))
     End Sub
 
     Class cls1

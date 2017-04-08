@@ -68,6 +68,23 @@ Namespace Criteria.Values
                         If Object.Equals(o, v) Then
                             r = IEvaluableValue.EvalResult.Found
                             Exit For
+                        Else
+                            Dim spk = TryCast(v, ISinglePKEntity)
+                            If spk IsNot Nothing Then
+                                If Equals(o, spk.Identifier) Then
+                                    r = IEvaluableValue.EvalResult.Found
+                                    Exit For
+                                End If
+                            Else
+                                spk = TryCast(o, ISinglePKEntity)
+
+                                If spk IsNot Nothing Then
+                                    If Equals(spk.Identifier, v) Then
+                                        r = IEvaluableValue.EvalResult.Found
+                                        Exit For
+                                    End If
+                                End If
+                            End If
                         End If
                     Next
                 Case FilterOperation.NotIn
@@ -75,6 +92,23 @@ Namespace Criteria.Values
                         If Object.Equals(o, v) Then
                             r = IEvaluableValue.EvalResult.NotFound
                             Exit For
+                        Else
+                            Dim spk = TryCast(v, ISinglePKEntity)
+                            If spk IsNot Nothing Then
+                                If Equals(o, spk.Identifier) Then
+                                    r = IEvaluableValue.EvalResult.NotFound
+                                    Exit For
+                                End If
+                            Else
+                                spk = TryCast(o, ISinglePKEntity)
+
+                                If spk IsNot Nothing Then
+                                    If Equals(spk.Identifier, v) Then
+                                        r = IEvaluableValue.EvalResult.NotFound
+                                        Exit For
+                                    End If
+                                End If
+                            End If
                         End If
                     Next
                 Case Else

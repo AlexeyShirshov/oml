@@ -1798,7 +1798,9 @@ Public Class ObjectMappingEngine
     Public Function GetEntitySchema(ByVal entityName As String) As IEntitySchema
         Return GetEntitySchema(GetTypeByEntityName(entityName), True)
     End Function
-
+    Public Sub Init()
+        GetIdic()
+    End Sub
     Private Function GetIdic() As IDictionary
         If _idic Is Nothing Then
             Using New CSScopeMgrLite(_idicSpin)
@@ -1808,6 +1810,17 @@ Public Class ObjectMappingEngine
             End Using
         End If
         Return _idic
+    End Function
+    Public Function InitType(tp As Type) As IEntitySchema
+        Using New CSScopeMgrLite(_idicSpin)
+            If _idic Is Nothing Then
+                _idic = CreateObjectSchema(_names)
+                Return GetEntitySchema(tp, False)
+            Else
+                Return GetEntitySchema(tp, Me, _idic, _names)
+            End If
+        End Using
+
     End Function
 
     Private Function GetNames() As IDictionary
@@ -1831,7 +1844,7 @@ Public Class ObjectMappingEngine
     Public Overridable Function GetEntitySchema(ByVal t As Type, ByVal throwNotFound As Boolean) As IEntitySchema
         If t Is Nothing Then
             If throwNotFound Then
-                Throw New ArgumentNullException("t")
+                Throw New ArgumentNullException(NameOf(t))
             Else
                 Return Nothing
             End If
@@ -1840,8 +1853,11 @@ Public Class ObjectMappingEngine
         Dim idic As IDictionary = GetIdic()
         Dim schema As IEntitySchema = CType(idic(t), IEntitySchema)
 
-        If schema Is Nothing AndAlso throwNotFound Then
-            Throw New ArgumentException(String.Format("Cannot find schema for type {0}", t))
+        If schema Is Nothing Then
+            schema = InitType(t)
+            If schema Is Nothing AndAlso throwNotFound Then
+                Throw New ArgumentException(String.Format("Cannot find schema for type {0}", t))
+            End If
         End If
 
         Return schema

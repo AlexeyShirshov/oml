@@ -1202,16 +1202,16 @@ Namespace Cache
                     End If
                 Next
 
-                If ValidateBehavior = Cache.ValidateBehavior.Immediate _
-                    OrElse (addType IsNot Nothing AndAlso delType IsNot Nothing) _
-                    OrElse fromUpdate Then
-                    Exit For
-                End If
-
                 If obj.UpdateCtx.Added Then
                     addType = tt
                 ElseIf obj.UpdateCtx.Deleted Then
                     delType = tt
+                End If
+
+                If ValidateBehavior = Cache.ValidateBehavior.Immediate _
+                    OrElse (addType IsNot Nothing AndAlso delType IsNot Nothing) _
+                    OrElse fromUpdate Then
+                    Exit For
                 End If
 
             Next
@@ -1365,45 +1365,41 @@ l1:
                     End If
 
                     If obj.UpdateCtx.Deleted OrElse obj.UpdateCtx.Added OrElse forseEval Then
-                        Dim r As Boolean = False
                         Dim er As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Found
                         If f IsNot Nothing Then
                             er = f.EvalObj(schema, obj, oschema, ce.Joins, ce.QueryEU)
-                            r = er = IEvaluableValue.EvalResult.Unknown
                         End If
 
-                        If r Then
-                            RemoveEntry(p.Key, id)
-                            'dic.Remove(id)
-                        ElseIf er = IEvaluableValue.EvalResult.Found Then
-                            Dim sync As String = id & mgr.GetStaticKey
-                            Using SyncHelper.AcquireDynamicLock(sync)
-                                If obj.UpdateCtx.Added Then
-                                    If Not ce.Add(mgr, obj) Then
-                                        RemoveEntry(p.Key, id)
-                                        'dic.Remove(id)
+                        Select Case CInt(er)
+                            Case IEvaluableValue.EvalResult.Unknown
+                                RemoveEntry(p.Key, id)
+                            Case IEvaluableValue.EvalResult.Found
+                                Dim sync As String = id & mgr.GetStaticKey
+                                Using SyncHelper.AcquireDynamicLock(sync)
+                                    If obj.UpdateCtx.Added Then
+                                        If Not ce.Add(mgr, obj) Then
+                                            RemoveEntry(p.Key, id)
+                                            'dic.Remove(id)
+                                        End If
+                                    ElseIf obj.UpdateCtx.Deleted Then
+                                        ce.Delete(mgr, obj)
+                                    ElseIf obj.UpdateCtx.UpdatedFields IsNot Nothing Then
+                                        If Not ce.Add(mgr, obj) Then
+                                            RemoveEntry(p.Key, id)
+                                        End If
+                                        'Else
+                                        '    Throw New InvalidOperationException
                                     End If
-                                ElseIf obj.UpdateCtx.Deleted Then
-                                    ce.Delete(mgr, obj)
-                                ElseIf obj.UpdateCtx.UpdatedFields IsNot Nothing Then
-                                    If Not ce.Add(mgr, obj) Then
-                                        RemoveEntry(p.Key, id)
-                                    End If
-                                    'Else
-                                    '    Throw New InvalidOperationException
+                                End Using
+
+                                If callbacks IsNot Nothing Then
+                                    callbacks.ObjectDependsUpdated(obj)
                                 End If
-                            End Using
 
-                            If callbacks IsNot Nothing Then
-                                callbacks.ObjectDependsUpdated(obj)
-                            End If
-
-                            If callbacks2 IsNot Nothing Then
-                                callbacks2.ObjectDependsUpdated(obj)
-                            End If
-                        End If
-                        'Else
-                        '    Assert(False, "Object must be in appropriate state")
+                                If callbacks2 IsNot Nothing Then
+                                    callbacks2.ObjectDependsUpdated(obj)
+                                End If
+                        End Select
                     End If
                 Else
                     rm.Add(id)
