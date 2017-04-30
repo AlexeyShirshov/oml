@@ -166,4 +166,10 @@ Namespace Entities.Meta
     Public Interface IDefferedLoading
         Function GetDefferedLoadPropertiesGroups() As String()()
     End Interface
+
+    Public Interface IStringValueConverter
+        Function Convert(mpe As ObjectMappingEngine, prop As String, s As String, ByRef val As Object) As Boolean
+        Delegate Function FallBackDelegate() As Object
+    End Interface
+
 End Namespace

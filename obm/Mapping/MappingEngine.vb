@@ -67,7 +67,7 @@ Public Class ObjectMappingEngine
                                                ByVal type2add As Type, ByVal type2addEntityAttribute As EntityAttribute) As EntityAttribute
     Public Delegate Function CreateEntityDelegate(ByVal t As Type) As Object
     Public Delegate Function ConvertVersionToIntDelegate(version As String) As Integer
-
+    Delegate Function FallBackDelegate(prop As String, s As String) As Object
     Private _sharedTables As Hashtable = Hashtable.Synchronized(New Hashtable)
     Protected map As IDictionary = Hashtable.Synchronized(New Hashtable)
     Protected sel As IDictionary = Hashtable.Synchronized(New Hashtable)
@@ -86,7 +86,7 @@ Public Class ObjectMappingEngine
     Private Shared _entityTypesSpin As New SpinLockRef
     Public Const DefaultVersion As String = "1"
     Public Const NeedEntitySchemaMapping As String = "Worm:NeedEntitySchemaMapping"
-
+    Public Shared SkipValue As Object = New Object
     Public Event EndInitSchema(idic As IDictionary)
 
     Public Sub New()
@@ -210,6 +210,88 @@ Public Class ObjectMappingEngine
         Next
         Return map
     End Function
+
+    Public Function ConvertFromString(oschema As IPropertyMap, prop As String, s As String, Optional fallback As IStringValueConverter.FallBackDelegate = Nothing) As Object
+        Dim sc = TryCast(oschema, IStringValueConverter)
+        Dim v As Object = Nothing
+        If sc IsNot Nothing Then
+            If sc.Convert(Me, prop, s, v) Then
+                Return v
+            End If
+        End If
+
+        If oschema Is Nothing Then
+            Return If(fallback IsNot Nothing, fallback(), s)
+        End If
+
+        If String.IsNullOrEmpty(prop) Then
+            Return If(fallback IsNot Nothing, fallback(), s)
+        End If
+
+        Dim m As MapField2Column = Nothing
+        If Not oschema.FieldColumnMap.TryGetValue(prop, m) OrElse map Is Nothing Then
+            Return If(fallback IsNot Nothing, fallback(), s)
+        End If
+
+        If m.PropertyType Is Nothing Then
+            Return If(fallback IsNot Nothing, fallback(), s)
+        End If
+
+        Return Convert.ChangeType(s, m.PropertyType)
+    End Function
+    Public Sub LoadEntityValues(entity As Object, values As IDictionary(Of String, String), Optional fallBack As FallBackDelegate = Nothing,
+                                Optional errors As IList(Of Exception) = Nothing)
+        If entity Is Nothing Then
+            Throw New ArgumentNullException(NameOf(entity))
+        End If
+
+        If values Is Nothing Then
+            Return
+        End If
+
+        Dim osc = TryCast(entity, IStringValueConverter)
+        Dim oschema = GetEntitySchema(entity.GetType)
+
+        For Each de In values
+            Dim prop = de.Key
+            Dim s = de.Value
+            Dim v As Object = Nothing
+            If osc IsNot Nothing Then
+                If osc.Convert(Me, prop, s, v) Then
+                    SetPropertyValue(entity, prop, v, oschema)
+                    Continue For
+                End If
+            End If
+
+            Dim fb As IStringValueConverter.FallBackDelegate = Nothing
+            If fallBack IsNot Nothing Then
+                fb = Function() fallBack(prop, s)
+            End If
+
+
+            Try
+                v = ConvertFromString(oschema, prop, s, fb)
+            Catch ex As Exception
+                Dim newEx As New ObjectMappingException(String.Format("cannot convert property {0} from value {1}", prop, s), ex)
+                If errors IsNot Nothing Then
+                    errors.Add(newEx)
+                    Continue For
+                Else
+                    'CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                    'Throw ex
+                    Throw newEx
+                End If
+            End Try
+
+            If v IsNot SkipValue Then
+                SetPropertyValue(entity, prop, v, oschema)
+            End If
+        Next
+    End Sub
+    Public Sub LoadEntityValues(entity As Object, values As Specialized.NameValueCollection, Optional fallBack As FallBackDelegate = Nothing,
+                                Optional errors As IList(Of Exception) = Nothing)
+        LoadEntityValues(entity, values?.AllKeys.ToDictionary(Function(it) it, Function(it2) values?(it2)), fallBack, errors)
+    End Sub
 
     Private Shared Function MapColumn(pi As Reflection.PropertyInfo, mpeVersion As String, convertVersion As ConvertVersionToIntDelegate,
                                       columns() As EntityPropertyAttribute, features As IEnumerable(Of String)) As EntityPropertyAttribute

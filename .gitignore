@@ -1,0 +1,16 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/ASPNETHosting/obj
+/MySQL/obj/Debug
+/MySQLTests/obj/Debug
+/net3.5/linq/obj/Debug
+/net3.5/linqprovider/obj/Debug
+/net3.5/TestLinq/obj/Debug
+/obm/bin/Debug
+/obm/obj
+/TestProject1/obj
+/Tests/obj
+/.vs/Worm/v14
+/obm/Worm.Orm.vbproj.user

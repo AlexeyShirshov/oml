@@ -202,5 +202,9 @@ Namespace Entities.Meta
 
             Return r
         End Function
+        <Extension>
+        Public Function ConvertFromString(ByVal oschema As IPropertyMap, mpe As ObjectMappingEngine, prop As String, s As String) As Object
+            Return mpe.ConvertFromString(oschema, prop, s)
+        End Function
     End Module
 End Namespace
