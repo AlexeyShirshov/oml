@@ -233,11 +233,18 @@ Public Class ObjectMappingEngine
             Return If(fallback IsNot Nothing, fallback(), s)
         End If
 
-        If m.PropertyType Is Nothing Then
+        Dim pt = m.PropertyType
+        If pt Is Nothing Then
             Return If(fallback IsNot Nothing, fallback(), s)
         End If
 
-        Return Convert.ChangeType(s, m.PropertyType)
+        pt = If(Nullable.GetUnderlyingType(pt), pt)
+
+        If String.IsNullOrEmpty(s) AndAlso pt IsNot GetType(String) Then
+            Return Nothing
+        Else
+            Return Convert.ChangeType(s, pt)
+        End If
     End Function
     Public Sub LoadEntityValues(entity As Object, values As IDictionary(Of String, String), Optional fallBack As FallBackDelegate = Nothing,
                                 Optional errors As IList(Of Exception) = Nothing)
