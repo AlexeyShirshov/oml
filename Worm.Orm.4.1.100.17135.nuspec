@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>Worm.Orm</id>
+        <version>4.1.100.17135</version>
+        <authors>AlexeyShirshov</authors>
+        <owners>AlexeyShirshov</owners>
+        <licenseUrl>https://github.com/AlexeyShirshov/oml/blob/master/license.md</licenseUrl>
+        <projectUrl>https://github.com/AlexeyShirshov/oml</projectUrl>
+        <iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Yet another .NET-oriented ready to use object-relational mapping library.</description>
+        <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
+        <copyright>Copyright 2017</copyright>
+        <tags>Tag1 Tag2</tags>
+    </metadata>
+    <files>
+        <file src="obm\bin\Release\Worm.Orm.dll" target="lib\net4\Worm.Orm.dll" />
+    </files>
+</package>

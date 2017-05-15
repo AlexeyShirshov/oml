@@ -132,8 +132,13 @@ Namespace Database
                 Return _saver
             End Get
         End Property
-        Public Sub CreateDependency(master As ICachedEntity, slave As ICachedEntity, Optional del As ObjectListSaver.OnSavedDependency = Nothing)
-            _saver.CreateDependency(master, slave, del)
+        Public Sub CreateDependency(master As ICachedEntity, slave As ICachedEntity,
+                                    Optional del As ObjectListSaver.OnSavedDependencyDelegate = Nothing,
+                                    Optional reorderOnSave As Boolean = True)
+            _saver.CreateDependency(master, slave, del, reorderOnSave)
+        End Sub
+        Public Sub CreateDependency(master As ICachedEntity, slave As ICachedEntity)
+            CreateDependency(master, slave, Nothing, True)
         End Sub
         Protected Overridable Function CreateSaver(ByVal mgr As OrmReadOnlyDBManager) As ObjectListSaver
             Return mgr.CreateBatchSaver(Of ObjectListSaver)(_created)

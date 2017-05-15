@@ -9,6 +9,42 @@ Namespace Database
     Public Class ObjectListSaver
         Implements IDisposable
 
+        Public Class DependencyItem
+            Property Master As ICachedEntity
+            Property Slave As ICachedEntity
+            Property OnSavedDependency As OnSavedDependencyDelegate
+            Property ReorderOnSave As Boolean = True
+        End Class
+        Public Class DependencyList
+            Inherits List(Of DependencyItem)
+
+            Public Function TryGetValue(master As ICachedEntity, ByRef dep As List(Of Pair(Of ICachedEntity, OnSavedDependencyDelegate))) As Boolean
+                dep = (From k In Me
+                       Where k.Master Is master
+                       Select New Pair(Of ICachedEntity, OnSavedDependencyDelegate)(k.Slave, k.OnSavedDependency)
+                       ).ToList
+
+                Return If(dep?.Any, False)
+            End Function
+
+            'Default Property Indexer(ByVal master As ICachedEntity) As List(Of DependencyItem)
+            '    Get
+            '        If True Then
+
+            '        Else
+            '            Throw New ArgumentOutOfRangeException
+            '        End If
+            '    End Get
+            '    Set(ByVal Value As List(Of DependencyItem))
+            '        If True Then
+
+            '        Else
+            '            Throw New ArgumentOutOfRangeException
+            '        End If
+            '    End Set
+            'End Property
+
+        End Class
         Public Enum FurtherActionEnum
             [Default]
             Retry
@@ -16,7 +52,7 @@ Namespace Database
             Skip
         End Enum
 
-        Public Delegate Function OnSavedDependency(sndr As Worm.Database.ObjectListSaver, master As Entities.ICachedEntity, slave As Entities.ICachedEntity) As IEnumerable(Of ICachedEntity)
+        Public Delegate Function OnSavedDependencyDelegate(sndr As Worm.Database.ObjectListSaver, master As Entities.ICachedEntity, slave As Entities.ICachedEntity) As IEnumerable(Of ICachedEntity)
 
         Public Event PreSave(ByVal sender As ObjectListSaver)
         Public Event BeginSave(ByVal sender As ObjectListSaver, ByVal count As Integer)
@@ -57,7 +93,7 @@ Namespace Database
         Private _dontResolve As Boolean
         Private _mode As Data.IsolationLevel?
         Private _hasTransaction As Boolean
-        Private _dependencies As New Dictionary(Of ICachedEntity, List(Of Pair(Of ICachedEntity, OnSavedDependency)))
+        Private _dependencies As New DependencyList
 
 #If DEBUG Then
         Friend _deleted As New List(Of ICachedEntity)
@@ -118,14 +154,14 @@ Namespace Database
                 End Set
             End Property
 
-            Private _objs As List(Of ICachedEntity)
-            Public ReadOnly Property Objects() As List(Of ICachedEntity)
+            Private _objs As IEnumerable(Of ICachedEntity)
+            Public ReadOnly Property Objects() As IEnumerable(Of ICachedEntity)
                 Get
                     Return _objs
                 End Get
             End Property
 
-            Public Sub New(ByVal objs As List(Of ICachedEntity))
+            Public Sub New(ByVal objs As IEnumerable(Of ICachedEntity))
                 _objs = objs
             End Sub
 
@@ -345,20 +381,18 @@ Namespace Database
             End If
             RaiseEvent OnRemoved(Me, o)
         End Sub
-        Public Sub CreateDependency(master As ICachedEntity, slave As ICachedEntity, Optional del As OnSavedDependency = Nothing)
-            Dim depList As List(Of Pair(Of ICachedEntity, OnSavedDependency)) = Nothing
-            If Not _dependencies.TryGetValue(master, depList) OrElse depList Is Nothing Then
-                depList = New List(Of Pair(Of ICachedEntity, OnSavedDependency))
-                _dependencies(master) = depList
-            End If
+        Public Sub CreateDependency(master As ICachedEntity, slave As ICachedEntity)
+            CreateDependency(master, slave, Nothing, True)
+        End Sub
+        Public Sub CreateDependency(master As ICachedEntity, slave As ICachedEntity, Optional del As OnSavedDependencyDelegate = Nothing, Optional reorderOnSave As Boolean = True)
 
-            Dim d = depList.FindIndex(Function(it) it.First Is slave)
+            Dim d = _dependencies.FindIndex(Function(it) it.Master Is master AndAlso it.Slave Is slave)
             If d >= 0 Then
-                depList.RemoveAt(d)
+                _dependencies.RemoveAt(d)
             End If
 
-            Dim newd = New Pair(Of ICachedEntity, OnSavedDependency)(slave, del)
-            depList.Add(newd)
+            Dim newd = New DependencyItem With {.Master = master, .Slave = slave, .OnSavedDependency = del, .ReorderOnSave = reorderOnSave}
+            _dependencies.Add(newd)
         End Sub
 
         Protected Sub ObjRejected(ByVal o As ICachedEntity)
@@ -421,37 +455,61 @@ Namespace Database
             Return True
         End Function
 
-        Protected Function SaveObj(ByVal o As _ICachedEntity, ByVal need2save As List(Of ICachedEntity), _
-            ByVal saved As List(Of Pair(Of ObjectState, _ICachedEntity)), _
+        Protected Function SaveObj(ByVal savingObj As _ICachedEntity, ByVal need2save As HashSet(Of ICachedEntity),
+            ByVal saved As List(Of Pair(Of ObjectState, _ICachedEntity)),
             Optional ByVal col2save As IList = Nothing) As Boolean
             Dim owr As ObjectWrap(Of ICachedEntity) = Nothing
             Dim retry = False
             Do
                 retry = False
                 Try
-                    Dim args As New CancelEventArgs(o)
+                    Dim args As New CancelEventArgs(savingObj)
                     RaiseEvent ObjectSaving(Me, args)
-                    Dim adv As IAdvSave = TryCast(o, IAdvSave)
+                    Dim adv As IAdvSave = TryCast(savingObj, IAdvSave)
                     If adv IsNot Nothing Then
                         adv.Saving(Me)
                     End If
                     If Not args.Cancel Then
-                        Dim dep = From k In _dependencies
-                                  Where k.Value IsNot Nothing AndAlso k.Value.Any(Function(it) it.First Is o)
+                        Dim masters4savingObj = From k In _dependencies
+                                                Where k.Master IsNot Nothing AndAlso k.Slave Is savingObj AndAlso k.ReorderOnSave
 
-                        If dep.Any AndAlso Not dep.All(Function(it) saved.Any(Function(it2) it2.Second Is it.Key)) Then
-                            RaiseEvent ObjectPostponed(Me, o)
-                            need2save.Add(o)
+                        If masters4savingObj.Any AndAlso Not masters4savingObj.All(Function(it) saved.Any(Function(it2) it2.Second Is it.Master)) Then
+                            RaiseEvent ObjectPostponed(Me, savingObj)
+                            If Not need2save.Contains(savingObj) Then
+                                If saved.Any(Function(it) it.Second Is savingObj) Then
+                                    Throw New OrmManagerException(String.Format("Object {0} already saved. Use CreateDependency to reorder save sequence", savingObj.ObjName))
+                                End If
+
+                                'If Not _objects.Any(Function(it) it Is savingObj) Then
+                                need2save.Add(savingObj)
+                                'End If
+                            End If
                             Return False
                         End If
 
-                        If Not CanSaveObj(o, col2save) Then
-                            RaiseEvent ObjectPostponed(Me, o)
-                            need2save.Add(o)
+                        If Not CanSaveObj(savingObj, col2save) Then
+                            RaiseEvent ObjectPostponed(Me, savingObj)
+                            If Not need2save.Contains(savingObj) Then
+                                If saved.Any(Function(it) it.Second Is savingObj) Then
+                                    Throw New OrmManagerException(String.Format("Object {0} already saved. Use CreateDependency to reorder save sequence", savingObj.ObjName))
+                                End If
+
+                                'If Not _objects.Any(Function(it) it Is savingObj) Then
+                                need2save.Add(savingObj)
+                                'End If
+                            End If
                             Return False
                         Else
                             For Each ns As Pair(Of ICachedEntity, Action(Of ICachedEntity)) In args._new2Save
-                                need2save.Add(ns.First)
+                                If Not need2save.Contains(ns.First) Then
+                                    If saved.Any(Function(it) it.Second Is ns.First) Then
+                                        Throw New OrmManagerException(String.Format("Object {0} already saved. Use CreateDependency to reorder save sequence", ns.First.ObjName))
+                                    End If
+
+                                    If Not _objects.Any(Function(it) it Is ns.First) Then
+                                        need2save.Add(ns.First)
+                                    End If
+                                End If
                                 If ns.Second IsNot Nothing Then
                                     Using New CoreFramework.AutoCleanup(Sub()
                                                                             _dontCheckOnAdd = True
@@ -465,17 +523,17 @@ Namespace Database
                                 End If
                             Next
 
-                            owr = New ObjectWrap(Of ICachedEntity)(o)
-                            _lockList.Add(owr, _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
-                            Dim os As ObjectState = o.ObjectState
+                            owr = New ObjectWrap(Of ICachedEntity)(savingObj)
+                            _lockList.Add(owr, _mgr.GetSyncForSave(savingObj.GetType, savingObj)) 'o.GetSyncRoot)
+                            Dim os As ObjectState = savingObj.ObjectState
                             Dim oldME As ObjectMappingEngine = Nothing
                             Dim blb As Boolean
                             Try
-                                If Not _mgr.MappingEngine.Equals(o.GetMappingEngine) Then
+                                If Not _mgr.MappingEngine.Equals(savingObj.GetMappingEngine) Then
                                     oldME = _mgr._schema
-                                    _mgr._schema = o.GetMappingEngine
+                                    _mgr._schema = savingObj.GetMappingEngine
                                 End If
-                                blb = _mgr.SaveChanges(o, False)
+                                blb = _mgr.SaveChanges(savingObj, False)
                             Finally
                                 If oldME IsNot Nothing Then
                                     _mgr._schema = oldME
@@ -484,13 +542,22 @@ Namespace Database
                             If blb Then
                                 _lockList(owr).Dispose()
                                 _lockList.Remove(owr)
-                                RaiseEvent ObjectPostponed(Me, o)
-                                need2save.Add(o)
+                                RaiseEvent ObjectPostponed(Me, savingObj)
+                                If Not need2save.Contains(savingObj) Then
+
+                                    If saved.Any(Function(it) it.Second Is savingObj) Then
+                                        Throw New OrmManagerException(String.Format("Object {0} already saved. Use CreateDependency to reorder save sequence", savingObj.ObjName))
+                                    End If
+
+                                    'If Not _objects.Any(Function(it) it Is savingObj) Then
+                                    need2save.Add(savingObj)
+                                    'End If
+                                End If
                             Else
-                                saved.Add(New Pair(Of ObjectState, _ICachedEntity)(os, o))
-                                RaiseEvent ObjectSaved(Me, o)
-                                Dim depList As List(Of Pair(Of ICachedEntity, OnSavedDependency)) = Nothing
-                                If _dependencies.TryGetValue(o, depList) AndAlso depList IsNot Nothing Then
+                                saved.Add(New Pair(Of ObjectState, _ICachedEntity)(os, savingObj))
+                                RaiseEvent ObjectSaved(Me, savingObj)
+                                Dim depList As List(Of Pair(Of ICachedEntity, OnSavedDependencyDelegate)) = Nothing
+                                If _dependencies.TryGetValue(savingObj, depList) AndAlso depList IsNot Nothing Then
                                     For Each d In depList
                                         If d.Second IsNot Nothing Then
                                             Using New CoreFramework.AutoCleanup(Sub()
@@ -499,11 +566,17 @@ Namespace Database
                                                                                 Sub()
                                                                                     _dontCheckOnAdd = False
                                                                                 End Sub)
-                                                Dim r = d.Second()(Me, o, d.First)
+                                                Dim r = d.Second()(Me, savingObj, d.First)
                                                 If r IsNot Nothing Then
                                                     For Each tosave In r
-                                                        If tosave IsNot Nothing Then
-                                                            need2save.Add(tosave)
+                                                        If tosave IsNot Nothing AndAlso Not need2save.Contains(tosave) Then
+                                                            If saved.Any(Function(it) it.Second Is tosave) Then
+                                                                Throw New OrmManagerException(String.Format("Object {0} already saved. Use CreateDependency to reorder save sequence", tosave.ObjName))
+                                                            End If
+
+                                                            If Not _objects.Any(Function(it) it Is tosave) Then
+                                                                need2save.Add(tosave)
+                                                            End If
                                                         End If
                                                     Next
                                                 End If
@@ -519,7 +592,7 @@ Namespace Database
                     If owr IsNot Nothing Then
                         Dim dsp As IDisposable = Nothing
                         If _lockList.TryGetValue(owr, dsp) Then
-                            Dim args As New SaveErrorEventArgs(o, ex)
+                            Dim args As New SaveErrorEventArgs(savingObj, ex)
                             RaiseEvent ObjectSavingError(Me, args)
                             Select Case args.FurtherAction
                                 Case FurtherActionEnum.Retry
@@ -533,14 +606,14 @@ Namespace Database
                                 Case FurtherActionEnum.RetryLater
                                     dsp.Dispose()
                                     _lockList.Remove(owr)
-                                    RaiseEvent ObjectPostponed(Me, o)
-                                    need2save.Add(o)
+                                    RaiseEvent ObjectPostponed(Me, savingObj)
+                                    need2save.Add(savingObj)
                                     Return False
                             End Select
                         End If
                     End If
                     If Not retry Then
-                        Throw New OrmManagerException("Error during save " & o.ObjName, ex)
+                        Throw New OrmManagerException("Error during save " & savingObj.ObjName, ex)
                     End If
                 End Try
             Loop While retry
@@ -556,7 +629,7 @@ Namespace Database
             RaiseEvent PreSave(Me)
             Dim hasTransaction As Boolean = _hasTransaction AndAlso Not AcceptOuterTransaction
             Dim saved As New List(Of Pair(Of ObjectState, _ICachedEntity)), copies As New List(Of Pair(Of ICachedEntity))
-            Dim rejectList As New List(Of ICachedEntity), need2save As New List(Of ICachedEntity)
+            Dim rejectList As New List(Of ICachedEntity), need2save As New HashSet(Of ICachedEntity)
             _startSave = True
 #If DebugLocks Then
                 Using New CSScopeMgr_Debug(_mgr.Cache, "d:\temp\")
@@ -692,7 +765,7 @@ Namespace Database
                                 Dim ls As List(Of UpdatedEntity) = l2(t)
                                 '_mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
                                 '    AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
-                                CType(_mgr.Cache, OrmCache).UpdateCache(_mgr.MappingEngine, ls, _mgr, _
+                                CType(_mgr.Cache, OrmCache).UpdateCache(_mgr.MappingEngine, ls, _mgr,
                                     AddressOf OrmManager.ClearCacheFlags, Nothing, _callbacks, False, False)
                             Next
                             For Each o As _ICachedEntity In val
@@ -737,8 +810,8 @@ Namespace Database
             'End Using
         End Sub
 
-        Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, _ICachedEntity)), _
-            ByVal rejectList As List(Of ICachedEntity), ByVal copies As List(Of Pair(Of ICachedEntity)), ByVal need2save As List(Of ICachedEntity))
+        Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, _ICachedEntity)),
+            ByVal rejectList As List(Of ICachedEntity), ByVal copies As List(Of Pair(Of ICachedEntity)), ByVal need2save As IEnumerable(Of ICachedEntity))
             For Each o As _ICachedEntity In rejectList
                 RaiseEvent ObjectRejecting(Me, o)
                 _dontTrackRemoved = True

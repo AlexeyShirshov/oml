@@ -243,7 +243,12 @@ Public Class ObjectMappingEngine
         If String.IsNullOrEmpty(s) AndAlso pt IsNot GetType(String) Then
             Return Nothing
         Else
-            Return Convert.ChangeType(s, pt)
+
+            If pt.IsEnum Then
+                Return [Enum].Parse(pt, s)
+            Else
+                Return Convert.ChangeType(s, pt)
+            End If
         End If
     End Function
     Public Sub LoadEntityValues(entity As Object, values As IDictionary(Of String, String), Optional fallBack As FallBackDelegate = Nothing,

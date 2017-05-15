@@ -14,3 +14,9 @@
 /Tests/obj
 /.vs/Worm/v14
 /obm/Worm.Orm.vbproj.user
+/MySQL/obj/Release
+/MySQLTests/obj/Release
+/net3.5/linq/obj/Release
+/net3.5/linqprovider/obj/Release
+/net3.5/TestLinq/obj/Release
+/obm/bin/Release
