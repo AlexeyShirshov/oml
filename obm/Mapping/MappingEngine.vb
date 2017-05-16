@@ -1301,7 +1301,7 @@ Public Class ObjectMappingEngine
 
     Public Sub SetPropertyValue(ByVal obj As Object, ByVal propertyAlias As String, ByVal value As Object)
         If obj Is Nothing Then
-            Throw New ArgumentNullException("obj")
+            Throw New ArgumentNullException(NameOf(obj))
         End If
 
         Dim schema As IEntitySchema = GetEntitySchema(obj.GetType)
@@ -1313,7 +1313,7 @@ Public Class ObjectMappingEngine
         ByVal oschema As IEntitySchema, Optional ByVal pi As Reflection.PropertyInfo = Nothing)
 
         If obj Is Nothing Then
-            Throw New ArgumentNullException("obj")
+            Throw New ArgumentNullException(NameOf(obj))
         End If
 
         Dim ov As IOptimizedValues = TryCast(obj, IOptimizedValues)
@@ -1321,7 +1321,7 @@ Public Class ObjectMappingEngine
             If pi Is Nothing Then
                 Dim m As MapField2Column = Nothing
                 If oschema Is Nothing Then
-                    Throw New ArgumentNullException("oschema")
+                    Throw New ArgumentNullException(NameOf(oschema))
                 End If
 
                 If Not oschema.FieldColumnMap.TryGetValue(propertyAlias, m) Then
@@ -2991,7 +2991,7 @@ Public Class ObjectMappingEngine
         Return o
     End Function
 
-    Friend Function CloneFullEntity(ByVal e As _IEntity, ByVal oschema As IEntitySchema) As IEntity
+    Friend Function CloneFullEntity(ByVal e As _IEntity, ByVal oschema As IEntitySchema) As _IEntity
         Dim clone As _IEntity = CType(CloneIdentity(e, oschema), _IEntity)
         clone.SetObjectState(Entities.ObjectState.NotLoaded)
         OrmManager.CopyBody(e, clone, oschema)

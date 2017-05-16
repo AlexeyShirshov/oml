@@ -341,5 +341,9 @@ Namespace Xml
         Public Overrides Sub LoadProperty(cachedEntity As _IEntity, propertyAlias As String, stream As IO.Stream, Optional bufSize As Integer = 4096)
             Throw New NotImplementedException
         End Sub
+
+        Public Overrides Sub LoadObjectProperties(obj As _IEntity, ParamArray properties() As String)
+            Throw New NotImplementedException()
+        End Sub
     End Class
 End Namespace

@@ -113,7 +113,7 @@ Namespace Database
                                             Continue For
                                         End If
                                     ElseIf prev_error Then
-                                        Throw OrmManager.PrepareConcurrencyException(mgr.MappingEngine, obj)
+                                        Throw OrmManager.PrepareConcurrencyException(mgr.MappingEngine, obj, stmt)
                                     End If
 
                                     prev_error = False
@@ -406,7 +406,7 @@ Namespace Database
 
                         If [error] Then
                             'Debug.Assert(False)
-                            Throw PrepareConcurrencyException(mgr.MappingEngine, obj)
+                            Throw PrepareConcurrencyException(mgr.MappingEngine, obj, cmdtext)
                         End If
                     End If
                 End Using
@@ -1242,7 +1242,7 @@ l1:
             Invariant()
 
             If obj Is Nothing Then
-                Throw New ArgumentNullException("obj")
+                Throw New ArgumentNullException(NameOf(obj))
             End If
 
             Dim original_type As Type = obj.GetType
@@ -1369,7 +1369,130 @@ l1:
                 End With
             End Using
         End Sub
+        Public Overrides Sub LoadObjectProperties(ByVal obj As _IEntity, ParamArray ByVal properties As String())
 
+            Invariant()
+
+            If obj Is Nothing Then
+                Throw New ArgumentNullException(NameOf(obj))
+            End If
+
+            If Not properties?.Any Then
+                Return
+            End If
+
+            Dim original_type As Type = obj.GetType
+
+            Dim eudic As New Dictionary(Of String, EntityUnion)
+            Dim js As New List(Of QueryJoin)
+            Dim selDic As New Dictionary(Of EntityUnion, LoadTypeDescriptor)
+            Dim selOS As New EntityUnion(original_type)
+            Dim oschema As IEntitySchema = obj.GetEntitySchema(MappingEngine)
+
+            Dim c As Condition.ConditionConstructor = PrepareEntity2Load(obj, original_type, selDic, selOS, oschema, properties)
+
+            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
+                With cmd
+                    .CommandType = System.Data.CommandType.Text
+                    Dim almgr As AliasMgr = AliasMgr.Create
+                    Dim params As New ParamMgr(SQLGenerator, "p")
+                    Dim sb As New StringBuilder
+
+                    'If selDic.Count > 1 Then
+                    Dim ctx As New ExecutorCtx
+                    For Each lt As KeyValuePair(Of EntityUnion, LoadTypeDescriptor) In selDic
+                        Dim tt As Type = lt.Key.GetRealType(MappingEngine)
+                        ctx.Dic(tt) = lt.Value.EntitySchema
+                    Next
+
+                    Dim [from] As New QueryCmd.FromClauseDef(selOS)
+
+                    Query.Database.DbQueryExecutor.FormTypeTables(MappingEngine, ContextInfo, params, almgr,
+                        sb, SQLGenerator, selOS, Nothing, ctx, [from],
+                        True, Nothing, Nothing)
+
+                    Dim prd As New Criteria.PredicateLink
+
+                    Query.Database.DbQueryExecutor.FormJoins(MappingEngine, ContextInfo, Nothing, params,
+                        [from], js, almgr, sb, SQLGenerator, ctx, Nothing, prd, selOS)
+
+                    c.AddFilter(prd.Filter)
+                    Dim selSb As New StringBuilder
+                    selSb.Append("select ")
+                    For Each lt As KeyValuePair(Of EntityUnion, LoadTypeDescriptor) In selDic
+                        Dim tt As Type = lt.Key.GetRealType(MappingEngine)
+                        selSb.Append(BinaryExpressionBase.CreateFromEnumerable(lt.Value.Properties2Load).MakeStatement(
+                             MappingEngine, Nothing, StmtGenerator, params, almgr, ContextInfo, MakeStatementMode.Select Or MakeStatementMode.AddColumnAlias,
+                             New ExecutorCtx(tt, lt.Value.EntitySchema)))
+                        selSb.Append(",")
+                    Next
+                    selSb.Length -= 1
+                    selSb.Append(" from ")
+                    sb.Insert(0, selSb.ToString)
+
+                    SQLGenerator.AppendWhere(MappingEngine, original_type, c.Condition, almgr, sb, ContextInfo, params)
+
+                    params.AppendParams(.Parameters)
+                    .CommandText = sb.ToString
+
+                    Dim ec As OrmCache = TryCast(_cache, OrmCache)
+                    Dim b As ConnAction = TestConn(cmd)
+                    Try
+                        Dim et As New Stopwatch
+                        et.Start()
+                        Using dr As System.Data.Common.DbDataReader = ExecuteReaderCmd(cmd)
+                            Dim loaded As Boolean = False
+                            Do While dr.Read
+                                If loaded Then
+                                    Throw New OrmManagerException(String.Format("Statement [{0}] returns more than one record", cmd.CommandText))
+                                End If
+
+                                Dim cnt As Integer = LoadEntityAndParents(selDic, selOS, ec,
+                                    Function(_obj As Object,
+                                        _selectList As IList(Of SelectExpression),
+                                        _entityDictionary As IDictionary,
+                                        _modificationSync As Boolean,
+                                        ByRef _lock As IDisposable,
+                                        _oschema As IEntitySchema,
+                                        _propertyMap As Collections.IndexedCollection(Of String, MapField2Column),
+                                        _rownum As Integer,
+                                        _baseIdx As Integer)
+
+                                        Return LoadObjectFromDataReader(_obj, New DataReaderAbstraction(dr, _rownum, dr), _selectList, False,
+                                            _entityDictionary, _modificationSync, _lock, _oschema,
+                                            _propertyMap, _rownum, _baseIdx)
+
+                                    End Function, 0, obj, eudic, True)
+
+                                loaded = True
+                            Loop
+
+                            If Not loaded Then
+                                Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
+                                'If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, TryCast(oschema, ICacheBehavior))
+                                obj.SetObjectState(ObjectState.NotFoundInSource)
+                                If ce IsNot Nothing Then RemoveObjectFromCache(ce)
+                            End If
+
+                        End Using
+                        et.Stop()
+                        _cache.LogLoadTime(obj, et.Elapsed)
+                    Finally
+                        CloseConn(b)
+                    End Try
+
+                    Dim uc = TryCast(obj, IUndoChanges)
+                    If obj.ObjectState = ObjectState.Modified AndAlso uc IsNot Nothing Then
+                        Dim copy = uc.OriginalCopy
+                        If copy IsNot Nothing Then
+                            Dim clone = MappingEngine.CloneFullEntity(obj, oschema)
+                            clone.SetObjectStateClear(copy.ObjectState)
+                            uc.OriginalCopy = CType(clone, CachedEntity)
+                        End If
+                    End If
+                End With
+            End Using
+        End Sub
         Protected Sub LoadSingleObject(ByVal cmd As System.Data.Common.DbCommand, _
            ByVal selectList As IList(Of SelectExpression), ByVal obj As _IEntity, _
            ByVal modificationSync As Boolean, ByVal load As Boolean, _
@@ -1423,7 +1546,7 @@ l1:
                     Loop
 
                     If dr.RecordsAffected = 0 Then
-                        Throw PrepareConcurrencyException(MappingEngine, ce)
+                        Throw PrepareConcurrencyException(MappingEngine, ce, cmd.CommandText)
                     ElseIf dr.RecordsAffected < 0 Then
                         If Not obj.IsLoaded AndAlso load Then
                             'loading non-existent object

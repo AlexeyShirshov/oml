@@ -3753,6 +3753,7 @@ l1:
     Protected Friend MustOverride Function GetStaticKey() As String
 
     Protected Friend MustOverride Sub LoadObject(ByVal obj As _IEntity, ByVal propertyAlias As String)
+    Public MustOverride Sub LoadObjectProperties(ByVal obj As _IEntity, ParamArray ByVal properties As String())
     Public MustOverride Function GetEntityCloneFromStorage(ByVal obj As _ICachedEntity) As ICachedEntity
     'Public MustOverride Function LoadObjectsInternal(Of T As {IKeyEntity, New}, T2 As {IKeyEntity})(ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of SelectExpression), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
     'Public MustOverride Function LoadObjectsInternal(Of T2 As {IKeyEntity})(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of SelectExpression), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
@@ -4219,9 +4220,9 @@ l1:
         Return obj
     End Function
 
-    Protected Function LoadEntityAndParents(ByVal selDic As Dictionary(Of EntityUnion, LoadTypeDescriptor), ByVal selOS As EntityUnion, _
-        ByVal ec As OrmCache, ByVal loader As LoadObjectFromStorageDelegate, _
-        ByVal idx As Integer, ByVal o As _IEntity, ByVal eudic As Dictionary(Of String, EntityUnion)) As Integer
+    Protected Function LoadEntityAndParents(ByVal selDic As Dictionary(Of EntityUnion, LoadTypeDescriptor), ByVal selOS As EntityUnion,
+        ByVal ec As OrmCache, ByVal loader As LoadObjectFromStorageDelegate,
+        ByVal idx As Integer, ByVal o As _IEntity, ByVal eudic As Dictionary(Of String, EntityUnion), Optional modificationSync As Boolean = False) As Integer
 
         Dim tp As LoadTypeDescriptor = selDic(selOS)
 
@@ -4230,7 +4231,7 @@ l1:
             ec.BeginTrackDelete(objType)
         End If
         Try
-            LoadEntityFromStorage(TryCast(o, _ICachedEntity), o, tp.Load, False, ec, loader, GetDictionary(objType), _
+            LoadEntityFromStorage(TryCast(o, _ICachedEntity), o, tp.Load, modificationSync, ec, loader, GetDictionary(objType),
                                      tp.Properties2Load.ConvertAll(Function(e) New SelectExpression(e)), idx)
             idx += tp.Properties2Load.Count
             For Each pr As Pair(Of String, Reflection.PropertyInfo) In tp.ParentProperties
@@ -4256,7 +4257,7 @@ l1:
                     'If dic.Count = 0 Then
                     '    idic = MappingEngine.GetProperties(pit, ntp.Schema)
                     'End If
-                    loader(an, ntp.Properties2Load.ConvertAll(Function(e) New SelectExpression(e)), Nothing, False, Nothing, _
+                    loader(an, ntp.Properties2Load.ConvertAll(Function(e) New SelectExpression(e)), Nothing, False, Nothing,
                         ntp.EntitySchema, ntp.EntitySchema.GetAutoLoadMap, 0, idx)
                 End If
             Next
@@ -4400,7 +4401,30 @@ l1:
         FindObjectsToLoad(original_type, oschema, selOS, c, eudic, js, selDic, propertyAlias)
         Return c
     End Function
+    Protected Function PrepareEntity2Load(ByVal obj As _IEntity, ByVal original_type As Type,
+        ByVal selDic As Dictionary(Of EntityUnion, LoadTypeDescriptor),
+        ByVal selOS As EntityUnion, ByVal oschema As IEntitySchema,
+                                          props As IEnumerable(Of String)) As Condition.ConditionConstructor
 
+        Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
+        Dim pks As IEnumerable(Of PKDesc) = obj.GetPKValues(oschema)
+        'If GetType(ICachedEntity).IsAssignableFrom(original_type) Then
+        '    pks = obj.GetPKValues(oschema)
+        'Else
+        '    pks = oschema.GetPKs(obj)
+        'End If
+
+        If pks.Count = 0 Then
+            Throw New OrmManagerException(String.Format("Entity {0} has no primary key", original_type))
+        End If
+
+        For Each pk As PKDesc In pks
+            c.AddFilter(New cc.EntityFilter(selOS, pk.PropertyAlias, New ScalarValue(pk.Value), Worm.Criteria.FilterOperation.Equal))
+        Next
+
+        selDic.Add(selOS, New LoadTypeDescriptor(True, props.Select(Function(col As String) New EntityExpression(col, selOS)).ToList, oschema))
+        Return c
+    End Function
     Public Sub Load(ByVal e As _IEntity, ByVal oschema As IEntitySchema, Optional ByVal propertyAlias As String = Nothing)
         Dim kp As IKeyProvider = TryCast(e, IKeyProvider)
         If kp IsNot Nothing Then
@@ -5151,7 +5175,7 @@ l1:
             cp.CopyTo([to])
         Else
             If oschema Is Nothing Then
-                Throw New ArgumentNullException("oschema")
+                Throw New ArgumentNullException(NameOf(oschema))
             End If
 
             Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
@@ -5162,9 +5186,9 @@ l1:
         End If
     End Sub
 
-    Public Shared Function PrepareConcurrencyException(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity) As OrmManagerException
+    Public Shared Function PrepareConcurrencyException(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, cmd As String) As OrmManagerException
         If obj Is Nothing Then
-            Throw New ArgumentNullException("obj")
+            Throw New ArgumentNullException(NameOf(obj))
         End If
 
         Dim sb As New StringBuilder
@@ -5204,7 +5228,7 @@ l1:
             End If
         Next
         sb.Append("}")
-
+        sb.Append("Command: ").Append(cmd)
         Return New OrmManagerException(sb.ToString)
     End Function
 

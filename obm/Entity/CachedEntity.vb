@@ -472,7 +472,15 @@ Namespace Entities
         Public Sub Load()
             Load(CStr(Nothing))
         End Sub
+        Public Sub LoadProperties(ParamArray properties As String())
+            Using mc As IGetManager = GetMgr()
+                If mc Is Nothing Then
+                    Throw New InvalidOperationException("OrmManager required")
+                End If
 
+                mc.Manager.LoadObjectProperties(Me, properties)
+            End Using
+        End Sub
         Public Sub Load(ByVal propertyAlias As String)
             Using mc As IGetManager = GetMgr()
                 If mc Is Nothing Then
@@ -1328,7 +1336,7 @@ l1:
             'Return True
         End Sub
 
-        Protected Sub RaiseSaved(ByVal sa As OrmManager.SaveAction) Implements _ICachedEntity.RaiseSaved
+        Protected Overridable Sub RaiseSaved(ByVal sa As OrmManager.SaveAction) Implements _ICachedEntity.RaiseSaved
             RaiseEvent Saved(Me, New ObjectSavedArgs(sa))
         End Sub
 
@@ -1701,19 +1709,19 @@ l1:
             End If
         End Sub
 
-        Public Sub RaiseAdded(ByVal args As System.EventArgs) Implements ICachedEntity.RaiseAdded
+        Public Overridable Sub RaiseAdded(ByVal args As System.EventArgs) Implements ICachedEntity.RaiseAdded
             RaiseEvent Added(Me, args)
         End Sub
 
-        Public Sub RaiseChangesAccepted(ByVal args As System.EventArgs) Implements ICachedEntity.RaiseChangesAccepted
+        Public Overridable Sub RaiseChangesAccepted(ByVal args As System.EventArgs) Implements ICachedEntity.RaiseChangesAccepted
             RaiseEvent ChangesAccepted(Me, args)
         End Sub
 
-        Public Sub RaiseDeleted(ByVal args As System.EventArgs) Implements ICachedEntity.RaiseDeleted
+        Public Overridable Sub RaiseDeleted(ByVal args As System.EventArgs) Implements ICachedEntity.RaiseDeleted
             RaiseEvent Deleted(Me, args)
         End Sub
 
-        Public Sub RaiseUpdated(ByVal args As System.EventArgs) Implements ICachedEntity.RaiseUpdated
+        Public Overridable Sub RaiseUpdated(ByVal args As System.EventArgs) Implements ICachedEntity.RaiseUpdated
             RaiseEvent Updated(Me, args)
         End Sub
 
@@ -1730,7 +1738,7 @@ l1:
         <NonSerialized()>
         Public Event ChangesRejected(sender As ICachedEntity, args As EventArgs) Implements ICachedEntity.ChangesRejected
 
-        Public Sub RaiseChangesRejected(args As EventArgs) Implements ICachedEntity.RaiseChangesRejected
+        Public Overridable Sub RaiseChangesRejected(args As EventArgs) Implements ICachedEntity.RaiseChangesRejected
             RaiseEvent ChangesRejected(Me, args)
         End Sub
     End Class

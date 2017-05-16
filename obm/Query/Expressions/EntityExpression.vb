@@ -103,7 +103,7 @@ Namespace Expressions2
                     End If
                     tbl = map.Table
                 Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _op.Entity.ToStaticString(mpe) & "." & _op.PropertyAlias, ex))
+                    Throw New ObjectMappingException(String.Format("There is no column for property {0} ", _op.Entity.ToStaticString(mpe) & "." & _op.PropertyAlias, ex))
                 End Try
             End If
 
@@ -112,7 +112,7 @@ Namespace Expressions2
                 Try
                     [alias] = almgr.GetAlias(tbl, _op.Entity) & stmt.Selector
                 Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException("There is not alias for table " & tbl.RawName, ex)
+                    Throw New ObjectMappingException("There is no alias for table " & tbl.RawName, ex)
                 End Try
             Else
                 [alias] = tbl.UniqueName(_op.Entity) & mpe.Delimiter

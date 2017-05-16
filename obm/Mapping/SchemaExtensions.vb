@@ -101,7 +101,7 @@ Namespace Entities.Meta
         <Extension>
         Public Function ChangeValueType(ByVal s As IEntitySchema, ByVal propertyAlias As String, ByVal o As Object) As Object
             If s Is Nothing Then
-                Throw New ArgumentNullException("s")
+                Throw New ArgumentNullException(NameOf(s))
             End If
 
             Dim schema As IEntitySchemaBase = TryCast(s, IEntitySchemaBase)
@@ -152,7 +152,7 @@ Namespace Entities.Meta
         <Extension>
         Public Function GetSinglePK(ByVal oschema As IPropertyMap, ByVal getTypeFunc As Func(Of Type)) As String
             If oschema Is Nothing Then
-                Throw New ArgumentNullException("oschema")
+                Throw New ArgumentNullException(NameOf(oschema))
             End If
             Dim pk As String = Nothing
             For Each mp As MapField2Column In oschema.GetPKs
@@ -167,7 +167,7 @@ Namespace Entities.Meta
         <Extension>
         Public Function GetPropertyTypeByName(ByVal oschema As IPropertyMap, ByVal type As Type, ByVal propertyAlias As String) As Type
             If oschema Is Nothing Then
-                Throw New ArgumentNullException("oschema")
+                Throw New ArgumentNullException(NameOf(oschema))
             End If
             Dim m As MapField2Column = Nothing
             If Not oschema.FieldColumnMap.TryGetValue(propertyAlias, m) Then
@@ -178,7 +178,7 @@ Namespace Entities.Meta
         <Extension>
         Public Iterator Function GetAutoLoadFields(ByVal oschema As IPropertyMap) As IEnumerable(Of MapField2Column)
             If oschema Is Nothing Then
-                Throw New ArgumentNullException("oschema")
+                Throw New ArgumentNullException(NameOf(oschema))
             End If
 
             For Each mp As MapField2Column In oschema.FieldColumnMap
@@ -190,14 +190,14 @@ Namespace Entities.Meta
         <Extension>
         Public Function GetAutoLoadMap(ByVal oschema As IPropertyMap) As Collections.IndexedCollection(Of String, MapField2Column)
             If oschema Is Nothing Then
-                Throw New ArgumentNullException("oschema")
+                Throw New ArgumentNullException(NameOf(oschema))
             End If
 
             Dim r As New OrmObjectIndex()
             For Each mp As MapField2Column In oschema.GetAutoLoadFields
-                If (mp.Attributes And Field2DbRelations.Hidden) = 0 Then
-                    r.Add(mp)
-                End If
+                'If (mp.Attributes And Field2DbRelations.Hidden) = 0 Then
+                r.Add(mp)
+                'End If
             Next
 
             Return r
