@@ -2995,9 +2995,9 @@ Public Class ObjectMappingEngine
         Dim clone As _IEntity = CType(CloneIdentity(e, oschema), _IEntity)
         clone.SetObjectState(Entities.ObjectState.NotLoaded)
         OrmManager.CopyBody(e, clone, oschema)
-        Dim uc As IPropertyLazyLoad = TryCast(clone, IPropertyLazyLoad)
-        If uc IsNot Nothing Then
-            uc.LazyLoadDisabled = True
+        Dim ll As IPropertyLazyLoad = TryCast(clone, IPropertyLazyLoad)
+        If ll IsNot Nothing Then
+            ll.LazyLoadDisabled = True
         End If
         clone.SetObjectStateClear(e.ObjectState)
         Return clone

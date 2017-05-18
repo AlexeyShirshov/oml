@@ -5166,12 +5166,11 @@ l1:
             CopyProperties([from], [to], oschema)
         End If
     End Sub
-
-    Public Shared Sub CopyProperties(ByVal [from] As Object, ByVal [to] As Object, _
-        ByVal oschema As IEntitySchema)
+    Public Shared Sub CopyProperties(ByVal [from] As Object, ByVal [to] As Object,
+        ByVal oschema As IEntitySchema, ParamArray properties As String())
 
         Dim cp As ICopyProperties = TryCast([from], ICopyProperties)
-        If cp IsNot Nothing Then
+        If cp IsNot Nothing AndAlso properties Is Nothing Then
             cp.CopyTo([to])
         Else
             If oschema Is Nothing Then
@@ -5181,7 +5180,10 @@ l1:
             Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
 
             For Each m As MapField2Column In map
-                ObjectMappingEngine.SetPropertyValue([to], m.PropertyAlias, ObjectMappingEngine.GetPropertyValue([from], m.PropertyAlias, oschema, m.PropertyInfo), oschema, m.PropertyInfo)
+                If properties Is Nothing OrElse properties.Contains(m.PropertyAlias) Then
+                    ObjectMappingEngine.SetPropertyValue([to], m.PropertyAlias,
+                                                     ObjectMappingEngine.GetPropertyValue([from], m.PropertyAlias, oschema, m.PropertyInfo), oschema, m.PropertyInfo)
+                End If
             Next
         End If
     End Sub
