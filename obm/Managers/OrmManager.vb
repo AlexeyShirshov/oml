@@ -5178,9 +5178,8 @@ l1:
             End If
 
             Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
-
             For Each m As MapField2Column In map
-                If properties Is Nothing OrElse properties.Contains(m.PropertyAlias) Then
+                If properties Is Nothing OrElse Not properties.Any OrElse properties.Contains(m.PropertyAlias) Then
                     ObjectMappingEngine.SetPropertyValue([to], m.PropertyAlias,
                                                      ObjectMappingEngine.GetPropertyValue([from], m.PropertyAlias, oschema, m.PropertyInfo), oschema, m.PropertyInfo)
                 End If

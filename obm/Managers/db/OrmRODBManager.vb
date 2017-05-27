@@ -1485,7 +1485,9 @@ l1:
                     If obj.ObjectState = ObjectState.Modified AndAlso uc IsNot Nothing Then
                         Dim copy = uc.OriginalCopy
                         If copy IsNot Nothing Then
-                            CopyProperties(obj, copy, oschema, properties)
+                            Using New LoadingWrapper(copy)
+                                CopyProperties(obj, copy, oschema, properties)
+                            End Using
                             'Dim clone = MappingEngine.CloneFullEntity(obj, oschema)
                             'clone.SetObjectStateClear(copy.ObjectState)
                             'uc.OriginalCopy = CType(clone, CachedEntity)
