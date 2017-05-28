@@ -284,7 +284,7 @@ Namespace Query
 
         Public Function GetRealType(ByVal mpe As ObjectMappingEngine) As Type
             If mpe Is Nothing Then
-                Throw New ArgumentNullException("mpe")
+                Throw New ArgumentNullException(NameOf(mpe))
             End If
 
             If _calc Is Nothing OrElse _ver <> mpe.Version Then

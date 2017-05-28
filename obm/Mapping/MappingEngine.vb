@@ -1866,7 +1866,7 @@ Public Class ObjectMappingEngine
 #Region " Public members "
 
     Public Function GetTypeByEntityName(ByVal name As String) As Type
-        If name Is Nothing Then Throw New ArgumentNullException("name")
+        If name Is Nothing Then Throw New ArgumentNullException(NameOf(name))
         Dim p As Pair(Of Type, EntityAttribute) = CType(GetNames(name), Pair(Of Type, EntityAttribute))
         If p Is Nothing Then
             Return Nothing
