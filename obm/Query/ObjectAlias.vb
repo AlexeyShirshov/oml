@@ -165,21 +165,21 @@ Namespace Query
 
         Public Sub New(ByVal t As Type)
             If t Is Nothing Then
-                Throw New ArgumentNullException("t")
+                Throw New ArgumentNullException(NameOf(t))
             End If
             _t = t
         End Sub
 
         Public Sub New(ByVal entityName As String)
             If String.IsNullOrEmpty(entityName) Then
-                Throw New ArgumentNullException("entityName")
+                Throw New ArgumentNullException(NameOf(entityName))
             End If
             _en = entityName
         End Sub
 
         Public Sub New(ByVal [alias] As QueryAlias)
             If [alias] Is Nothing Then
-                Throw New ArgumentNullException("alias")
+                Throw New ArgumentNullException(NameOf([alias]))
             End If
             _a = [alias]
         End Sub
@@ -187,6 +187,7 @@ Namespace Query
         Protected Sub New()
 
         End Sub
+        Public Property Hint As String
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             Return Equals(TryCast(obj, EntityUnion))
         End Function
@@ -212,7 +213,7 @@ Namespace Query
 
         Public Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             If mpe Is Nothing Then
-                Throw New ArgumentNullException("mpe")
+                Throw New ArgumentNullException(NameOf(mpe))
             End If
 
             Dim t As Type = GetRealType(mpe)
@@ -386,6 +387,7 @@ Namespace Query
                 target._a = _a.clone
             End If
 
+            target.Hint = Hint
             Return True
         End Function
     End Class

@@ -17,15 +17,15 @@ Namespace Query
         Private _j As New List(Of QueryJoin)
 
 #Region " Inner joins "
-        Public Shared Function join(ByVal t As Type) As JoinCondition
-            Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.Join, CType(Nothing, IFilter))
+        Public Shared Function join(ByVal t As Type, Optional hint As String = Nothing) As JoinCondition
+            Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.Join, CType(Nothing, IFilter)) With {.Hint = hint}
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function join(ByVal entityName As String) As JoinCondition
-            Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.Join, Nothing)
+        Public Shared Function join(ByVal entityName As String, Optional hint As String = Nothing) As JoinCondition
+            Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.Join, Nothing) With {.Hint = hint}
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
@@ -38,15 +38,15 @@ Namespace Query
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function join(ByVal os As EntityUnion) As JoinCondition
-            Dim j As New QueryJoin(os, Worm.Criteria.Joins.JoinType.Join, Nothing)
+        Public Shared Function join(ByVal os As EntityUnion, Optional hint As String = Nothing) As JoinCondition
+            Dim j As New QueryJoin(os, Worm.Criteria.Joins.JoinType.Join, Nothing) With {.Hint = hint}
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function join(ByVal table As SourceFragment) As JoinCondition
-            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.Join, Nothing)
+        Public Shared Function join(ByVal table As SourceFragment, Optional hint As String = Nothing) As JoinCondition
+            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.Join, Nothing) With {.Hint = hint}
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
@@ -55,22 +55,22 @@ Namespace Query
 #End Region
 
 #Region " Left joins "
-        Public Shared Function left_join(ByVal table As SourceFragment) As JoinCondition
-            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
+        Public Shared Function left_join(ByVal table As SourceFragment, Optional hint As String = Nothing) As JoinCondition
+            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing) With {.Hint = hint}
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function left_join(ByVal t As Type) As JoinCondition
-            Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.LeftOuterJoin, CType(Nothing, IFilter))
+        Public Shared Function left_join(ByVal t As Type, Optional hint As String = Nothing) As JoinCondition
+            Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.LeftOuterJoin, CType(Nothing, IFilter)) With {.Hint = hint}
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function left_join(ByVal entityName As String) As JoinCondition
-            Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
+        Public Shared Function left_join(ByVal entityName As String, Optional hint As String = Nothing) As JoinCondition
+            Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing) With {.Hint = hint}
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
@@ -83,8 +83,8 @@ Namespace Query
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function left_join(ByVal eu As EntityUnion) As JoinCondition
-            Dim j As New QueryJoin(eu, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
+        Public Shared Function left_join(ByVal eu As EntityUnion, Optional hint As String = Nothing) As JoinCondition
+            Dim j As New QueryJoin(eu, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing) With {.Hint = hint}
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
@@ -93,22 +93,22 @@ Namespace Query
 
 #Region " Right joins "
 
-        Public Shared Function right_join(ByVal t As Type) As JoinCondition
-            Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.RightOuterJoin, CType(Nothing, IFilter))
+        Public Shared Function right_join(ByVal t As Type, Optional hint As String = Nothing) As JoinCondition
+            Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.RightOuterJoin, CType(Nothing, IFilter)) With {.Hint = hint}
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function right_join(ByVal entityName As String) As JoinCondition
-            Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
+        Public Shared Function right_join(ByVal entityName As String, Optional hint As String = Nothing) As JoinCondition
+            Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing) With {.Hint = hint}
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function right_join(ByVal table As SourceFragment) As JoinCondition
-            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
+        Public Shared Function right_join(ByVal table As SourceFragment, Optional hint As String = Nothing) As JoinCondition
+            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing) With {.Hint = hint}
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
@@ -117,15 +117,15 @@ Namespace Query
 #End Region
 
 #Region " Full joins "
-        Public Shared Function full_join(ByVal t As Type) As JoinCondition
-            Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.FullJoin, CType(Nothing, IFilter))
+        Public Shared Function full_join(ByVal t As Type, Optional hint As String = Nothing) As JoinCondition
+            Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.FullJoin, CType(Nothing, IFilter)) With {.Hint = hint}
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function full_join(ByVal entityName As String) As JoinCondition
-            Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.FullJoin, Nothing)
+        Public Shared Function full_join(ByVal entityName As String, Optional hint As String = Nothing) As JoinCondition
+            Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.FullJoin, Nothing) With {.Hint = hint}
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
@@ -138,15 +138,15 @@ Namespace Query
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function full_join(ByVal os As EntityUnion) As JoinCondition
-            Dim j As New QueryJoin(os, Worm.Criteria.Joins.JoinType.FullJoin, Nothing)
+        Public Shared Function full_join(ByVal os As EntityUnion, Optional hint As String = Nothing) As JoinCondition
+            Dim j As New QueryJoin(os, Worm.Criteria.Joins.JoinType.FullJoin, Nothing) With {.Hint = hint}
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
         End Function
 
-        Public Shared Function full_join(ByVal table As SourceFragment) As JoinCondition
-            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.FullJoin, Nothing)
+        Public Shared Function full_join(ByVal table As SourceFragment, Optional hint As String = Nothing) As JoinCondition
+            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.FullJoin, Nothing) With {.Hint = hint}
             Dim jc As New JCtor
             jc._j.Add(j)
             Return New JoinCondition(jc._j)
@@ -435,13 +435,13 @@ Namespace Query
 #End Region
 
 #Region " Cross "
-        Public Shared Function cross(ByVal t As Type) As JoinLinkBase
-            Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.CrossJoin, CType(Nothing, IFilter))
+        Public Shared Function cross(ByVal t As Type, Optional hint As String = Nothing) As JoinLinkBase
+            Dim j As New QueryJoin(t, Worm.Criteria.Joins.JoinType.CrossJoin, CType(Nothing, IFilter)) With {.Hint = hint}
             Return New JoinLinkBase(j)
         End Function
 
-        Public Shared Function cross(ByVal entityName As String) As JoinLinkBase
-            Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.CrossJoin, Nothing)
+        Public Shared Function cross(ByVal entityName As String, Optional hint As String = Nothing) As JoinLinkBase
+            Dim j As New QueryJoin(entityName, Worm.Criteria.Joins.JoinType.CrossJoin, Nothing) With {.Hint = hint}
             Return New JoinLinkBase(j)
         End Function
 
@@ -450,13 +450,13 @@ Namespace Query
             Return New JoinLinkBase(j)
         End Function
 
-        Public Shared Function cross(ByVal os As EntityUnion) As JoinLinkBase
-            Dim j As New QueryJoin(os, Worm.Criteria.Joins.JoinType.CrossJoin, Nothing)
+        Public Shared Function cross(ByVal os As EntityUnion, Optional hint As String = Nothing) As JoinLinkBase
+            Dim j As New QueryJoin(os, Worm.Criteria.Joins.JoinType.CrossJoin, Nothing) With {.Hint = hint}
             Return New JoinLinkBase(j)
         End Function
 
-        Public Shared Function cross(ByVal table As SourceFragment) As JoinLinkBase
-            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.CrossJoin, Nothing)
+        Public Shared Function cross(ByVal table As SourceFragment, Optional hint As String = Nothing) As JoinLinkBase
+            Dim j As New QueryJoin(table, Worm.Criteria.Joins.JoinType.CrossJoin, Nothing) With {.Hint = hint}
             Return New JoinLinkBase(j)
         End Function
 #End Region

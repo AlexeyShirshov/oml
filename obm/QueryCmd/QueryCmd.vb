@@ -100,51 +100,56 @@ Namespace Query
             Public Query As QueryCmd
             Private _qeu As EntityUnion
 
-            Public Sub New(ByVal table As SourceFragment)
+            Public Sub New(ByVal table As SourceFragment, Optional hint As String = Nothing)
                 If table Is Nothing Then
-                    Throw New ArgumentNullException("table")
+                    Throw New ArgumentNullException(NameOf(table))
                 End If
                 Me.Table = table
+                Me.Hint = hint
             End Sub
 
             Public Sub New(ByVal query As QueryCmd)
                 If query Is Nothing Then
-                    Throw New ArgumentNullException("query")
+                    Throw New ArgumentNullException(NameOf(query))
                 End If
                 Me.Query = query
             End Sub
 
             Public Sub New(ByVal [alias] As QueryAlias)
                 If [alias] Is Nothing Then
-                    Throw New ArgumentNullException("alias")
+                    Throw New ArgumentNullException(NameOf([alias]))
                 End If
                 Me.ObjectSource = New EntityUnion([alias])
             End Sub
 
-            Public Sub New(ByVal t As Type)
+            Public Sub New(ByVal t As Type, Optional hint As String = Nothing)
                 If t Is Nothing Then
-                    Throw New ArgumentNullException("t")
+                    Throw New ArgumentNullException(NameOf(t))
                 End If
                 Me.ObjectSource = New EntityUnion(t)
+                Me.Hint = hint
             End Sub
 
-            Public Sub New(ByVal entityName As String)
+            Public Sub New(ByVal entityName As String, Optional hint As String = Nothing)
                 If String.IsNullOrEmpty(entityName) Then
-                    Throw New ArgumentNullException("entityName")
+                    Throw New ArgumentNullException(NameOf(entityName))
                 End If
                 Me.ObjectSource = New EntityUnion(entityName)
+                Me.Hint = hint
             End Sub
 
-            Public Sub New(ByVal os As EntityUnion)
+            Public Sub New(ByVal os As EntityUnion, Optional hint As String = Nothing)
                 If os Is Nothing Then
-                    Throw New ArgumentNullException("os")
+                    Throw New ArgumentNullException(NameOf(os))
                 End If
                 Me.ObjectSource = os
+                Me.Hint = hint
             End Sub
 
             Protected Sub New()
 
             End Sub
+            Public Property Hint As String
             Public ReadOnly Property QueryEU() As EntityUnion
                 Get
                     If Query IsNot Nothing Then
@@ -3071,8 +3076,8 @@ l1:
             Return Me
         End Function
 
-        Public Function From(ByVal t As Type) As QueryCmd
-            _from = New FromClauseDef(t)
+        Public Function From(ByVal t As Type, Optional hint As String = Nothing) As QueryCmd
+            _from = New FromClauseDef(t, hint)
             RenewMark()
             Return Me
         End Function
@@ -3083,8 +3088,8 @@ l1:
             Return Me
         End Function
 
-        Public Function From(ByVal entityName As String) As QueryCmd
-            _from = New FromClauseDef(entityName)
+        Public Function From(ByVal entityName As String, Optional hint As String = Nothing) As QueryCmd
+            _from = New FromClauseDef(entityName, hint)
             RenewMark()
             Return Me
         End Function

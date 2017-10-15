@@ -850,10 +850,12 @@ l1:
                 sb.Append(s.GetTableName(tbl_real, contextInfo))
             End If
 
+            Dim hint = CoreFramework.StringExtensions.Coalesce(from.Hint, osrc_.Hint, tbl_real.Hint)
+
             sb.Append(" ").Append([alias])
 
-            If Not String.IsNullOrEmpty(tbl_real.Hint) Then
-                sb.Append(" ").Append(tbl_real.Hint)
+            If Not String.IsNullOrEmpty(hint) Then
+                sb.Append(" ").Append(hint)
             End If
 
             If apd IsNot Nothing Then

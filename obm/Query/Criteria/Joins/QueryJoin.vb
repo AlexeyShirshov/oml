@@ -86,7 +86,7 @@ Namespace Criteria.Joins
             'End If
 
             If almgr Is Nothing Then
-                Throw New ArgumentNullException("almgr")
+                Throw New ArgumentNullException(NameOf(almgr))
             End If
 
             Dim os_ As EntityUnion = ObjectSource
@@ -110,6 +110,7 @@ Namespace Criteria.Joins
 
                 If os_ Is Nothing OrElse Not os_.IsQuery Then
                     Dim tbl As SourceFragment = _table
+                    Dim hint = CoreFramework.StringExtensions.Coalesce(Me.Hint, ObjectSource?.Hint, tbl?.Hint)
                     If tbl Is Nothing Then
                         'If _type IsNot Nothing Then
                         '    tbl = schema.GetTables(_type)(0)
@@ -126,7 +127,11 @@ Namespace Criteria.Joins
                     End If
 
                     sb.Append(JoinTypeString()).Append(schema.GetTableName(tbl, contextInfo))
-                    sb.Append(" " & almgr.GetAlias(alTable, os_)).Append(" on ")
+                    sb.Append(" " & almgr.GetAlias(alTable, os_))
+                    If Not String.IsNullOrEmpty(hint) Then
+                        sb.Append(" ").Append(hint)
+                    End If
+                    sb.Append(" on ")
                     sb.Append(Condition.MakeQueryStmt(mpe, fromClause, schema, executor, contextInfo, almgr, pname))
                     Return alTable
                 Else
@@ -151,6 +156,7 @@ Namespace Criteria.Joins
                 End If
             ElseIf JoinType = Joins.JoinType.CrossJoin Then
                 Dim tbl As SourceFragment = _table
+                Dim hint = CoreFramework.StringExtensions.Coalesce(Me.Hint, ObjectSource?.Hint, tbl?.Hint)
                 If tbl Is Nothing Then
                     tbl = mpe.GetTables(ObjectSource.GetRealType(mpe))(0)
                 End If
@@ -162,6 +168,9 @@ Namespace Criteria.Joins
 
                 sb.Append(JoinTypeString()).Append(schema.GetTableName(tbl, contextInfo))
                 sb.Append(" ").Append(almgr.GetAlias(alTable, os_))
+                If Not String.IsNullOrEmpty(hint) Then
+                    sb.Append(" ").Append(hint)
+                End If
                 Return alTable
             ElseIf os_ IsNot Nothing AndAlso os_.IsQuery Then
                 sb.Append(JoinTypeString()).Append("(")
@@ -350,6 +359,8 @@ Namespace Criteria.Joins
             End Get
         End Property
 
+        Public Property Hint As String
+
         Public Function InjectJoinFilter(ByVal schema As ObjectMappingEngine, ByVal t As Type, ByVal propertyAlias As String, ByVal table As SourceFragment, ByVal column As String) As Core.TemplateBase
             For Each _fl As Core.IFilter In _condition.GetAllFilters()
                 Dim f As JoinFilter = Nothing
@@ -474,6 +485,7 @@ Namespace Criteria.Joins
                 target._jos = _jos.Clone
             End If
 
+            target.Hint = Hint
             Return True
         End Function
     End Class
