@@ -3076,7 +3076,12 @@ l1:
             Return Me
         End Function
 
-        Public Function From(ByVal t As Type, Optional hint As String = Nothing) As QueryCmd
+        Public Function From(ByVal t As Type) As QueryCmd
+            _from = New FromClauseDef(t)
+            RenewMark()
+            Return Me
+        End Function
+        Public Function From(ByVal t As Type, hint As String) As QueryCmd
             _from = New FromClauseDef(t, hint)
             RenewMark()
             Return Me
@@ -3088,7 +3093,12 @@ l1:
             Return Me
         End Function
 
-        Public Function From(ByVal entityName As String, Optional hint As String = Nothing) As QueryCmd
+        Public Function From(ByVal entityName As String) As QueryCmd
+            _from = New FromClauseDef(entityName)
+            RenewMark()
+            Return Me
+        End Function
+        Public Function From(ByVal entityName As String, hint As String) As QueryCmd
             _from = New FromClauseDef(entityName, hint)
             RenewMark()
             Return Me
