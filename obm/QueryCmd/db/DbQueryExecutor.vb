@@ -850,7 +850,7 @@ l1:
                 sb.Append(s.GetTableName(tbl_real, contextInfo))
             End If
 
-            Dim hint = CoreFramework.StringExtensions.Coalesce(from.Hint, osrc_.Hint, tbl_real.Hint)
+            Dim hint = CoreFramework.StringExtensions.Coalesce(from.Hint, osrc_?.Hint, tbl_real.Hint)
 
             sb.Append(" ").Append([alias])
 
