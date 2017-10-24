@@ -58,6 +58,7 @@ Namespace Criteria.Joins
             _c = c
         End Sub
 
+#Region " and "
         Public Function [and](ByVal f As IGetFilter) As JoinLink
             _c.AddFilter(f.Filter, Worm.Criteria.Conditions.ConditionOperator.And)
             Return Me
@@ -92,6 +93,44 @@ Namespace Criteria.Joins
             Dim c As New CriteriaJoin(jf, _c, _jc)
             Return c
         End Function
+#End Region
+
+#Region " or "
+        Public Function [or](ByVal f As IGetFilter) As JoinLink
+            _c.AddFilter(f.Filter, Worm.Criteria.Conditions.ConditionOperator.Or)
+            Return Me
+        End Function
+
+        Public Function [or](ByVal t As Type, ByVal propertyAlias As String) As CriteriaJoin
+            Dim jf As New JoinFilter(t, propertyAlias, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+            Dim c As New CriteriaJoin(jf, _c, _jc, ConditionOperator.Or)
+            Return c
+        End Function
+
+        Public Function [or](ByVal table As SourceFragment, ByVal column As String) As CriteriaJoin
+            Dim jf As New JoinFilter(table, column, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+            Dim c As New CriteriaJoin(jf, _c, _jc, ConditionOperator.Or)
+            Return c
+        End Function
+
+        Public Function [or](ByVal op As ObjectProperty) As CriteriaJoin
+            Dim jf As New JoinFilter(op, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+            Dim c As New CriteriaJoin(jf, _c, _jc, ConditionOperator.Or)
+            Return c
+        End Function
+
+        Public Function [or](ByVal al As QueryAlias, ByVal propertyAlias As String) As CriteriaJoin
+            Dim jf As New JoinFilter(New EntityUnion(al), propertyAlias, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+            Dim c As New CriteriaJoin(jf, _c, _jc, ConditionOperator.Or)
+            Return c
+        End Function
+
+        Public Function [or](ByVal eu As EntityUnion, ByVal propertyAlias As String) As CriteriaJoin
+            Dim jf As New JoinFilter(eu, propertyAlias, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+            Dim c As New CriteriaJoin(jf, _c, _jc, ConditionOperator.Or)
+            Return c
+        End Function
+#End Region
 
         Protected Overrides Sub PreAdd()
             If _c IsNot Nothing Then
@@ -158,16 +197,20 @@ Namespace Criteria.Joins
         Private _jf As JoinFilter
         Private _c As Condition.ConditionConstructor
         Private _jc As List(Of QueryJoin)
+        Private _operator As ConditionOperator
 
         Protected Friend Sub New(ByVal jf As JoinFilter, ByVal jc As List(Of QueryJoin))
             _jf = jf
             _jc = jc
         End Sub
-
         Protected Friend Sub New(ByVal jf As JoinFilter, ByVal c As Condition.ConditionConstructor, ByVal jc As List(Of QueryJoin))
+            MyClass.New(jf, c, jc, ConditionOperator.And)
+        End Sub
+        Protected Friend Sub New(ByVal jf As JoinFilter, ByVal c As Condition.ConditionConstructor, ByVal jc As List(Of QueryJoin), ByVal [operator] As ConditionOperator)
             _jf = jf
             _c = c
             _jc = jc
+            _operator = [operator]
         End Sub
 
 #Region " eq "
@@ -250,7 +293,7 @@ Namespace Criteria.Joins
             If _c Is Nothing Then
                 _c = New Condition.ConditionConstructor
             End If
-            _c.AddFilter(_jf)
+            _c.AddFilter(_jf, _operator)
             Return New JoinLink(_c, _jc)
         End Function
     End Class
