@@ -4768,6 +4768,226 @@ l1:
         End Function
 #End Region
 
+#Region " FirstSimple "
+
+        Public Function FirstSimple(Of T)(ByVal mgr As OrmManager) As T
+            Dim oldT As Top = TopParam
+            Dim oldRowFilter As TableFilter = RowNumberFilter
+            Try
+
+                Dim l As IList(Of T) = Nothing
+                If RowNumberFilter Is Nothing Then
+                    l = Top(1).ToSimpleList(Of T)(mgr)
+                Else
+                    l = Take(1).ToSimpleList(Of T)(mgr)
+                End If
+
+                If l.Count = 0 Then
+                    Throw New InvalidOperationException("Number of items is " & l.Count)
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+                _rn = oldRowFilter
+            End Try
+        End Function
+
+        Public Function FirstSimple(Of T)(ByVal getMgr As ICreateManager) As T
+            Dim oldT As Top = TopParam
+            Dim oldRowFilter As TableFilter = RowNumberFilter
+            Try
+
+                Dim l As IList(Of T) = Nothing
+                If RowNumberFilter Is Nothing Then
+                    l = Top(1).ToSimpleList(Of T)(getMgr)
+                Else
+                    l = Take(1).ToSimpleList(Of T)(getMgr)
+                End If
+
+                If l.Count = 0 Then
+                    Throw New InvalidOperationException("Number of items is " & l.Count)
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+                _rn = oldRowFilter
+            End Try
+        End Function
+
+        Public Function FirstSimple(Of T)() As T
+            Dim oldT As Top = TopParam
+            Dim oldRowFilter As TableFilter = RowNumberFilter
+            Try
+
+                Dim l As IList(Of T) = Nothing
+                If RowNumberFilter Is Nothing Then
+                    l = Top(1).ToSimpleList(Of T)()
+                Else
+                    l = Take(1).ToSimpleList(Of T)()
+                End If
+
+                If l.Count = 0 Then
+                    Throw New InvalidOperationException("Number of items is " & l.Count)
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+                _rn = oldRowFilter
+            End Try
+        End Function
+#End Region
+
+#Region " FirstOrDefaultSimple "
+        Public Function [FirstOrDefaultSimple](Of T)(ByVal mgr As OrmManager) As T
+            Dim oldT As Top = TopParam
+            Try
+                Dim l As IList(Of T) = Top(1).ToSimpleList(Of T)(mgr)
+                If l.Count = 0 Then
+                    Return Nothing
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+            End Try
+        End Function
+
+        Public Function [FirstOrDefaultSimple](Of T)(ByVal getMgr As ICreateManager) As T
+            Dim oldT As Top = TopParam
+            Try
+                Dim l As IList(Of T) = Top(1).ToSimpleList(Of T)(getMgr)
+                If l.Count = 0 Then
+                    Return Nothing
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+            End Try
+        End Function
+
+        Public Function [FirstOrDefaultSimple](Of T)() As T
+            Dim oldT As Top = TopParam
+            Try
+                Dim l As IList(Of T) = Top(1).ToSimpleList(Of T)()
+                If l.Count = 0 Then
+                    Return Nothing
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+            End Try
+        End Function
+#End Region
+
+#Region " FirstEntity "
+
+        Public Function FirstEntity(Of T As _IEntity)(ByVal mgr As OrmManager) As T
+            Dim oldT As Top = TopParam
+            Dim oldRowFilter As TableFilter = RowNumberFilter
+            Try
+
+                Dim l As IList(Of T) = Nothing
+                If RowNumberFilter Is Nothing Then
+                    l = Top(1).ToObjectList(Of T)(mgr)
+                Else
+                    l = Take(1).ToObjectList(Of T)(mgr)
+                End If
+
+                If l.Count = 0 Then
+                    Throw New InvalidOperationException("Number of items is " & l.Count)
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+                _rn = oldRowFilter
+            End Try
+        End Function
+
+        Public Function FirstEntity(Of T As _IEntity)(ByVal getMgr As ICreateManager) As T
+            Dim oldT As Top = TopParam
+            Dim oldRowFilter As TableFilter = RowNumberFilter
+            Try
+
+                Dim l As IList(Of T) = Nothing
+                If RowNumberFilter Is Nothing Then
+                    l = Top(1).ToObjectList(Of T)(getMgr)
+                Else
+                    l = Take(1).ToObjectList(Of T)(getMgr)
+                End If
+
+                If l.Count = 0 Then
+                    Throw New InvalidOperationException("Number of items is " & l.Count)
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+                _rn = oldRowFilter
+            End Try
+        End Function
+
+        Public Function FirstEntity(Of T As _IEntity)() As T
+            Dim oldT As Top = TopParam
+            Dim oldRowFilter As TableFilter = RowNumberFilter
+            Try
+
+                Dim l As IList(Of T) = Nothing
+                If RowNumberFilter Is Nothing Then
+                    l = Top(1).ToObjectList(Of T)()
+                Else
+                    l = Take(1).ToObjectList(Of T)()
+                End If
+
+                If l.Count = 0 Then
+                    Throw New InvalidOperationException("Number of items is " & l.Count)
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+                _rn = oldRowFilter
+            End Try
+        End Function
+#End Region
+
+#Region " FirstOrDefaultEntity "
+        Public Function [FirstOrDefaultEntity](Of T As _IEntity)(ByVal mgr As OrmManager) As T
+            Dim oldT As Top = TopParam
+            Try
+                Dim l As IList(Of T) = Top(1).ToObjectList(Of T)(mgr)
+                If l.Count = 0 Then
+                    Return Nothing
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+            End Try
+        End Function
+
+        Public Function [FirstOrDefaultEntity](Of T As _IEntity)(ByVal getMgr As ICreateManager) As T
+            Dim oldT As Top = TopParam
+            Try
+                Dim l As IList(Of T) = Top(1).ToObjectList(Of T)(getMgr)
+                If l.Count = 0 Then
+                    Return Nothing
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+            End Try
+        End Function
+
+        Public Function [FirstOrDefaultEntity](Of T As _IEntity)() As T
+            Dim oldT As Top = TopParam
+            Try
+                Dim l As IList(Of T) = Top(1).ToObjectList(Of T)()
+                If l.Count = 0 Then
+                    Return Nothing
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+            End Try
+        End Function
+#End Region
+
 #End Region
 
 #Region " Lasts "
