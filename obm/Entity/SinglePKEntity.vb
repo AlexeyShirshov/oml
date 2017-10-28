@@ -1051,18 +1051,20 @@ Namespace Entities
         End Property
 
         Public Function GetRelation(ByVal desc As RelationDesc) As Entities.Relation Implements IRelations.GetRelation
+            Dim mpe = GetMappingEngine()
+
             Using AcquareLock()
                 For Each rl As Relation In _relations
                     If rl.Relation.Equals(desc) Then
                         Return rl
-                    ElseIf M2MRelationDesc.CompareKeys(rl.Relation.Key, desc.Key) Then
+                    ElseIf M2MRelationDesc.CompareKeys(rl.Relation.Key, desc.Key) AndAlso mpe IsNot Nothing Then
                         If rl.Relation.Type IsNot Nothing Then
-                            If desc.Entity.GetRealType(GetMappingEngine) Is rl.Relation.Type Then
+                            If desc.Entity.GetRealType(mpe) Is rl.Relation.Type Then
                                 rl.Relation = desc
                                 Return rl
                             End If
                         ElseIf Not String.IsNullOrEmpty(rl.Relation.EntityName) Then
-                            If rl.Relation.Entity.GetRealType(GetMappingEngine) Is desc.Type Then
+                            If rl.Relation.Entity.GetRealType(mpe) Is desc.Type Then
                                 rl.Relation = desc
                                 Return rl
                             End If

@@ -20,3 +20,7 @@
 /net3.5/linqprovider/obj/Release
 /net3.5/TestLinq/obj/Release
 /obm/bin/Release
+/.vs/Worm/v15/Server/sqlite3
+/.vs/Worm/v15/sqlite3/db.lock
+/.vs/Worm/v15/sqlite3/storage.ide-shm
+/.vs/Worm/v15/sqlite3/storage.ide-wal
