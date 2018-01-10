@@ -80,7 +80,7 @@ Public Class ObjectMappingEngine
     Private _idicSpin As New SpinLockRef
     Private _ce As CreateEntityDelegate
     Private _c2int As ConvertVersionToIntDelegate
-    Private _features As IList(Of String) = New CoreFramework.Collections.ConcurrentList(Of String)
+    Private _features As IList(Of String) = New CoreFramework.CFCollections.ConcurrentList(Of String)
     Public ReadOnly Mark As Guid = Guid.NewGuid
     Private Shared _entityTypes As IEnumerable(Of Type)
     Private Shared _entityTypesSpin As New SpinLockRef

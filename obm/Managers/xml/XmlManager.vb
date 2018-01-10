@@ -5,7 +5,7 @@ Imports System.Xml.XPath
 Imports Worm.Entities
 Imports Worm.Criteria.Joins
 Imports Worm.Query.Sorting
-Imports CoreFramework.Debugging
+Imports CoreFramework.CFDebugging
 
 Namespace Xml
     Partial Public Class QueryManager

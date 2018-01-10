@@ -1331,7 +1331,7 @@ Namespace Entities
 
         Public Property IsPropertyLoaded(propertyAlias As String) As Boolean Implements IPropertyLazyLoad.IsPropertyLoaded
             Get
-                Using New CoreFramework.Threading.CSScopeMgrLite(_sl)
+                Using New CoreFramework.CFThreading.CSScopeMgrLite(_sl)
                     If _loaded_members Is Nothing Then
                         _loaded_members = New Dictionary(Of String, Boolean)
                     End If
@@ -1346,7 +1346,7 @@ Namespace Entities
                 End Using
             End Get
             Set(value As Boolean)
-                Using New CoreFramework.Threading.CSScopeMgrLite(_sl)
+                Using New CoreFramework.CFThreading.CSScopeMgrLite(_sl)
                     If _loaded_members Is Nothing Then
                         _loaded_members = New Dictionary(Of String, Boolean)
                     End If

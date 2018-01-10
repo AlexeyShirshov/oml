@@ -288,7 +288,7 @@ Public MustInherit Class DataContextBase
             If mgr IsNot Nothing Then
                 mgr.Dispose()
                 mgr = Nothing
-                CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                CoreFramework.CFDebugging.Stack.PreserveStackTrace(ex)
                 Throw ex
             End If
         End Try

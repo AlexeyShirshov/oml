@@ -2,7 +2,7 @@
 Imports Worm.Query.Sorting
 Imports Worm.Expressions2
 
-<Serializable()> _
+<Serializable()>
 Public NotInheritable Class OrmManagerException
     Inherits Exception
 
@@ -20,8 +20,8 @@ Public NotInheritable Class OrmManagerException
         ' Add other code for custom properties here.
     End Sub
 
-    Private Sub New( _
-        ByVal info As System.Runtime.Serialization.SerializationInfo, _
+    Private Sub New(
+        ByVal info As System.Runtime.Serialization.SerializationInfo,
         ByVal context As System.Runtime.Serialization.StreamingContext)
         MyBase.New(info, context)
         ' Insert code here for custom properties here.
@@ -280,7 +280,7 @@ Public Class CreateManager
             If m IsNot Nothing Then
                 m.Dispose()
                 m = Nothing
-                CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                CoreFramework.CFDebugging.Stack.PreserveStackTrace(ex)
                 Throw ex
             End If
         End Try

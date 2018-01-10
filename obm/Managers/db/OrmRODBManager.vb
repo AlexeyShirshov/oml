@@ -17,7 +17,7 @@ Imports System.Threading.Tasks
 Imports System.Threading
 Imports System.Linq
 Imports System.Text.RegularExpressions
-Imports CoreFramework.Debugging
+Imports CoreFramework.CFDebugging
 
 Namespace Database
     Partial Public Class OrmReadOnlyDBManager
@@ -1135,14 +1135,14 @@ l1:
                     RaiseEvent CommandException(Me, args)
                     Select Case args.Action
                         Case CommandExceptionArgs.ActionEnum.Rethrow
-                            CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                            CoreFramework.CFDebugging.Stack.PreserveStackTrace(ex)
                             Throw ex
                         Case CommandExceptionArgs.ActionEnum.RethrowCustom
                             Dim cex As Exception = TryCast(args.Context, Exception)
                             If cex IsNot Nothing Then
                                 Throw cex
                             Else
-                                CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                                CoreFramework.CFDebugging.Stack.PreserveStackTrace(ex)
                                 Throw ex
                             End If
                         Case CommandExceptionArgs.ActionEnum.RetryOldConnection
@@ -1153,7 +1153,7 @@ l1:
                             If _tran IsNot Nothing OrElse String.IsNullOrEmpty(connStr) Then
                                 'if we have transaction we should not rollback it as long as possible
                                 'if exception will not be rethrown, connection will close and transaction rolls back
-                                CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                                CoreFramework.CFDebugging.Stack.PreserveStackTrace(ex)
                                 Throw ex
                             End If
 
@@ -1171,7 +1171,7 @@ l1:
                                 cmd.CommandText = cmdText
                             Else
                                 'to prevent stack overflow
-                                CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                                CoreFramework.CFDebugging.Stack.PreserveStackTrace(ex)
                                 Throw ex
                             End If
                             GoTo l1
@@ -1181,7 +1181,7 @@ l1:
                             '    If _tran IsNot Nothing OrElse String.IsNullOrEmpty(connStr) Then
                             '        'if we have transaction we should not rollback it as long as possible
                             '        'if exception will not be rethrown, connection will close and transaction rolls back
-                            '        CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                            '        CoreFramework.CFDebugging.Stack.PreserveStackTrace(ex)
                             '        Throw ex
                             '    End If
                     End Select
@@ -2839,7 +2839,7 @@ l1:
                         RaiseEvent ConnectionException(Me, args)
                         Select Case args.Action
                             Case ConnectionExceptionArgs.ActionEnum.Rethrow
-                                CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                                CoreFramework.CFDebugging.Stack.PreserveStackTrace(ex)
                                 Throw ex
                             Case ConnectionExceptionArgs.ActionEnum.RethrowCustom
                                 Dim cex As Exception = TryCast(args.Context, Exception)
@@ -2854,7 +2854,7 @@ l1:
                                     _conn.ConnectionString = _connStr
                                 Else
                                     'to prevent stack overflow
-                                    CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                                    CoreFramework.CFDebugging.Stack.PreserveStackTrace(ex)
                                     Throw ex
                                 End If
                                 GoTo l1
@@ -2883,7 +2883,7 @@ l2:
                                 RaiseEvent ConnectionException(Me, args)
                                 Select Case args.Action
                                     Case ConnectionExceptionArgs.ActionEnum.Rethrow
-                                        CoreFramework.Debugging.Stack.PreserveStackTrace(ex)
+                                        CoreFramework.CFDebugging.Stack.PreserveStackTrace(ex)
                                         Throw ex
                                     Case ConnectionExceptionArgs.ActionEnum.RethrowCustom
                                         Dim cex As Exception = TryCast(args.Context, Exception)

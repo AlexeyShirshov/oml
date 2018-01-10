@@ -58,24 +58,24 @@ Namespace Cache
         End Class
 
         Private Class TemplateHashs
-            Inherits Dictionary(Of String, Pair(Of HashIds, IOrmFilterTemplate))
+            Inherits Dictionary(Of String, Tuple(Of HashIds, IOrmFilterTemplate))
 
             Private Function GetIds(ByVal key As String, ByVal filter As IFilter, ByRef def As Boolean) As HashSet(Of String)
-                Dim p As Pair(Of HashIds, IOrmFilterTemplate) = Nothing
+                Dim p As Tuple(Of HashIds, IOrmFilterTemplate) = Nothing
                 Dim f As IEntityFilter = TryCast(filter, IEntityFilter)
                 def = f Is Nothing
                 If Not TryGetValue(key, p) Then
                     If Not def Then
-                        p = New Pair(Of HashIds, IOrmFilterTemplate)(New HashIds, f.GetFilterTemplate)
+                        p = New Tuple(Of HashIds, IOrmFilterTemplate)(New HashIds, f.GetFilterTemplate)
                     Else
-                        p = New Pair(Of HashIds, IOrmFilterTemplate)(New HashIds, Nothing)
+                        p = New Tuple(Of HashIds, IOrmFilterTemplate)(New HashIds, Nothing)
                     End If
                     Me(key) = p
                 End If
                 If Not def Then
-                    Return p.First.GetIds(f.MakeHash)
+                    Return p.Item1.GetIds(f.MakeHash)
                 Else
-                    Return p.First.GetIds(EntityFilter.EmptyHash)
+                    Return p.Item1.GetIds(EntityFilter.EmptyHash)
                 End If
             End Function
 
@@ -956,7 +956,7 @@ Namespace Cache
 #End If
                 Dim hashs As TemplateHashs = _immediateValidate.GetFilters(tkey)
 
-                For Each p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)) In hashs
+                For Each p As KeyValuePair(Of String, Tuple(Of HashIds, IOrmFilterTemplate)) In hashs
                     Dim dic As IDictionary = GetQueryDictionary(p.Key)
 
                     For Each op In objs
@@ -1088,7 +1088,7 @@ Namespace Cache
 #End If
                 Dim hashs As TemplateHashs = _immediateValidate.GetFilters(tkey)
 
-                For Each p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)) In hashs
+                For Each p As KeyValuePair(Of String, Tuple(Of HashIds, IOrmFilterTemplate)) In hashs
                     Dim dic As IDictionary = GetQueryDictionary(p.Key)
 
                     If dic IsNot Nothing Then
@@ -1331,22 +1331,22 @@ l1:
                 Yield tt.BaseType
             End If
         End Function
-        Private Sub UpdateFilters(ByVal p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)),
+        Private Sub UpdateFilters(ByVal p As KeyValuePair(Of String, Tuple(Of HashIds, IOrmFilterTemplate)),
                                   ByVal schema As ObjectMappingEngine, ByVal oschema As IEntitySchema,
                                   ByVal obj As _ICachedEntity, ByVal oldObj As _ICachedEntity, ByVal dic As IDictionary,
                                   ByVal callbacks As IUpdateCacheCallbacks, ByVal callbacks2 As IUpdateCacheCallbacks2,
                                   ByVal forseEval As Boolean, ByVal mgr As OrmManager)
             Dim hash As String = EntityFilter.EmptyHash
-            If p.Value.Second IsNot Nothing Then
+            If p.Value.Item2 IsNot Nothing Then
                 Try
-                    hash = p.Value.Second.MakeHash(schema, oschema, obj)
+                    hash = p.Value.Item2.MakeHash(schema, oschema, obj)
                 Catch ex As ArgumentException When ex.Message.StartsWith("Template type")
                     Return
                 Catch ex As InvalidOperationException When ex.Message.StartsWith("Type is not specified in filter")
                     Throw New InvalidOperationException(String.Format("Key {0}", p.Key), ex)
                 End Try
             End If
-            Dim hid As HashIds = p.Value.First
+            Dim hid As HashIds = p.Value.Item1
             Dim ids As IEnumerable(Of String) = hid.GetIds(hash)
             Dim rm As New List(Of String)
             For Each id As String In ids
@@ -1416,14 +1416,14 @@ l1:
 
             If obj.UpdateCtx.UpdatedFields IsNot Nothing AndAlso oldObj IsNot Nothing Then
                 hash = EntityFilter.EmptyHash
-                If p.Value.Second IsNot Nothing Then
+                If p.Value.Item2 IsNot Nothing Then
                     Try
-                        hash = p.Value.Second.MakeHash(schema, oschema, oldObj)
+                        hash = p.Value.Item2.MakeHash(schema, oschema, oldObj)
                     Catch ex As ArgumentException When ex.Message.StartsWith("Template type")
                         Return
                     End Try
                 End If
-                hid = p.Value.First
+                hid = p.Value.Item1
                 ids = hid.GetIds(hash)
 
                 For Each id As String In ids

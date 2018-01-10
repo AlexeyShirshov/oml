@@ -4,7 +4,7 @@ Imports Worm.Cache
 Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports Worm.Query
-Imports CoreFramework.Debugging
+Imports CoreFramework.CFDebugging
 
 Namespace Database.Storedprocs
 

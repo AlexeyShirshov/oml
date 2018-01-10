@@ -296,6 +296,10 @@ Namespace Query
                 ElseIf _calc Is Nothing AndAlso _a IsNot Nothing Then
                     _calc = _a.Query.GetSelectedOS.GetRealType(mpe)
                 End If
+
+                If _calc Is Nothing Then
+                    Throw New ApplicationException(String.Format("EntityUnion {0} cannot be converted to type", _ToString))
+                End If
             End If
             Return _calc
         End Function
