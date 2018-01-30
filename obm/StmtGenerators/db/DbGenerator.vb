@@ -11,6 +11,7 @@ Imports Worm.Criteria.Values
 Imports Worm.Criteria
 Imports System.Runtime.CompilerServices
 Imports System.Linq
+Imports CoreFramework
 
 Namespace Database
 
@@ -968,6 +969,9 @@ l1:
 
                     selectedProperties = syncUpdateProps.ConvertAll(Function(e) New SelectExpression(e))
 
+                    Dim lastErrIdx = 0
+                    'Dim insTables As New List(Of Tuple(Of SourceFragment, String))
+
                     If updated_tables.Count > 0 Then
                         'Dim sch As IOrmObjectSchema = GetObjectSchema(rt)
                         Dim pk_table As SourceFragment = esch.GetPKTable(rt)
@@ -980,25 +984,30 @@ l1:
                             If upd_cmd.Length > 0 Then
                                 upd_cmd.Append(EndLine)
                                 If SupportIf() Then
+                                    Dim lastError As String = Nothing
+                                    upd_cmd.Append(DeclareVariableInc("@lastErr", "int", lastErrIdx, lastError)).Append(EndLine)
+
                                     If HasUpdateColumnsForTable(syncUpdateProps, lastTbl, esch) OrElse Not lastTbl.Equals(pk_table) Then
                                         hasSyncUpdate = hasSyncUpdate OrElse HasUpdateColumnsForTable(syncUpdateProps, lastTbl, esch)
                                         Dim varName As String = "@" & lastTbl.Name.Replace(".", "").Trim("["c, "]"c) & "_rownum"
                                         upd_cmd.Append(DeclareVariable(varName, "int")).Append(EndLine)
                                         upd_cmd.Append("select ").Append(varName).Append(" = ").Append(RowCount)
-                                        upd_cmd.Append(", @lastErr = ").Append(le.LastError).Append(EndLine)
+                                        upd_cmd.Append(", ").Append(lastError).Append(" = ").Append(le.LastError).Append(EndLine)
 
                                         If Not lastTbl.Equals(pk_table) Then
                                             CorrectUpdateWithInsert(mpe, oschema, lastTbl, lastUT, upd_cmd,
-                                                obj, params, exec, varName, contextInfo)
+                                                obj, params, exec, varName, contextInfo, lastError)
+
+                                            'insTables.Add(New Tuple(Of SourceFragment, String)(lastTbl, lastError))
                                         End If
                                     Else
-                                        upd_cmd.Append("set @lastErr = ").Append(le.LastError).Append(EndLine)
+                                        upd_cmd.Append("set ").Append(lastError).Append(" = ").Append(le.LastError).Append(EndLine)
                                     End If
 
-                                    upd_cmd.Append("if @lastErr = 0 ")
+                                    upd_cmd.Append("if ").Append(lastError).Append(" = 0 ")
                                 End If
-                            ElseIf updated_tables.Count > 1 Then
-                                upd_cmd.Append(DeclareVariable("@lastErr", "int")).Append(EndLine)
+                                'ElseIf updated_tables.Count > 1 Then
+                                '    upd_cmd.Append(DeclareVariable("@lastErr", "int")).Append(EndLine)
                             End If
 
                             lastTbl = tbl
@@ -1029,10 +1038,12 @@ l1:
 
                         If SupportIf() Then
                             Dim varName As String = "@" & lastTbl.Name.Replace(".", "").Trim("["c, "]"c) & "_rownum"
+                            Dim lastError As String = Nothing
+                            Dim lastErrStmt = DeclareVariableInc("@lastErr", "int", lastErrIdx, lastError)
                             Dim insSb As New StringBuilder
                             If Not lastTbl.Equals(pk_table) Then
                                 CorrectUpdateWithInsert(mpe, oschema, lastTbl, lastUT, insSb,
-                                     obj, params, exec, varName, contextInfo)
+                                     obj, params, exec, varName, contextInfo, lastError)
                             End If
 
                             Dim hasCol As Boolean = HasUpdateColumnsForTable(syncUpdateProps, lastTbl, esch)
@@ -1040,9 +1051,10 @@ l1:
                                 hasSyncUpdate = hasSyncUpdate OrElse hasCol
                                 upd_cmd.Append(EndLine)
                                 upd_cmd.Append(DeclareVariable(varName, "int")).Append(EndLine)
+                                upd_cmd.Append(lastErrStmt).Append(EndLine)
                                 upd_cmd.Append("select ").Append(varName).Append(" = ").Append(RowCount)
                                 If insSb.Length > 0 Then
-                                    upd_cmd.Append(", @lastErr = ").Append(le.LastError)
+                                    upd_cmd.Append(", ").Append(lastError).Append(" = ").Append(le.LastError)
                                 End If
                                 upd_cmd.Append(insSb.ToString)
                             End If
@@ -1086,9 +1098,11 @@ l1:
             End Using
         End Function
 
-        Protected Overridable Function CorrectUpdateWithInsert(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal table As SourceFragment, ByVal tableinfo As TableUpdate,
-            ByVal upd_cmd As StringBuilder, ByVal obj As ICachedEntity, ByVal params As ICreateParam,
-            ByVal exec As Query.IExecutionContext, ByVal rowCnt As String, ByVal contextInfo As IDictionary) As Boolean
+        Protected Overridable Function CorrectUpdateWithInsert(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal table As SourceFragment,
+                                                               ByVal tableinfo As TableUpdate,
+                                                               ByVal upd_cmd As StringBuilder, ByVal obj As ICachedEntity, ByVal params As ICreateParam,
+                                                               ByVal exec As Query.IExecutionContext, ByVal rowCnt As String, ByVal contextInfo As IDictionary,
+                                                               lastError As String) As Boolean
 
             Dim dic As New List(Of InsertedTable)
             Dim l As New List(Of ITemplateFilter)
@@ -1104,7 +1118,7 @@ l1:
             ins.Executor = exec
             dic.Add(ins)
             Dim oldl As Integer = upd_cmd.Length
-            upd_cmd.Append(EndLine).Append("if ").Append(rowCnt).Append(" = 0 and @lastErr = 0 ")
+            upd_cmd.Append(EndLine).Append("if ").Append(rowCnt).Append(" = 0 and ").Append(lastError).Append(" = 0 ")
             Dim newl As Integer = upd_cmd.Length
             FormInsert(mpe, dic, upd_cmd, obj.GetType, oschema, Nothing, params, contextInfo)
             If newl = upd_cmd.Length Then
@@ -1584,6 +1598,12 @@ l1:
 
         Public MustOverride ReadOnly Property Name() As String
         Public MustOverride Function DeclareVariable(ByVal name As String, ByVal type As String) As String
+        Public Function DeclareVariableInc(ByVal name As String, ByVal type As String, ByRef idx As Integer, ByRef varName As String) As String
+            varName = "{0}{1}".Format2(name, idx)
+            Dim r = DeclareVariable(varName, type)
+            idx += 1
+            Return r
+        End Function
 
 #Region " data factory "
         Public MustOverride Function CreateDBCommand(ByVal timeout As Integer) As System.Data.Common.DbCommand
