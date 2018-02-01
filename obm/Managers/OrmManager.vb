@@ -1435,7 +1435,7 @@ l1:
             ce = CType(dic(id), CachedItemBase)
             If ce Is Nothing Then
 l1:
-                Using SyncHelper.AcquireDynamicLock(sync)
+                Using SyncHelper.AcquireDynamicLockSlim(sync)
                     ce = CType(dic(id), CachedItemBase)
                     Dim emp As Boolean = ce Is Nothing
                     If emp OrElse cacheItemProvider.Renew OrElse _dont_cache_lists Then
