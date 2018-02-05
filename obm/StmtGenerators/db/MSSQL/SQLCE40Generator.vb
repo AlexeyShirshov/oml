@@ -316,6 +316,18 @@ Namespace Database
             End Using
         End Function
 
+        Public Overrides Function RollbackSavepoint(name As String) As String
+            Throw New NotImplementedException()
+        End Function
+
+        Public Overrides Function Savepoint(name As String) As String
+            Throw New NotImplementedException()
+        End Function
+        Public Overrides ReadOnly Property IsSavepointsSupported As Boolean
+            Get
+                Return False
+            End Get
+        End Property
         Public Overrides ReadOnly Property LastInsertID As String
             Get
                 Return "@@identity"

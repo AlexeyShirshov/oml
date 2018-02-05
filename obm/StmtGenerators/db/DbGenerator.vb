@@ -1623,6 +1623,9 @@ l1:
 #End Region
 
         Public Overridable Property QueryLength As Integer = 490
+        Public MustOverride Function RollbackSavepoint(name As String) As String
+        Public MustOverride Function Savepoint(name As String) As String
+        Public Overridable ReadOnly Property IsSavepointsSupported As Boolean = False
     End Class
 
     Public Interface ITopStatement

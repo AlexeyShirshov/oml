@@ -594,7 +594,50 @@ l1:
                 MyBase.Dispose(disposing)
             End Try
         End Sub
+#Region " Transaction "
+        Public Sub Savepoint(name As String)
+            Savepoint(Nothing, name)
+        End Sub
+        Public Sub Savepoint(tran As Data.Common.DbTransaction, name As String)
+            If tran Is Nothing Then
+                tran = _tran
+            End If
 
+            If tran Is Nothing Then
+                Throw New ArgumentNullException(NameOf(tran))
+            End If
+
+            Using cmd As Data.Common.DbCommand = CreateDBCommand()
+                With cmd
+                    .CommandType = System.Data.CommandType.Text
+                    .CommandText = SQLGenerator.Savepoint(name)
+                    .Connection = tran.Connection
+                    .Transaction = tran
+                End With
+
+                ExecuteNonQuery(cmd)
+            End Using
+        End Sub
+        Public Sub RollbackSavepoint(tran As Data.Common.DbTransaction, name As String)
+            If tran Is Nothing Then
+                tran = _tran
+            End If
+
+            If tran Is Nothing Then
+                Throw New ArgumentNullException(NameOf(tran))
+            End If
+
+            Using cmd As Data.Common.DbCommand = CreateDBCommand()
+                With cmd
+                    .CommandType = System.Data.CommandType.Text
+                    .CommandText = SQLGenerator.RollbackSavepoint(name)
+                    .Connection = tran.Connection
+                    .Transaction = tran
+                End With
+
+                ExecuteNonQuery(cmd)
+            End Using
+        End Sub
         Public ReadOnly Property Transaction() As System.Data.Common.DbTransaction
             Get
                 Return _tran
@@ -682,6 +725,7 @@ l1:
                     _conn = Nothing
             End Select
         End Sub
+#End Region
 
         Private _idstr As String
         Protected Friend Overrides ReadOnly Property IdentityString() As String

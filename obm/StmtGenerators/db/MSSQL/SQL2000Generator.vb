@@ -1103,6 +1103,19 @@ Namespace Database
         Public Overrides Function TestLockError(v As Object) As Boolean
             Throw New NotImplementedException
         End Function
+
+        Public Overrides Function RollbackSavepoint(name As String) As String
+            Return String.Format("rollback tran {0}", name)
+        End Function
+
+        Public Overrides Function Savepoint(name As String) As String
+            Return String.Format("save tran {0}", name)
+        End Function
+        Public Overrides ReadOnly Property IsSavepointsSupported As Boolean
+            Get
+                Return True
+            End Get
+        End Property
     End Class
 
 End Namespace
