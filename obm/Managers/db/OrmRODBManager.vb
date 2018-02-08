@@ -1381,6 +1381,7 @@ l1:
                             Loop
 
                             If Not loaded Then
+                                obj.IsLoaded = False
                                 Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
                                 'If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, TryCast(oschema, ICacheBehavior))
                                 obj.SetObjectState(ObjectState.NotFoundInSource)
@@ -1512,6 +1513,7 @@ l1:
                             Loop
 
                             If Not loaded Then
+                                obj.IsLoaded = False
                                 Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
                                 'If ce IsNot Nothing Then _cache.UnregisterModification(ce, MappingEngine, TryCast(oschema, ICacheBehavior))
                                 obj.SetObjectState(ObjectState.NotFoundInSource)

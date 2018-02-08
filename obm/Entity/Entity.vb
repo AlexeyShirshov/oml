@@ -59,7 +59,7 @@ Namespace Entities
         Private _cm As ICreateManager
         <NonSerialized()> _
         Private _mpe As ObjectMappingEngine
-
+        Private _isLoaded As Boolean
         <NonSerialized()>
         Public Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs) Implements IEntity.ManagerRequired
         <NonSerialized()>
@@ -107,10 +107,10 @@ Namespace Entities
 
         Protected Overridable Property IsLoaded() As Boolean Implements IEntity.IsLoaded
             Get
-                Return True
+                Return _isLoaded
             End Get
             Set(ByVal value As Boolean)
-                Throw New NotSupportedException
+                _isLoaded = value
             End Set
         End Property
 

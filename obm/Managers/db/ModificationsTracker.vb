@@ -17,6 +17,8 @@ Namespace Database
         Protected _created As Boolean
         Private _ss As OrmManager.SchemaSwitcher
         Private _syncObj As New Dictionary(Of ICachedEntity, Object)
+        Private _intermediate As New List(Of _ICachedEntity)
+        Private _inSavepoint As Boolean
 
         Public Event SaveComplete(ByVal logicalCommited As Boolean, ByVal dbCommit As Boolean)
         Public Event BeginRestore(ByVal count As Integer)
@@ -43,7 +45,7 @@ Namespace Database
 
         Public Sub New(ByVal mgr As OrmReadOnlyDBManager, Optional ByVal disposeMgr As Boolean = False, Optional newSaver As Boolean = False)
             If mgr Is Nothing Then
-                Throw New ArgumentNullException("mgr")
+                Throw New ArgumentNullException(NameOf(mgr))
             End If
 
             AddHandler mgr.BeginUpdate, AddressOf Add
@@ -132,6 +134,39 @@ Namespace Database
                 Return _saver
             End Get
         End Property
+
+        Public ReadOnly Property IsInSavepoint As Boolean
+            Get
+                Return _inSavepoint
+            End Get
+        End Property
+        Public Function Savepoint(name As String) As Boolean
+            Dim mgr = TryCast(_mgr, OrmReadOnlyDBManager)
+
+            If mgr.SQLGenerator.IsSavepointsSupported AndAlso Not _inSavepoint Then
+                mgr.Savepoint(mgr.Transaction, name)
+                _inSavepoint = True
+                Return True
+            End If
+
+            Return False
+        End Function
+        Public Sub RollbackSavepoint(name As String)
+            Dim mgr = TryCast(_mgr, OrmReadOnlyDBManager)
+
+            If mgr.SQLGenerator.IsSavepointsSupported AndAlso _inSavepoint Then
+                mgr.RollbackSavepoint(mgr.Transaction, name)
+
+                For Each obj In _intermediate
+                    Remove(obj)
+                Next
+
+                _intermediate.RemoveAll(Function(it) True)
+
+                _inSavepoint = False
+            End If
+
+        End Sub
         Public Sub CreateDependency(master As ICachedEntity, slave As ICachedEntity,
                                     Optional del As ObjectListSaver.OnSavedDependencyDelegate = Nothing,
                                     Optional reorderOnSave As Boolean = True)
@@ -146,7 +181,7 @@ Namespace Database
 
         Public Overridable Sub AddRange(ByVal objs As IEnumerable(Of _ICachedEntity))
             If objs Is Nothing Then
-                Throw New ArgumentNullException("objects")
+                Throw New ArgumentNullException(NameOf(objs))
             End If
 
             If Saver.StartSaving Then
@@ -176,7 +211,7 @@ Namespace Database
         End Sub
         Public Overridable Sub Delete(ByVal obj As _ICachedEntity)
             If obj Is Nothing Then
-                Throw New ArgumentNullException("obj")
+                Throw New ArgumentNullException(NameOf(obj))
             End If
 
             obj.Delete(_mgr)
@@ -235,12 +270,16 @@ Namespace Database
                 End If
 
                 _saver.Add(obj)
+
+                If IsInSavepoint Then
+                    _intermediate.Add(obj)
+                End If
             End If
         End Sub
 
         Public Overridable Sub Remove(ByVal obj As _ICachedEntity)
             If obj Is Nothing Then
-                Throw New ArgumentNullException("obj")
+                Throw New ArgumentNullException(NameOf(obj))
             End If
 
             If Not _saver._dontCheckOnAdd Then
