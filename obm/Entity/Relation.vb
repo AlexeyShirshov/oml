@@ -36,11 +36,11 @@ Namespace Entities
 
         Sub New(ByVal main As ISinglePKEntity, ByVal desc As RelationDesc)
             If main Is Nothing Then
-                Throw New ArgumentNullException("main")
+                Throw New ArgumentNullException(NameOf(main))
             End If
 
             If desc Is Nothing Then
-                Throw New ArgumentNullException("desc")
+                Throw New ArgumentNullException(NameOf(desc))
             End If
 
             _host = main

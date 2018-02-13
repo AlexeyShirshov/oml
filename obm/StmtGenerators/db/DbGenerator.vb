@@ -712,10 +712,10 @@ Namespace Database
                         Dim f As IFilter = join.Condition
 
                         For Each m As MapField2Column In oschema.GetPKs
-                            f = JoinFilter.ChangeEntityJoinToLiteral(mpe, f, type, m.PropertyAlias, "@id_" & m.PropertyAlias)
+                            f = JoinFilter.ChangeEntityJoinToLiteral(mpe, join.Condition, type, m.PropertyAlias, "@id_" & m.PropertyAlias)
 
                             If f Is Nothing Then
-                                f = JoinFilter.ChangeTableJoinToLiteral(Me, mpe, f, tables(0), m.SourceFields, "@id_" & m.PropertyAlias)
+                                f = JoinFilter.ChangeTableJoinToLiteral(Me, mpe, join.Condition, tables(0), m.SourceFields, "@id_" & m.PropertyAlias)
                             End If
                         Next
 
@@ -735,7 +735,7 @@ Namespace Database
             ByRef selectedProperties As List(Of SelectExpression)) As String
 
             If obj Is Nothing Then
-                Throw New ArgumentNullException("obj")
+                Throw New ArgumentNullException(NameOf(obj))
             End If
 
             Using obj.AcquareLock()
