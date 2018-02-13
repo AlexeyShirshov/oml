@@ -713,6 +713,10 @@ Namespace Database
 
                         For Each m As MapField2Column In oschema.GetPKs
                             f = JoinFilter.ChangeEntityJoinToLiteral(mpe, f, type, m.PropertyAlias, "@id_" & m.PropertyAlias)
+
+                            If f Is Nothing Then
+                                f = JoinFilter.ChangeTableJoinToLiteral(Me, mpe, f, tables(0), m.SourceFields, "@id_" & m.PropertyAlias)
+                            End If
                         Next
 
                         If f Is Nothing Then
