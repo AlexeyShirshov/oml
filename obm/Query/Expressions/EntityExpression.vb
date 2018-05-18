@@ -1,6 +1,7 @@
 ﻿Imports Worm.Query
 Imports Worm.Entities.Meta
 Imports System.Collections.Generic
+Imports CoreFramework
 
 Namespace Expressions2
     <Serializable>
@@ -81,6 +82,7 @@ Namespace Expressions2
             Dim map As MapField2Column = Nothing
             Dim tbl As SourceFragment = Nothing
             Dim [alias] As String = String.Empty
+            Dim oschema As IEntitySchema = Nothing
 
             If _op.Entity.IsQuery Then
                 tbl = _op.Entity.ObjectAlias.Tbl
@@ -92,7 +94,6 @@ Namespace Expressions2
             Else
                 Try
                     Dim t As Type = _op.Entity.GetRealType(mpe)
-                    Dim oschema As IEntitySchema = Nothing
 
                     If executor Is Nothing Then
                         oschema = mpe.GetEntitySchema(t)
@@ -112,7 +113,8 @@ Namespace Expressions2
                 Try
                     [alias] = almgr.GetAlias(tbl, _op.Entity) & stmt.Selector
                 Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException("There is no alias for table " & tbl.RawName, ex)
+                    Throw New ObjectMappingException("There is no alias for table {0}({1}). AlMgr dump: {2}. Mpe mark: {3}. IEntitySchema {5}-{4}. Type hash code: {6}".Format2(
+                                                     tbl.RawName, tbl.UniqueName(_op.Entity), TryCast(almgr, AliasMgr)?.Dump, mpe.Mark, oschema.GetHashCode, oschema.GetType, _op.Entity.GetRealType(mpe).GetHashCode), ex)
                 End Try
             Else
                 [alias] = tbl.UniqueName(_op.Entity) & mpe.Delimiter

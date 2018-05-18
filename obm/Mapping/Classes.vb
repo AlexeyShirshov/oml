@@ -1,4 +1,5 @@
 ﻿Imports Worm.Query
+Imports System.Linq
 
 Namespace Entities.Meta
 
@@ -459,6 +460,24 @@ Namespace Entities.Meta
                 End If
                 Return dic.ContainsKey(table)
             End If
+        End Function
+        Friend Function Dump() As String
+            Dim sb As New StringBuilder
+
+            If _defaultAliases IsNot Nothing Then
+                sb.AppendLine("Default aliases")
+                For Each kv In _defaultAliases
+                    sb.AppendFormat("{0}: {1}", kv.Key.UniqueName(Nothing), kv.Value).AppendLine()
+                Next
+            End If
+            If _objectAlises IsNot Nothing Then
+                sb.AppendLine("Object aliases")
+                For Each kv In _objectAlises
+                    sb.AppendFormat("{0}: [{1}]", kv.Key._ToString, String.Join(",", kv.Value.Select(Function(it) String.Format("{0}: {1}", it.Key.UniqueName(kv.Key), it.Value)))).AppendLine()
+                Next
+            End If
+
+            Return sb.ToString
         End Function
     End Class
 

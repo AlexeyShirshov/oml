@@ -298,8 +298,14 @@ Namespace Query
                         _cmd._sel = Nothing
                     ElseIf _types IsNot Nothing Then
                         _cmd._sel = New SelectClauseDef(_types)
+#If nlog Then
+                        'NLog.LogManager.GetCurrentClassLogger?.Trace("_cmd._sel types {0}", Environment.StackTrace)
+#End If
                     ElseIf _sssl IsNot Nothing Then
                         _cmd._sel = New SelectClauseDef(_sssl)
+#If nlog Then
+                        'NLog.LogManager.GetCurrentClassLogger?.Trace("_cmd._sel selexp {0}", Environment.StackTrace)
+#End If
                     Else
                         Throw New NotSupportedException
                     End If
@@ -1117,6 +1123,9 @@ Namespace Query
                         t.Add(New Pair(Of EntityUnion, Boolean?)(tp.First, False))
                     Next
                     cmd._sel = New SelectClauseDef(t)
+#If nlog Then
+                    'NLog.LogManager.GetCurrentClassLogger?.Trace("_cmd._sel type {0}", Environment.StackTrace)
+#End If
                 End If
             End Sub
 
@@ -1460,6 +1469,9 @@ l1:
                         If selTypes Is Nothing Then
                             If _from IsNot Nothing Then
                                 selTypes = New ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(_from.ObjectSource, Nothing)})
+#If nlog Then
+                                'NLog.LogManager.GetCurrentClassLogger?.Trace("From dump: {0}", _from.ObjectSource.Dump(mpe))
+#End If
                             Else
                                 Throw New QueryCmdException("Neither SelectTypes nor FromClause not set", Me)
                             End If
@@ -1923,6 +1935,10 @@ l1:
         Protected Sub AddTypeFields(ByVal mpe As ObjectMappingEngine, ByVal cl As List(Of SelectExpression), _
             ByVal tp As Pair(Of EntityUnion, Boolean?), ByVal pref As String, ByVal isAnonym As Boolean, ByVal stmt As StmtGenerator)
             Dim t As Type = tp.First.GetRealType(mpe)
+
+#If nlog Then
+            'NLog.LogManager.GetCurrentClassLogger?.Trace("Select type {1} hash code: {0}. Dump: {2}", t.GetHashCode, t, tp.First.Dump(mpe))
+#End If
 
             Dim oschema As IEntitySchema = GetEntitySchema(mpe, t)
 
@@ -3340,6 +3356,9 @@ l1:
                         Dim rt As Type = CType(ef.Template, OrmFilterTemplate).ObjectSource.GetRealType(mpe)
                         If t.IsAssignableFrom(rt) Then
                             _sel = New SelectClauseDef(New List(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion(rt), Nothing)}))
+#If nlog Then
+                            'NLog.LogManager.GetCurrentClassLogger?.Trace("_cmd._sel filter {0}", Environment.StackTrace)
+#End If
                             Return
                         End If
                     End If
@@ -3347,6 +3366,9 @@ l1:
             End If
 
             _sel = New SelectClauseDef(New List(Of Pair(Of EntityUnion, Boolean?))(New Pair(Of EntityUnion, Boolean?)() {New Pair(Of EntityUnion, Boolean?)(New EntityUnion(t), Nothing)}))
+#If nlog Then
+            'NLog.LogManager.GetCurrentClassLogger?.Trace("_cmd._sel int {0}", Environment.StackTrace)
+#End If
         End Sub
 
         Public Function SelectEntity(ByVal eu As EntityUnion, ByVal withLoad As Boolean) As QueryCmd

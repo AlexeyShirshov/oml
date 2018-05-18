@@ -173,20 +173,20 @@ Namespace Query.Database
         End Function
 
         Protected Overrides Function GetCacheItemProvoderAnonym(Of ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
-            Return New ProviderAnonym(Of ReturnType)(CType(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, GetType(ReturnType))), BaseProvider))
+            Return New ProviderAnonym(Of ReturnType)(CType(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, mgr.MappingEngine.NormalType(GetType(ReturnType)))), BaseProvider))
         End Function
 
         Protected Overrides Function GetCacheItemProvoderAnonym(Of CreateType As {New, _IEntity}, ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
-            Return New ProviderAnonym(Of CreateType, ReturnType)(CType(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, GetType(CreateType))), BaseProvider))
+            Return New ProviderAnonym(Of CreateType, ReturnType)(CType(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, mgr.MappingEngine.NormalType(GetType(CreateType)))), BaseProvider))
         End Function
 
         Protected Overrides Function GetCacheItemProvoder(Of ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
-            Return New Provider(Of ReturnType)(CType(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, GetType(ReturnType))), BaseProvider))
+            Return New Provider(Of ReturnType)(CType(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, mgr.MappingEngine.NormalType(GetType(ReturnType)))), BaseProvider))
         End Function
 
         Protected Overrides Function GetCacheItemProvoderT(Of CreateType As {ICachedEntity, New},
                                                        ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As CacheItemBaseProvider
-            Dim bp As BaseProvider = CType(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, GetType(CreateType))), BaseProvider)
+            Dim bp As BaseProvider = CType(GetProvider(mgr, query, Function(m As OrmManager, q As QueryCmd) InitTypes(m, q, mgr.MappingEngine.NormalType(GetType(CreateType)))), BaseProvider)
             If bp Is Nothing Then
                 Return Nothing
             Else
@@ -787,6 +787,10 @@ l1:
                 Else
                     fromOS = mpe.GetEntitySchema(fe.GetRealType(mpe))
                 End If
+
+#If nlog Then
+                'NLog.LogManager.GetCurrentClassLogger?.Trace("From IEntitySchema {1}-{0}. Type hash code: {2}", fromOS.GetHashCode, fromOS.GetType, fe.GetRealType(mpe).GetHashCode)
+#End If
 
                 Dim mts As IMultiTableObjectSchema = TryCast(fromOS, IMultiTableObjectSchema)
                 If mts Is Nothing Then
@@ -1464,6 +1468,10 @@ l1:
                     mpe, contextInfo, params, almgr, sb, s, query.GetSelectedOS, query, query, _
                     query.FromClause, query.AppendMain, Nothing, p)
             End If
+
+#If nlog Then
+            'NLog.LogManager.GetCurrentClassLogger?.Trace("FormQuery almgr dump {0}", TryCast(almgr, AliasMgr)?.Dump)
+#End If
 
             FormJoins(mpe, contextInfo, query, params, query.FromClause, query._js, almgr, sb, s, query, newPK, p, query.GetSelectedOS)
 

@@ -1,10 +1,11 @@
 ﻿Imports Worm.Entities.Meta
 Imports Worm.Criteria.Values
 Imports Worm.Criteria
+Imports CoreFramework
 
 Namespace Query
 
-    <Serializable()> _
+    <Serializable()>
     Public Class QueryAlias
         Implements ICopyable
 
@@ -123,7 +124,7 @@ Namespace Query
         'End Function
 
         Protected Overridable Function _Clone() As Object Implements ICloneable.Clone
-            Return Clone
+            Return Clone()
         End Function
 
         Public Function Clone() As QueryAlias
@@ -155,7 +156,7 @@ Namespace Query
         End Function
     End Class
 
-    <Serializable()> _
+    <Serializable()>
     Public Class EntityUnion
         Implements IQueryElement
 
@@ -210,7 +211,17 @@ Namespace Query
                 Throw New NotImplementedException
             End If
         End Function
-
+        Friend Function Dump(mpe As ObjectMappingEngine) As String
+            If _t IsNot Nothing Then
+                Return "type: {0}. gethashcode: {1}".Format2(_t, _t.GetHashCode)
+            ElseIf Not String.IsNullOrEmpty(_en) Then
+                Return "entity: {0}. type gethashcode: {1}".Format2(_en, GetRealType(mpe).GetHashCode)
+            ElseIf _a IsNot Nothing Then
+                Return "alias: {0}. type gethashcode: {1}".Format2(_a, GetRealType(mpe).GetHashCode)
+            Else
+                Throw New NotImplementedException
+            End If
+        End Function
         Public Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             If mpe Is Nothing Then
                 Throw New ArgumentNullException(NameOf(mpe))
@@ -281,16 +292,16 @@ Namespace Query
         End Property
 
         Private _calc As Type
-        Private _ver As String
+        Private _mark As Guid
 
         Public Function GetRealType(ByVal mpe As ObjectMappingEngine) As Type
             If mpe Is Nothing Then
                 Throw New ArgumentNullException(NameOf(mpe))
             End If
 
-            If _calc Is Nothing OrElse _ver <> mpe.Version Then
+            If _calc Is Nothing OrElse _mark <> mpe.Mark Then
                 _calc = AnyType
-                _ver = mpe.Version
+                _mark = mpe.Mark
                 If _calc Is Nothing AndAlso Not String.IsNullOrEmpty(AnyEntityName) Then
                     _calc = mpe.GetTypeByEntityName(AnyEntityName)
                 ElseIf _calc Is Nothing AndAlso _a IsNot Nothing Then
@@ -298,7 +309,7 @@ Namespace Query
                 End If
 
                 If _calc Is Nothing Then
-                    Throw New ApplicationException(String.Format("EntityUnion {0} cannot be converted to type", _ToString))
+                    Throw New ApplicationException(String.Format("EntityUnion {0} cannot be converted to type", Dump(mpe)))
                 End If
             End If
             Return _calc
@@ -366,7 +377,7 @@ Namespace Query
         End Operator
 
         Protected Overridable Function _Clone() As Object Implements ICloneable.Clone
-            Return Clone
+            Return Clone()
         End Function
 
         Public Function Clone() As EntityUnion
@@ -388,7 +399,7 @@ Namespace Query
             target._t = _t
 
             If _a IsNot Nothing Then
-                target._a = _a.clone
+                target._a = _a.Clone
             End If
 
             target.Hint = Hint

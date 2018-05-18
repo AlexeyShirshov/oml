@@ -72,6 +72,7 @@ Public Class ObjectMappingEngine
     Protected map As IDictionary = Hashtable.Synchronized(New Hashtable)
     Protected sel As IDictionary = Hashtable.Synchronized(New Hashtable)
     Protected _joins As IDictionary = Hashtable.Synchronized(New Hashtable)
+    Private _typeMap As IDictionary = Hashtable.Synchronized(New Hashtable)
     Private _version As String
     Private _mapv As ResolveSchemaForSingleType
     Private _mapn As ResolveEntityNameForHierarchy
@@ -209,6 +210,33 @@ Public Class ObjectMappingEngine
             End If
         Next
         Return map
+    End Function
+
+    Friend Function NormalType(t As Type) As Type
+        Dim idic = GetIdic()
+        If Not idic.Contains(t) Then
+            Dim rt = CType(_typeMap(t), Type)
+            If rt Is Nothing Then
+
+                For Each kv As DictionaryEntry In idic
+                    Dim ts = kv.Key.ToString
+                    If ts = t.ToString Then
+                        rt = CType(kv.Key, Type)
+                        _typeMap(t) = rt
+                    End If
+                Next
+            End If
+
+            If rt IsNot Nothing Then
+                Return rt
+            End If
+#If nlog Then
+            NLog.LogManager.GetCurrentClassLogger?.Trace("Normal type {1}. Hash: {0} is not found", t.GetHashCode, t)
+#End If
+            'Throw New ObjectMappingException($"Type {t} ")
+        End If
+
+        Return t
     End Function
 
     Public Function ConvertFromString(oschema As IPropertyMap, prop As String, s As String, Optional fallback As IStringValueConverter.FallBackDelegate = Nothing) As Object
@@ -1558,7 +1586,12 @@ Public Class ObjectMappingEngine
             Dim t As Type = GetType(_IEntity)
 
             For Each tp As Type In types
-                If t.IsAssignableFrom(tp) Then Yield tp
+                If t.IsAssignableFrom(tp) Then
+#If nlog Then
+                    NLog.LogManager.GetCurrentClassLogger?.Trace("Scanned type {1}. Hash: {0}. Assembly: {2}. Hash: {3}. Path: {4}", tp.GetHashCode, tp, assembly, assembly.GetHashCode, assembly.Location)
+#End If
+                    Yield tp
+                End If
             Next
         Next
     End Function
@@ -1582,8 +1615,23 @@ Public Class ObjectMappingEngine
                     End If
 
                     If _entityTypes Is Nothing OrElse Not _entityTypes.Any Then
-                        Dim arr As New System.Collections.Concurrent.BlockingCollection(Of Type)()
+                        Dim l As New List(Of Type)()
                         For Each t In GetTypes2Scan()
+
+                            Dim exist = l.FirstOrDefault(Function(it) it.ToString = t.ToString)
+                            If exist IsNot Nothing Then
+                                If String.IsNullOrEmpty(exist.Assembly.Location) Then
+                                    l.Remove(exist)
+                                Else
+                                    Continue For
+                                End If
+                            End If
+
+                            l.Add(t)
+                        Next
+
+                        Dim arr As New System.Collections.Concurrent.ConcurrentBag(Of Type)()
+                        For Each t In l
                             arr.Add(t)
                         Next
 
@@ -1617,7 +1665,19 @@ Public Class ObjectMappingEngine
 
         SyncLock idic.SyncRoot
             If Not idic.Contains(tp) Then
+                '#If DEBUG Then
+                '                For Each kv As DictionaryEntry In idic
+                '                    Dim t = kv.Key.ToString
+                '                    If t = tp.ToString Then
+                '                        NLog.LogManager.GetCurrentClassLogger?.Trace("Duplicate type {1}. Hash: {2}. Stack: {0}", Environment.StackTrace, t, kv.Key.GetHashCode)
+                '                        Exit For
+                '                    End If
+                '                Next
+                '#End If
                 idic.Add(tp, schema)
+#If nlog Then
+                NLog.LogManager.GetCurrentClassLogger?.Trace("Added es type {1}. Hash: {2}. Stack: {0}", Environment.StackTrace, tp, tp.GetHashCode)
+#End If
                 Return True
             End If
         End SyncLock
@@ -1745,7 +1805,20 @@ Public Class ObjectMappingEngine
                     End If
                 End If
 
+                '#If DEBUG Then
+                '                For Each kv As DictionaryEntry In idic
+                '                    Dim t = kv.Key.ToString
+                '                    If t = tp.ToString Then
+                '                        NLog.LogManager.GetCurrentClassLogger?.Trace("Duplicate type {1}. Hash: {2}. Stack: {0}", Environment.StackTrace, t, kv.Key.GetHashCode)
+                '                        Exit For
+                '                    End If
+                '                Next
+                '#End If
+
                 idic.Add(tp, schema)
+#If nlog Then
+                NLog.LogManager.GetCurrentClassLogger?.Trace("Added es type {1}. Hash: {2}. Stack: {0}", Environment.StackTrace, tp, tp.GetHashCode)
+#End If
             End If
         Catch ex As ArgumentException
             Throw New ObjectMappingException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea.Type), ex)
@@ -1787,7 +1860,23 @@ Public Class ObjectMappingEngine
         End If
 
         Try
-            If idic IsNot Nothing Then idic.Add(tp, schema)
+            If idic IsNot Nothing Then
+
+                '#If DEBUG Then
+                '                For Each kv As DictionaryEntry In idic
+                '                    Dim t = kv.Key.ToString
+                '                    If t = tp.ToString Then
+                '                        NLog.LogManager.GetCurrentClassLogger?.Trace("Duplicate type {1}. Hash: {2}. Stack: {0}", Environment.StackTrace, t, kv.Key.GetHashCode)
+                '                        Exit For
+                '                    End If
+                '                Next
+                '#End If
+                idic.Add(tp, schema)
+#If nlog Then
+                NLog.LogManager.GetCurrentClassLogger?.Trace("Added es type {1}. Hash: {2}. Stack: {0}", Environment.StackTrace, tp, tp.GetHashCode)
+#End If
+            End If
+
         Catch ex As ArgumentException
             Throw New ObjectMappingException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ownEntityAttr.Type), ex)
         End Try
@@ -1946,6 +2035,10 @@ Public Class ObjectMappingEngine
 
         Dim idic As IDictionary = GetIdic()
         Dim schema As IEntitySchema = CType(idic(t), IEntitySchema)
+
+        If schema Is Nothing Then
+            schema = CType(idic(NormalType(t)), IEntitySchema)
+        End If
 
         If schema Is Nothing Then
             schema = InitType(t)
