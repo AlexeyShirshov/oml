@@ -88,6 +88,7 @@ Public Class ObjectMappingEngine
     Public Const DefaultVersion As String = "1"
     Public Const NeedEntitySchemaMapping As String = "Worm:NeedEntitySchemaMapping"
     Public Shared SkipValue As Object = New Object
+    Private _normTypesSpin As New SpinLockRef
     Public Event EndInitSchema(idic As IDictionary)
 
     Public Sub New()
@@ -215,21 +216,23 @@ Public Class ObjectMappingEngine
     Friend Function NormalType(t As Type) As Type
         Dim idic = GetIdic()
         If Not idic.Contains(t) Then
-            Dim rt = CType(_typeMap(t), Type)
-            If rt Is Nothing Then
+            Using New CSScopeMgrLite(_normTypesSpin)
+                Dim rt = CType(_typeMap(t), Type)
+                If rt Is Nothing Then
 
-                For Each kv As DictionaryEntry In idic
-                    Dim ts = kv.Key.ToString
-                    If ts = t.ToString Then
-                        rt = CType(kv.Key, Type)
-                        _typeMap(t) = rt
-                    End If
-                Next
-            End If
+                    For Each kv As DictionaryEntry In idic
+                        Dim ts = kv.Key.ToString
+                        If ts = t.ToString Then
+                            rt = CType(kv.Key, Type)
+                            _typeMap(t) = rt
+                        End If
+                    Next
+                End If
 
-            If rt IsNot Nothing Then
-                Return rt
-            End If
+                If rt IsNot Nothing Then
+                    Return rt
+                End If
+            End Using
 #If nlog Then
             NLog.LogManager.GetCurrentClassLogger?.Trace("Normal type {1}. Hash: {0} is not found", t.GetHashCode, t)
 #End If
