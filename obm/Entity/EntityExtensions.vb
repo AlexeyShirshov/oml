@@ -68,5 +68,75 @@ Namespace Entities
                 Return OrmManager.GetPKValues(CType(e, Object), oschema)
             End If
         End Function
+        <Extension>
+        Public Function Clone(ByVal e As _IEntity, ByVal oschema As IEntitySchema) As IEntity
+            If e Is Nothing Then
+                Throw New ArgumentNullException(NameOf(e))
+            End If
+
+            Using mc As IGetManager = e.GetMgr()
+                Dim t As IEntity = Nothing
+                If mc Is Nothing Then
+                    t = CType(Activator.CreateInstance(e.GetType), _IEntity)
+                Else
+                    t = mc.Manager.CreateEntity(e.GetType)
+                End If
+
+                OrmManager.CopyBody(e, t, oschema)
+
+                Return t
+            End Using
+
+        End Function
+
+        <Extension>
+        Public Function Clone(ByVal e As _ICachedEntity, pk As IEnumerable(Of PKDesc), ByVal oschema As IEntitySchema) As _ICachedEntity
+            If e Is Nothing Then
+                Throw New ArgumentNullException(NameOf(e))
+            End If
+
+            Using mc As IGetManager = e.GetMgr()
+                Dim t As _ICachedEntity = Nothing
+                Dim mpe As ObjectMappingEngine = Nothing
+                If mc Is Nothing Then
+                    t = CType(Activator.CreateInstance(e.GetType), _ICachedEntity)
+                Else
+                    t = CType(mc.Manager.CreateObject(pk, e.GetType), _ICachedEntity)
+                    mpe = mc.Manager.MappingEngine
+                End If
+
+                OrmManager.CopyBody(e, t, oschema)
+
+                OrmManager.SetPK(t, pk, oschema, mpe)
+
+                Return t
+            End Using
+
+        End Function
+
+        <Extension>
+        Public Function Clone(Of T As {New, _ICachedEntity})(ByVal e As T, pk As IEnumerable(Of PKDesc), ByVal oschema As IEntitySchema) As T
+            If e Is Nothing Then
+                Throw New ArgumentNullException(NameOf(e))
+            End If
+
+            Using mc As IGetManager = e.GetMgr()
+                Dim target As T = Nothing
+                Dim mpe As ObjectMappingEngine = Nothing
+                If mc Is Nothing Then
+                    target = New T
+                Else
+                    target = mc.Manager.CreateObject(Of T)(pk)
+                    mpe = mc.Manager.MappingEngine
+                End If
+
+                OrmManager.CopyBody(e, target, oschema)
+
+                OrmManager.SetPK(target, pk, oschema, mpe)
+
+                Return target
+            End Using
+
+        End Function
     End Module
 End Namespace

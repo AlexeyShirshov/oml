@@ -305,7 +305,48 @@ Namespace Database
             _saver.Add(CType(obj, _ICachedEntity))
             'End If
         End Sub
+#Region " Clone entity "
+        Public Function CloneKeyEntity(Of T As {ISinglePKEntity, New})(entity As T) As T
+            If NewObjectManager Is Nothing Then
+                Throw New InvalidOperationException("NewObjectManager is not set")
+            End If
 
+            Return CloneNewObject(Of T)(NewObjectManager.GetPKForNewObject(GetType(T), _mgr.MappingEngine), entity)
+        End Function
+
+        Public Function CloneNewEntity(Of T As {_ICachedEntity, New})(entity As T) As T
+            If NewObjectManager Is Nothing Then
+                Throw New InvalidOperationException("NewObjectManager is not set")
+            End If
+
+            Dim pk() As PKDesc = NewObjectManager.GetPKForNewObject(GetType(T), _mgr.MappingEngine)
+            Return CloneNewObject(Of T)(pk, entity)
+        End Function
+
+        Public Function CloneNewObject(entity As _ICachedEntity) As _ICachedEntity
+            If NewObjectManager Is Nothing Then
+                Throw New InvalidOperationException("NewObjectManager is not set")
+            End If
+
+            If entity Is Nothing Then
+                Throw New ArgumentNullException(NameOf(entity))
+            End If
+
+            Dim pk() As PKDesc = NewObjectManager.GetPKForNewObject(entity.GetType, _mgr.MappingEngine)
+
+            Dim o = entity.Clone(pk, Nothing)
+            NewObjectManager.AddNew(o)
+            Add(o)
+            Return o
+        End Function
+        Public Function CloneNewObject(Of T As {_ICachedEntity, New})(pk() As PKDesc, entity As T) As T
+            Dim o = entity.Clone(pk, Nothing)
+            NewObjectManager.AddNew(o)
+            Add(o)
+            Return o
+        End Function
+#End Region
+#Region " Create entity "
         Public Function CreateNewKeyEntity(Of T As {ISinglePKEntity, New})() As T
             If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
@@ -349,7 +390,7 @@ Namespace Database
             Return o
         End Function
 
-        Public Function CreateNewObject(ByVal t As Type) As ISinglePKEntity
+        Public Function CreateNewObject(ByVal t As Type) As _ICachedEntity
             If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
@@ -357,16 +398,17 @@ Namespace Database
             Return CreateNewObject(t, NewObjectManager.GetPKForNewObject(t, _mgr.MappingEngine))
         End Function
 
-        Public Function CreateNewObject(ByVal t As Type, ByVal id As Object) As ISinglePKEntity
-            For Each mi As Reflection.MethodInfo In Me.GetType.GetMember("CreateNewObject", Reflection.MemberTypes.Method, _
+        Public Function CreateNewObject(ByVal t As Type, ByVal id As Object) As _ICachedEntity
+            For Each mi As Reflection.MethodInfo In Me.GetType.GetMember("CreateNewObject", Reflection.MemberTypes.Method,
                 Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public)
                 If mi.IsGenericMethod AndAlso mi.GetParameters.Length = 1 Then
                     mi = mi.MakeGenericMethod(New Type() {t})
-                    Return CType(mi.Invoke(Me, New Object() {id}), ISinglePKEntity)
+                    Return CType(mi.Invoke(Me, New Object() {id}), _ICachedEntity)
                 End If
             Next
             Throw New InvalidOperationException("Cannot find method CreateNewObject")
         End Function
+#End Region
 
         Protected Sub _Rollback()
             If _restore <> OnErrorEnum.DontRestore Then
