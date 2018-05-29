@@ -14,7 +14,6 @@ Namespace Query
         Private _q As Worm.Query.QueryCmd
         Private _uqName As String
         Private _tbl As Entities.Meta.SourceFragment
-
         Public Sub New(ByVal t As Type)
             _t = t
             _uqName = Guid.NewGuid.GetHashCode.ToString
@@ -163,6 +162,7 @@ Namespace Query
         Private _t As Type
         Private _en As String
         Private _a As QueryAlias
+        Private ReadOnly _spin As New CoreFramework.CFThreading.SpinLockRef
 
         Public Sub New(ByVal t As Type)
             If t Is Nothing Then
@@ -184,10 +184,14 @@ Namespace Query
             End If
             _a = [alias]
         End Sub
-
         Protected Sub New()
 
         End Sub
+        'Protected Sub New(t As Type, en As String, a As QueryAlias)
+        '    _t = t
+        '    _en = en
+        '    _a = a
+        'End Sub
         Public Property Hint As String
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
             Return Equals(TryCast(obj, EntityUnion))
@@ -298,19 +302,22 @@ Namespace Query
             If mpe Is Nothing Then
                 Throw New ArgumentNullException(NameOf(mpe))
             End If
-
             If _calc Is Nothing OrElse _mark <> mpe.Mark Then
-                _calc = AnyType
-                _mark = mpe.Mark
-                If _calc Is Nothing AndAlso Not String.IsNullOrEmpty(AnyEntityName) Then
-                    _calc = mpe.GetTypeByEntityName(AnyEntityName)
-                ElseIf _calc Is Nothing AndAlso _a IsNot Nothing Then
-                    _calc = _a.Query.GetSelectedOS.GetRealType(mpe)
-                End If
+                Using New CSScopeMgrLite(_spin)
+                    If _calc Is Nothing OrElse _mark <> mpe.Mark Then
+                        _calc = AnyType
+                        _mark = mpe.Mark
+                        If _calc Is Nothing AndAlso Not String.IsNullOrEmpty(AnyEntityName) Then
+                            _calc = mpe.GetTypeByEntityName(AnyEntityName)
+                        ElseIf _calc Is Nothing AndAlso _a IsNot Nothing Then
+                            _calc = _a.Query.GetSelectedOS.GetRealType(mpe)
+                        End If
 
-                If _calc Is Nothing Then
-                    Throw New ApplicationException(String.Format("EntityUnion {0} cannot be converted to type", Dump(mpe)))
-                End If
+                        If _calc Is Nothing Then
+                            Throw New ApplicationException(String.Format("EntityUnion {0} cannot be converted to type", Dump(mpe)))
+                        End If
+                    End If
+                End Using
             End If
             Return _calc
         End Function
