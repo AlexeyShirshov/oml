@@ -234,9 +234,11 @@ Namespace Query
             Dim t As Type = GetRealType(mpe)
             If t IsNot Nothing Then
                 Return mpe.GetEntityKey(t)
-            Else
+            ElseIf _a IsNot Nothing Then
                 Return _a.ToStaticString(mpe)
             End If
+
+            Throw New NotSupportedException(String.Format("Invalid state {0}", Dump(mpe)))
         End Function
 
         Public Function _ToString() As String Implements IQueryElement._ToString
@@ -302,7 +304,8 @@ Namespace Query
             If mpe Is Nothing Then
                 Throw New ArgumentNullException(NameOf(mpe))
             End If
-            If _calc Is Nothing OrElse _mark <> mpe.Mark Then
+            Dim calc = _calc
+            If calc Is Nothing OrElse _mark <> mpe.Mark Then
                 Using New CSScopeMgrLite(_spin)
                     If _calc Is Nothing OrElse _mark <> mpe.Mark Then
                         _calc = AnyType
@@ -316,10 +319,12 @@ Namespace Query
                         If _calc Is Nothing Then
                             Throw New ApplicationException(String.Format("EntityUnion {0} cannot be converted to type", Dump(mpe)))
                         End If
+
+                        calc = _calc
                     End If
                 End Using
             End If
-            Return _calc
+            Return calc
         End Function
 
         Public ReadOnly Property IsQuery() As Boolean

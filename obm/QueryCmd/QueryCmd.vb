@@ -1724,6 +1724,10 @@ l1:
             If selectOS IsNot Nothing Then
                 Dim selectType As Type = selectOS.GetRealType(schema)
 
+                If selectType Is Nothing Then
+                    Throw New QueryCmdException(String.Format("selectOS {0} has null type", selectOS.Dump(schema)), Me)
+                End If
+
                 If AutoJoins Then
                     Dim joins() As Worm.Criteria.Joins.QueryJoin = Nothing
                     Dim appendMain As Boolean
@@ -1765,6 +1769,10 @@ l1:
 
                         If _js.Find(Function(join) join.ObjectSource = ot.ObjectSource) Is Nothing Then
                             Dim type2join As System.Type = ot.ObjectSource.GetRealType(schema)
+
+                            If type2join Is Nothing Then
+                                Throw New QueryCmdException(String.Format("ot.ObjectSource {0} has null type", ot.ObjectSource.Dump(schema)), Me)
+                            End If
 
                             If (selectType.IsAssignableFrom(type2join) OrElse type2join.IsAssignableFrom(selectType)) AndAlso
                                 oschema.FieldColumnMap.TryGetValue(ot.PropertyAlias, Nothing) Then
