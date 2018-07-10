@@ -208,8 +208,8 @@ Namespace Database.Storedprocs
 #Else
                 Using SyncHelper.AcquireDynamicLock("013hgoadngvb;kla")
 #End If
-                    Dim td As Dictionary(Of Type, List(Of svp)) = cache.GetExternalObject(Of Dictionary(Of Type, List(Of svp)))(StoreName & "$Dic")
-                    Dim dv As Dictionary(Of String, Pair(Of svp, Dictionary(Of String, IList(Of Object)))) = cache.GetExternalObject(Of Dictionary(Of String, Pair(Of svp, Dictionary(Of String, IList(Of Object)))))(StoreName)
+                    Dim td As Dictionary(Of Type, List(Of svp)) = cache.GetOrAddExternalObject(Of Dictionary(Of Type, List(Of svp)))(StoreName & "$Dic")
+                    Dim dv As Dictionary(Of String, Pair(Of svp, Dictionary(Of String, IList(Of Object)))) = cache.GetOrAddExternalObject(Of Dictionary(Of String, Pair(Of svp, Dictionary(Of String, IList(Of Object)))))(StoreName)
                     Dim l As List(Of svp) = Nothing
                     If td.TryGetValue(obj.GetType, l) Then
                         Dim toRemove As List(Of svp) = Nothing
@@ -236,8 +236,8 @@ Namespace Database.Storedprocs
 #Else
                 Using SyncHelper.AcquireDynamicLock("013hgoadngvb;kla")
 #End If
-                    Dim td As Dictionary(Of Type, List(Of svp)) = cache.GetExternalObject(Of Dictionary(Of Type, List(Of svp)))(StoreName & "$Dic")
-                    Dim dv As Dictionary(Of String, Pair(Of svp, Dictionary(Of String, IList(Of Object)))) = cache.GetExternalObject(Of Dictionary(Of String, Pair(Of svp, Dictionary(Of String, IList(Of Object)))))(StoreName)
+                    Dim td As Dictionary(Of Type, List(Of svp)) = cache.GetOrAddExternalObject(Of Dictionary(Of Type, List(Of svp)))(StoreName & "$Dic")
+                    Dim dv As Dictionary(Of String, Pair(Of svp, Dictionary(Of String, IList(Of Object)))) = cache.GetOrAddExternalObject(Of Dictionary(Of String, Pair(Of svp, Dictionary(Of String, IList(Of Object)))))(StoreName)
                     Dim l As List(Of svp) = Nothing
                     If td.TryGetValue(obj.GetType, l) Then
                         Dim toRemove As List(Of svp) = Nothing
@@ -616,7 +616,7 @@ Namespace Database.Storedprocs
                 If c IsNot Nothing Then
 
                     Using SyncHelper.AcquireDynamicLock("013hgoadngvb;kla")
-                        Dim l As Dictionary(Of String, Pair(Of svp, Dictionary(Of String, IList(Of Object)))) = cache.GetExternalObject(StoreName, _
+                        Dim l As Dictionary(Of String, Pair(Of svp, Dictionary(Of String, IList(Of Object)))) = cache.GetOrAddExternalObject(StoreName, _
                             Function() New Dictionary(Of String, Pair(Of svp, Dictionary(Of String, IList(Of Object)))))
 
                         'SyncLock l
@@ -627,7 +627,7 @@ Namespace Database.Storedprocs
                             If s IsNot Nothing Then
                                 k = New Pair(Of svp, Dictionary(Of String, IList(Of Object)))(s, New Dictionary(Of String, IList(Of Object)))
                                 l(s.Name) = k
-                                Dim td As Dictionary(Of Type, List(Of svp)) = cache.GetExternalObject(StoreName & "$Dic", _
+                                Dim td As Dictionary(Of Type, List(Of svp)) = cache.GetOrAddExternalObject(StoreName & "$Dic", _
                                     Function() New Dictionary(Of Type, List(Of svp)))
                                 For Each t As Type In types
                                     Dim sl As List(Of svp) = Nothing

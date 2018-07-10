@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>Worm.Orm</id>
-    <version>4.1.187.18188</version>
+    <version>4.1.188.18190</version>
     <authors>alex</authors>
     <owners>alex</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -15,6 +15,6 @@
     <tags>Tag1 Tag2</tags>
   </metadata>
   <files>
-    <file src="bin\Release\Worm.Orm.dll" target="lib\net4\Worm.Orm.dll" />
+    <file src="lib\net4\Worm.Orm.dll" target="lib\net4\Worm.Orm.dll" />
   </files>
 </package>

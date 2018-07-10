@@ -4,6 +4,7 @@ Imports Worm.Cache
 Imports Worm.Query
 Imports System.Collections.Generic
 Imports System.Linq
+Imports System.Collections.Concurrent
 
 Namespace Entities
 
@@ -207,6 +208,7 @@ Namespace Entities
         Sub ValidateNewObject(ByVal mgr As OrmManager)
         Sub ValidateUpdate(ByVal mgr As OrmManager)
         Sub ValidateDelete(ByVal mgr As OrmManager)
+        ReadOnly Property CustomProperties As ConcurrentDictionary(Of String, Object)
     End Interface
 
     Public Interface IEntityFactory

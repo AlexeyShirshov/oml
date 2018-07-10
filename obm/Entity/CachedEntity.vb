@@ -7,6 +7,7 @@ Imports System.Collections.Generic
 Imports System.Xml
 Imports Worm.Query
 Imports System.Linq
+Imports System.Collections.Concurrent
 
 Namespace Entities
     <Serializable()> _
@@ -68,8 +69,8 @@ Namespace Entities
         Private _alterLock As New Object
         '<NonSerialized()> _
         'Private _copy As ICachedEntity
-        <NonSerialized()> _
-        Private _props As IDictionary
+        <NonSerialized()>
+        Private _props As New ConcurrentDictionary(Of String, Object)
 
         '<EditorBrowsable(EditorBrowsableState.Never)> _
         'Public Class AcceptState
@@ -1741,6 +1742,11 @@ l1:
         Public Overridable Sub RaiseChangesRejected(args As EventArgs) Implements ICachedEntity.RaiseChangesRejected
             RaiseEvent ChangesRejected(Me, args)
         End Sub
+        Public ReadOnly Property CustomProperties As ConcurrentDictionary(Of String, Object) Implements ICachedEntityEx.CustomProperties
+            Get
+                Return _props
+            End Get
+        End Property
     End Class
 
     <Serializable()> _

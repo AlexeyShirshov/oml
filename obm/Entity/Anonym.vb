@@ -3,16 +3,17 @@ Imports System.ComponentModel
 Imports Worm.Entities.Meta
 Imports Worm.Cache
 Imports System.Linq
+Imports System.Collections.Concurrent
 
 Namespace Entities
 
-    <Serializable()> _
-    <DefaultProperty("Item")> _
+    <Serializable()>
+    <DefaultProperty("Item")>
     Public Class AnonymousEntity
         Inherits Entity
         Implements IOptimizedValues, ICustomTypeDescriptor, ICopyProperties
 
-        Protected _props As New Dictionary(Of String, Object)
+        Protected _props As New ConcurrentDictionary(Of String, Object)
 
         Public Overridable Overloads Function GetValue( _
             ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema) As Object Implements IOptimizedValues.GetValueOptimized

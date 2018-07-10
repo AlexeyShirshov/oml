@@ -27,7 +27,7 @@ Namespace Cache
         Private _lock2 As New Object
         Private _list_converter As IListObjectConverter
         'Private _modifiedobjects As IDictionary
-        Private _externalObjects As IDictionary
+        Private _externalObjects As IDictionary(Of String, Object)
         Private _newMgr As INewObjectsStore = New NewObjectStore
         Private _m2m_dep As New Dictionary(Of String, Dictionary(Of String, Dictionary(Of String, Object)))
 
@@ -70,8 +70,9 @@ Namespace Cache
             Return Hashtable.Synchronized(New Hashtable)
         End Function
 
-        Public Overridable Function CreateRootDictionary4ExternalObjects() As IDictionary
-            Return Hashtable.Synchronized(New Hashtable)
+        Public Overridable Function CreateRootDictionary4ExternalObjects() As IDictionary(Of String, Object)
+            Return New Concurrent.ConcurrentDictionary(Of String, Object)
+            'Return Hashtable.Synchronized(New Hashtable)
         End Function
 
         Public Overridable Function CreateResultsets4SimpleValuesDictionary() As IDictionary
@@ -467,28 +468,34 @@ Namespace Cache
             End Using
         End Sub
 
-        Public Sub AddExternalObject(ByVal objectStoreName As String, ByVal obj As Object)
+        Public Sub AddOrUpdateExternalObject(ByVal objectStoreName As String, ByVal obj As Object)
             _externalObjects(objectStoreName) = obj
         End Sub
 
         Public Delegate Function GetObjectDelegate(Of T)() As T
 
-        Public Function GetExternalObject(Of T)(ByVal objectStoreName As String, Optional ByVal getObj As GetObjectDelegate(Of T) = Nothing) As T
-            Dim o As T = Nothing
-            SyncLock _externalObjects.SyncRoot
-                o = CType(_externalObjects(objectStoreName), T)
-                If o Is Nothing AndAlso getObj IsNot Nothing Then
+        Public Function GetOrAddExternalObject(Of T)(ByVal objectStoreName As String, Optional ByVal getObj As GetObjectDelegate(Of T) = Nothing) As T
+
+            Dim o As Object = Nothing
+
+            SyncLock _externalObjects
+                If Not _externalObjects.TryGetValue(objectStoreName, o) Then
                     o = getObj()
                     _externalObjects(objectStoreName) = o
                 End If
             End SyncLock
-            Return o
+
+            Return CType(o, T)
         End Function
 
-        Public Sub RemoveExternalObject(ByVal objectStoreName As String)
-            _externalObjects.Remove(objectStoreName)
-        End Sub
-
+        Public Function RemoveExternalObject(ByVal objectStoreName As String) As Boolean
+            Return _externalObjects.Remove(objectStoreName)
+        End Function
+        Public ReadOnly Property ExternalObjects As IDictionary(Of String, Object)
+            Get
+                Return _externalObjects
+            End Get
+        End Property
         Protected Friend Sub AddM2MObjDependent(ByVal obj As _ISinglePKEntity, ByVal key As String, ByVal id As String)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
