@@ -203,6 +203,7 @@
     <Compile Include="DbMS\SP\SPBase.vb" />
     <Compile Include="DbMS\BulkLoad\SqlServerBuildLoader.vb" />
     <Compile Include="Entity\EntityExtensions.vb" />
+    <Compile Include="Entity\EntityWrapper.vb" />
     <Compile Include="Managers\db\AppLockManager.vb" />
     <Compile Include="Managers\db\ConnectionMgr.vb" />
     <Compile Include="Managers\db\ErrorHandling.vb" />
@@ -378,7 +379,7 @@ del /Q $(TargetDir)$(TargetName)-Full*</PostBuildEvent>
   </PropertyGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.None.Increment" />
+      <UserProperties BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="True" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>
