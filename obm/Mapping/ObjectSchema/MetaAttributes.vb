@@ -351,13 +351,14 @@ Namespace Entities.Meta
         RowVersion = 23
         PK = 32
         ''' <summary>
-        ''' PK or SyncInsert or [ReadOnly]
+        ''' PK or SyncInsert or [ReadOnly] or Identity
         ''' </summary>
         ''' <remarks></remarks>
-        PrimaryKey = 37
+        PrimaryKey = 549
         NotSerialized = 64
         Factory = 128
         Hidden = CInt(2 ^ 8)
+        Identity = CInt(2 ^ 9)
     End Enum
 
     <AttributeUsage(AttributeTargets.Class, allowmultiple:=True, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _

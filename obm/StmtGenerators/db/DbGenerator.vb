@@ -1508,8 +1508,10 @@ l2:
                                 If iv IsNot Nothing Then
                                     ins_cmd.Append(", ").Append(pk.Second).Append(" = ").Append(iv.GetValue(propertyAlias))
                                 Else
-                                    'Dim att As Field2DbRelations = GetAttributes(os, GetColumnByFieldName(type, propertyAlias, os))
-                                    ins_cmd.Append(", ").Append(pk.Second).Append(" = ").Append(LastInsertID)
+                                    Dim att As Field2DbRelations = os.FieldColumnMap(propertyAlias).Attributes
+                                    If (att Or Field2DbRelations.Identity) = Field2DbRelations.Identity Then
+                                        ins_cmd.Append(", ").Append(pk.Second).Append(" = ").Append(LastInsertID)
+                                    End If
                                 End If
                             End If
                             'If String.IsNullOrEmpty(identityPK) Then
