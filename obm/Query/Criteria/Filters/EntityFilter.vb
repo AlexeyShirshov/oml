@@ -277,7 +277,7 @@ l1:
                 If Template.ObjectSource.IsQuery Then
                     tbl = Template.ObjectSource.ObjectAlias.Tbl
                     Dim q As QueryCmd = Template.ObjectSource.ObjectAlias.Query
-                    map = New MapField2Column(Template.PropertyAlias, executor.FindColumn(schema, Template.PropertyAlias), tbl)
+                    map = New MapField2Column(Template.PropertyAlias, CType(q, Query.IExecutionContext).FindColumn(schema, Template.PropertyAlias), tbl)
                 Else
                     Try
                         If executor Is Nothing Then

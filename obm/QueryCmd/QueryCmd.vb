@@ -1334,7 +1334,17 @@ l1:
                         Dim selOS As EntityUnion = GetSelectedOS()
                         If selOS IsNot Nothing Then
                             Dim t As Type = selOS.GetRealType(mpe)
-                            Dim selSchema As IEntitySchema = _types(selOS) 'mpe.GetEntitySchema(t)
+                            Dim selSchema As IEntitySchema = Nothing
+                            If Not _types.TryGetValue(selOS, selSchema) Then
+                                Dim fromEU As EntityUnion = _from.GetFromEntity
+                                If fromEU IsNot Nothing Then
+                                    selSchema = mpe.GetEntitySchema(fromEU.GetRealType(mpe))
+                                    'If Not _types.ContainsKey(fromEU) Then
+                                    _types.Add(fromEU, selSchema)
+                                    'End If
+                                End If
+                            End If
+
                             For Each se As SelectExpression In SelectList
                                 Dim en As IEnumerable(Of SelectUnion) = GetSelectedEntities(se)
                                 For Each su As SelectUnion In en
