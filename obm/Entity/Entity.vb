@@ -634,6 +634,10 @@ Namespace Entities
 
         Protected Sub RaisePropertyChanged(ByVal propertyChangedEventArgs As PropertyChangedEventArgs) Implements _IEntity.RaisePropertyChanged
             RaiseEvent PropertyChangedEx(Me, propertyChangedEventArgs)
+            Dim propName = GetEntitySchema(GetMappingEngine())?.GetPropertyByAlias(Me.GetType, propertyChangedEventArgs.PropertyAlias)?.Name
+            If Not String.IsNullOrEmpty(propName) Then
+                RaiseMVVMPropertyChanged(propName)
+            End If
         End Sub
         <NonSerialized>
         Public Event PropertyChanged(sender As Object, e As System.ComponentModel.PropertyChangedEventArgs) Implements System.ComponentModel.INotifyPropertyChanged.PropertyChanged

@@ -176,6 +176,17 @@ Namespace Entities.Meta
             Return m.PropertyInfo.PropertyType
         End Function
         <Extension>
+        Public Function GetPropertyByAlias(ByVal oschema As IPropertyMap, ByVal type As Type, ByVal propertyAlias As String) As Reflection.PropertyInfo
+            If oschema Is Nothing Then
+                Throw New ArgumentNullException(NameOf(oschema))
+            End If
+            Dim m As MapField2Column = Nothing
+            If Not oschema.FieldColumnMap.TryGetValue(propertyAlias, m) Then
+                Throw New ObjectMappingException("Type " & type.Name & " doesnot contain property " & propertyAlias)
+            End If
+            Return m.PropertyInfo
+        End Function
+        <Extension>
         Public Iterator Function GetAutoLoadFields(ByVal oschema As IPropertyMap) As IEnumerable(Of MapField2Column)
             If oschema Is Nothing Then
                 Throw New ArgumentNullException(NameOf(oschema))
