@@ -673,6 +673,7 @@ Namespace Query
         '<NonSerialized()>
         Public Event CommandException(sender As QueryCmd, args As CommandExceptionArgs)
 
+        Private _fallBack As OrmManager.ApplyFilterFallBackDelegate
 #Region " Cache "
         '<NonSerialized()> _
         Friend _types As Dictionary(Of EntityUnion, IEntitySchema)
@@ -6753,6 +6754,15 @@ l1:
             End Set
         End Property
 
+        Public Property FallBack As OrmManager.ApplyFilterFallBackDelegate
+            Get
+                Return _fallBack
+            End Get
+            Set(value As OrmManager.ApplyFilterFallBackDelegate)
+                _fallBack = value
+            End Set
+        End Property
+
         Protected Overridable Sub _ModifyResult(ByVal sender As QueryCmd, ByVal args As ModifyResultArgs)
             If args.OrmManager.Cache.NewObjectManager IsNot Nothing AndAlso Not args.IsSimple Then
                 Dim removed As Boolean = False
@@ -6777,7 +6787,7 @@ l1:
                         End If
                         'Dim objEU = GetSelectedOS()
                         Dim objEU As New EntityUnion(args.ReadOnlyList.RealType)
-                        For Each a As IEntity In args.OrmManager.ApplyFilter(args.ReadOnlyList.RealType, s, _f, _js, objEU)
+                        For Each a As IEntity In args.OrmManager.ApplyFilter(args.ReadOnlyList.RealType, s, _f, _js, objEU, _fallBack)
                             If nr Is Nothing OrElse Not nr.Contains(a) Then
                                 toAdd.Add(a)
                             End If

@@ -55,11 +55,11 @@ Partial Public MustInherit Class OrmManager
     '#End If
     'Public Delegate Function FindNew(ByVal type As Type, ByVal id As Integer) As OrmBase
     'Public Delegate Sub RemoveNew(ByVal type As Type, ByVal id As Integer)
-
+    Public Delegate Function ApplyFilterFallBackDelegate(mgr As OrmManager, ByVal t As Type, ByVal col As IEnumerable, ByVal filter As IGetFilter, joins As IEnumerable(Of Joins.QueryJoin), objEU As EntityUnion) As IReadOnlyList
     'Protected _cs As String
     'Protected _prevs As String
 
-    <ThreadStatic()> _
+    <ThreadStatic()>
     Private Shared _cur As OrmManager
     'Public Delegate Function GetLocalStorageDelegate(ByVal str As String) As Object
     'Protected _get_cur As GetLocalStorageDelegate
@@ -147,7 +147,7 @@ Partial Public MustInherit Class OrmManager
         End Get
     End Property
 
-    <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1805")> _
+    <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1805")>
     Protected Sub New(ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
 
         If cache Is Nothing Then
@@ -166,7 +166,7 @@ Partial Public MustInherit Class OrmManager
         CreateInternal()
     End Sub
 
-    <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1805")> _
+    <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1805")>
     Protected Sub New(ByVal schema As ObjectMappingEngine)
         '_dispose_cash = True
         _cache = New OrmCache
@@ -822,7 +822,7 @@ Partial Public MustInherit Class OrmManager
     Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type, ByVal add2CacheOnCreate As Boolean) As ISinglePKEntity
         Dim o As ISinglePKEntity = CreateKeyEntity(id, type)
         o.SetObjectState(ObjectState.NotLoaded)
-        Dim obj As _ICachedEntity = NormalizeObject(o, CType(GetDictionary(type), System.Collections.IDictionary), _
+        Dim obj As _ICachedEntity = NormalizeObject(o, CType(GetDictionary(type), System.Collections.IDictionary),
             add2CacheOnCreate, False, MappingEngine.GetEntitySchema(type))
         If ReferenceEquals(o, obj) AndAlso Not add2CacheOnCreate Then
             o.SetObjectState(ObjectState.Created)
@@ -861,7 +861,7 @@ Partial Public MustInherit Class OrmManager
         'Return o
         Dim o As T = CreateKeyEntity(Of T)(id)
         o.SetObjectState(ObjectState.NotLoaded)
-        Dim obj As _ICachedEntity = NormalizeObject(o, CType(GetDictionary(Of T)(), IDictionary), _
+        Dim obj As _ICachedEntity = NormalizeObject(o, CType(GetDictionary(Of T)(), IDictionary),
             add2CacheOnCreate, False, MappingEngine.GetEntitySchema(GetType(T)))
         If ReferenceEquals(o, obj) AndAlso Not add2CacheOnCreate Then
             o.SetObjectState(ObjectState.Created)
@@ -1007,12 +1007,12 @@ Partial Public MustInherit Class OrmManager
         RaiseEvent DataAvailable(Me, _er)
     End Sub
 
-    Protected Friend Sub RaiseOnDataAvailable(ByVal count As Integer, ByVal execTime As TimeSpan, ByVal fetchTime As TimeSpan, _
+    Protected Friend Sub RaiseOnDataAvailable(ByVal count As Integer, ByVal execTime As TimeSpan, ByVal fetchTime As TimeSpan,
             ByVal hit As Boolean)
         RaiseEvent DataAvailable(Me, New ExecutionResult(count, execTime, fetchTime, hit, Nothing))
     End Sub
 
-    Private Function GetResultset(Of T As {_ICachedEntity, New})(ByVal withLoad As Boolean, ByVal dic As IDictionary, _
+    Private Function GetResultset(Of T As {_ICachedEntity, New})(ByVal withLoad As Boolean, ByVal dic As IDictionary,
         ByVal id As String, ByVal sync As String, ByVal del As ICacheItemProvoder(Of T), ByRef succeeded As Boolean) As ReadOnlyEntityList(Of T)
         Dim v As ICacheValidator = TryCast(del, ICacheValidator)
         Dim ce As UpdatableCachedItem = CType(GetFromCache(Of T)(dic, sync, id, withLoad, del), UpdatableCachedItem)
@@ -1388,24 +1388,24 @@ l1:
 
 #Region " Cache "
 
-    Protected Friend Delegate Function ValidateDelegate(ByRef ce As CachedItemBase, _
-        ByVal del As ICacheItemProvoderBase, ByVal dic As IDictionary, ByVal id As Object, _
+    Protected Friend Delegate Function ValidateDelegate(ByRef ce As CachedItemBase,
+        ByVal del As ICacheItemProvoderBase, ByVal dic As IDictionary, ByVal id As Object,
         ByVal sync As String, ByVal v As ICacheValidator) As Boolean
 
-    Protected Friend Function GetFromCache2(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
+    Protected Friend Function GetFromCache2(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object,
         ByVal withLoad As Boolean, ByVal cacheItemProvider As ICacheItemProvoderBase) As CachedItemBase
 
         Return GetFromCacheBase(dic, sync, id, New TypeWrap(Of Object)(New Boolean() {withLoad}), cacheItemProvider, Nothing)
     End Function
 
-    Protected Friend Function GetFromCache(Of T As ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
+    Protected Friend Function GetFromCache(Of T As ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object,
         ByVal withLoad As Boolean, ByVal cacheItemProvider As ICacheItemProvoderBase) As CachedItemBase
 
         Return GetFromCacheBase(dic, sync, id, New TypeWrap(Of Object)(New Boolean() {withLoad}), cacheItemProvider, AddressOf ValidateCacheItem(Of T))
     End Function
 
-    Protected Friend Function GetFromCacheBase(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal ctx As TypeWrap(Of Object), ByVal cacheItemProvider As ICacheItemProvoderBase, _
+    Protected Friend Function GetFromCacheBase(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object,
+        ByVal ctx As TypeWrap(Of Object), ByVal cacheItemProvider As ICacheItemProvoderBase,
         ByVal validate As ValidateDelegate) As CachedItemBase
 
         Invariant()
@@ -1471,8 +1471,8 @@ l1:
         Return ce
     End Function
 
-    Private Function ValidateCacheItem(Of T As ICachedEntity)(ByRef ce As CachedItemBase, _
-        ByVal cacheItemProvider As ICacheItemProvoderBase, ByVal dic As IDictionary, ByVal id As Object, _
+    Private Function ValidateCacheItem(Of T As ICachedEntity)(ByRef ce As CachedItemBase,
+        ByVal cacheItemProvider As ICacheItemProvoderBase, ByVal dic As IDictionary, ByVal id As Object,
         ByVal sync As String, ByVal v As ICacheValidator) As Boolean
 
         Dim del As ICacheItemProvoder(Of T) = CType(cacheItemProvider, Global.Worm.OrmManager.ICacheItemProvoder(Of T))
@@ -1646,7 +1646,7 @@ l1:
         Return NormalizeObject(obj, dic, True, False, MappingEngine.GetEntitySchema(obj.GetType))
     End Function
 
-    Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal entityDictionary As IDictionary, _
+    Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal entityDictionary As IDictionary,
         ByVal add2Cache As Boolean, ByVal fromDb As Boolean, ByVal oschema As IEntitySchema) As _ICachedEntity
         Dim cb As ICacheBehavior = TryCast(oschema, ICacheBehavior)
         Return CType(_cache.FindObjectInCache(obj.GetType, obj, New CacheKey(obj), cb, entityDictionary, add2Cache, fromDb), _ICachedEntity)
@@ -1930,16 +1930,16 @@ l1:
 #End Region
 
 #Region " helpers "
-    Protected Function MakeJoin(ByVal joinOS As EntityUnion, ByVal selectOS As EntityUnion, _
-        ByVal type2join As Type, ByVal field As String, _
-        ByVal oper As Criteria.FilterOperation, ByVal joinType As JoinType, _
+    Protected Function MakeJoin(ByVal joinOS As EntityUnion, ByVal selectOS As EntityUnion,
+        ByVal type2join As Type, ByVal field As String,
+        ByVal oper As Criteria.FilterOperation, ByVal joinType As JoinType,
         Optional ByVal switchTable As Boolean = False) As QueryJoin
         Return MakeJoin(_schema, joinOS, type2join, selectOS, field, oper, joinType, switchTable)
     End Function
 
-    Protected Function MakeJoin( _
-        ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
-        ByVal oper As Criteria.FilterOperation, ByVal joinType As JoinType, _
+    Protected Function MakeJoin(
+        ByVal type2join As Type, ByVal selectType As Type, ByVal field As String,
+        ByVal oper As Criteria.FilterOperation, ByVal joinType As JoinType,
         Optional ByVal switchTable As Boolean = False) As QueryJoin
         Return MakeJoin(_schema, New EntityUnion(type2join), type2join, New EntityUnion(selectType), field, oper, joinType, switchTable)
     End Function
@@ -1976,7 +1976,7 @@ l1:
         Return _cache.IsInCache(id, t, _schema)
     End Function
 
-    <Conditional("DEBUG")> _
+    <Conditional("DEBUG")>
     Protected Overridable Sub Invariant()
         'Debug.Assert(Not _disposed)
         If _disposed Then
@@ -1998,7 +1998,7 @@ l1:
 
 #Region " shared helpers "
 
-    Private Shared Sub AddObjectForLoading(Of T As ICachedEntity)(ByVal cache As CacheBase, ByVal check_loaded As Boolean, _
+    Private Shared Sub AddObjectForLoading(Of T As ICachedEntity)(ByVal cache As CacheBase, ByVal check_loaded As Boolean,
         ByVal entityDictionary As ISet(Of ICachedEntity), ByVal o As ICachedEntity)
         If o IsNot Nothing Then
             Using o.AcquareLock
@@ -2012,8 +2012,8 @@ l1:
         End If
     End Sub
 
-    Private Shared Sub AddObjectForLoading(Of T As ICachedEntity)(ByVal cache As CacheBase, _
-        ByVal check_loaded As Boolean, ByVal entityDictionary As ISet(Of ICachedEntity), ByVal o As ICachedEntity, _
+    Private Shared Sub AddObjectForLoading(Of T As ICachedEntity)(ByVal cache As CacheBase,
+        ByVal check_loaded As Boolean, ByVal entityDictionary As ISet(Of ICachedEntity), ByVal o As ICachedEntity,
         ByVal properties As List(Of EntityExpression))
 
         If o IsNot Nothing Then
@@ -2043,8 +2043,8 @@ l1:
     ''' <param name="check_loaded"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Shared Function FormPKValues(Of T As ICachedEntity)(ByVal cache As CacheBase, ByVal objs As ReadOnlyEntityList(Of T), _
-        ByVal start As Integer, ByVal length As Integer, _
+    Public Shared Function FormPKValues(Of T As ICachedEntity)(ByVal cache As CacheBase, ByVal objs As ReadOnlyEntityList(Of T),
+        ByVal start As Integer, ByVal length As Integer,
         Optional ByVal check_loaded As Boolean = True) As IEnumerable(Of ICachedEntity)
 
         Dim entityDictionary As New HashSet(Of ICachedEntity)
@@ -2074,8 +2074,8 @@ l1:
     ''' <param name="properties"></param>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public Shared Function FormPKValues(Of T As ICachedEntity)(ByVal cache As CacheBase, _
-        ByVal objs As ReadOnlyEntityList(Of T), ByVal start As Integer, ByVal length As Integer, _
+    Public Shared Function FormPKValues(Of T As ICachedEntity)(ByVal cache As CacheBase,
+        ByVal objs As ReadOnlyEntityList(Of T), ByVal start As Integer, ByVal length As Integer,
         ByVal check_loaded As Boolean, ByVal properties As List(Of EntityExpression)) As IEnumerable(Of ICachedEntity)
 
         Dim entityDictionary As New HashSet(Of ICachedEntity)
@@ -2571,7 +2571,7 @@ l1:
 
 #End Region
 
-    Public Shared Function CreateReadOnlyList(ByVal t As Type) As ILoadableList
+    Public Shared Function CreateReadOnlyList(ByVal t As Type) As IReadOnlyList
         Dim rt As Type = Nothing
         If GetType(ISinglePKEntity).IsAssignableFrom(t) Then
             rt = GetType(ReadOnlyList(Of ))
@@ -2580,10 +2580,10 @@ l1:
         Else
             rt = GetType(ReadOnlyObjectList(Of ))
         End If
-        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {t})), ILoadableList)
+        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {t})), IReadOnlyList)
     End Function
 
-    Public Shared Function CreateReadOnlyList(ByVal listType As Type, ByVal l As IEnumerable) As ILoadableList
+    Public Shared Function CreateReadOnlyList(ByVal listType As Type, ByVal l As IEnumerable) As IReadOnlyList
         Dim rt As Type = Nothing
         If GetType(ISinglePKEntity).IsAssignableFrom(listType) Then
             rt = GetType(ReadOnlyList(Of ))
@@ -2592,10 +2592,10 @@ l1:
         Else
             rt = GetType(ReadOnlyObjectList(Of ))
         End If
-        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {l}), ILoadableList)
+        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {l}), IReadOnlyList)
     End Function
 
-    Public Shared Function CreateReadOnlyList(ByVal listType As Type, ByVal realType As Type, ByVal l As IEnumerable) As ILoadableList
+    Public Shared Function CreateReadOnlyList(ByVal listType As Type, ByVal realType As Type, ByVal l As IEnumerable) As IReadOnlyList
         Dim rt As Type = Nothing
         If GetType(ISinglePKEntity).IsAssignableFrom(listType) Then
             rt = GetType(ReadOnlyList(Of ))
@@ -2604,10 +2604,10 @@ l1:
         Else
             rt = GetType(ReadOnlyObjectList(Of ))
         End If
-        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {realType, l}), ILoadableList)
+        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {realType, l}), IReadOnlyList)
     End Function
 
-    Public Shared Function CreateReadOnlyList(ByVal listType As Type, ByVal realType As Type) As ILoadableList
+    Public Shared Function CreateReadOnlyList(ByVal listType As Type, ByVal realType As Type) As IReadOnlyList
         Dim rt As Type = Nothing
         If GetType(ISinglePKEntity).IsAssignableFrom(listType) Then
             rt = GetType(ReadOnlyList(Of ))
@@ -2616,7 +2616,7 @@ l1:
         Else
             rt = GetType(ReadOnlyObjectList(Of ))
         End If
-        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {realType}), ILoadableList)
+        Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {listType}), New Object() {realType}), IReadOnlyList)
     End Function
 
     Friend Shared Function _CreateReadOnlyList(ByVal t As Type) As IListEdit
@@ -2789,7 +2789,18 @@ l1:
         End If
         Return r
     End Function
-
+    Public Function ApplyFilter(ByVal t As Type, ByVal col As IEnumerable, ByVal filter As IGetFilter, fallBack As ApplyFilterFallBackDelegate) As IReadOnlyList
+        If fallBack Is Nothing Then
+            Return ApplyFilter(t, col, filter)
+        Else
+            Dim evaluated As Boolean
+            Dim r As IReadOnlyList = ApplyFilter(t, col, filter, evaluated)
+            If Not evaluated Then
+                r = fallBack(Me, t, col, filter, Nothing, Nothing)
+            End If
+            Return r
+        End If
+    End Function
     Public Function ApplyFilter(ByVal t As Type, ByVal col As IEnumerable, ByVal filter As IGetFilter,
                               joins As IEnumerable(Of Joins.QueryJoin), objEU As EntityUnion) As IReadOnlyList
         Dim evaluated As Boolean
@@ -2799,7 +2810,20 @@ l1:
         End If
         Return r
     End Function
+    Public Function ApplyFilter(ByVal t As Type, ByVal col As IEnumerable, ByVal filter As IGetFilter,
+                              joins As IEnumerable(Of Joins.QueryJoin), objEU As EntityUnion, fallBack As ApplyFilterFallBackDelegate) As IReadOnlyList
+        If fallBack Is Nothing Then
+            Return ApplyFilter(t, col, filter, joins, objEU)
+        Else
 
+            Dim evaluated As Boolean
+            Dim r As IReadOnlyList = ApplyFilter(t, col, filter, joins, objEU, evaluated)
+            If Not evaluated Then
+                r = fallBack(Me, t, col, filter, joins, objEU)
+            End If
+            Return r
+        End If
+    End Function
     Public Function ApplyFilter(ByVal t As Type, ByVal col As IEnumerable, ByVal filter As IGetFilter, ByRef evaluated As Boolean) As IReadOnlyList
         Return ApplyFilter(t, col, filter, Nothing, Nothing, evaluated)
     End Function

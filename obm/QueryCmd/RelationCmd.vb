@@ -971,8 +971,8 @@ l1:
         Public Overloads Overrides Function Count(ByVal mgr As OrmManager) As Integer
             Dim cnt As Integer = MyBase.Count(mgr)
             If Relation.HasChanges Then
-                cnt -= mgr.ApplyFilter(GetSelectedType(mgr.MappingEngine), Relation.Deleted, Filter).Count
-                cnt += mgr.ApplyFilter(GetSelectedType(mgr.MappingEngine), Relation.Added, Filter).Count
+                cnt -= mgr.ApplyFilter(GetSelectedType(mgr.MappingEngine), Relation.Deleted, Filter, FallBack).Count
+                cnt += mgr.ApplyFilter(GetSelectedType(mgr.MappingEngine), Relation.Added, Filter, FallBack).Count
             End If
             Return cnt
         End Function
@@ -996,12 +996,12 @@ l1:
 
                 Dim nr As IListEdit = CType(args.ReadOnlyList.Clone, IListEdit)
 
-                For Each o As IEntity In args.OrmManager.ApplyFilter(args.ReadOnlyList.RealType, Relation.Deleted, Filter)
+                For Each o As IEntity In args.OrmManager.ApplyFilter(args.ReadOnlyList.RealType, Relation.Deleted, Filter, FallBack)
                     nr.Remove(o)
                 Next
 
                 Dim toAdd As New List(Of IEntity)
-                For Each a As IEntity In args.OrmManager.ApplyFilter(args.ReadOnlyList.RealType, Relation.Added, Filter)
+                For Each a As IEntity In args.OrmManager.ApplyFilter(args.ReadOnlyList.RealType, Relation.Added, Filter, FallBack)
                     If Not nr.Contains(a) Then
                         toAdd.Add(a)
                     End If
