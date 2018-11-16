@@ -320,8 +320,8 @@ Namespace Query
                             Throw New ApplicationException(String.Format("EntityUnion {0} cannot be converted to type", Dump(mpe)))
                         End If
 
-                        calc = _calc
                     End If
+                    calc = _calc
                 End Using
             End If
             Return calc
