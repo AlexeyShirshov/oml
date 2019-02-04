@@ -15,6 +15,6 @@
     <tags>Tag1 Tag2</tags>
   </metadata>
   <files>
-    <file src="lib\net4\Worm.Orm.dll" target="lib\net4\Worm.Orm.dll" />
+    <file src="bin\release\Worm.Orm.dll" target="lib\net4\Worm.Orm.dll" />
   </files>
 </package>

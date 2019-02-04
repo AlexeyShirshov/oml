@@ -2568,6 +2568,8 @@ l1:
 l2:
                                 pk = True
                                 m = propertyMap(propertyAlias)
+                                se.IntoPropertyAlias = propertyAlias
+                                se._intoPA = Nothing
                             ElseIf String.IsNullOrEmpty(propertyAlias) Then
                                 Throw New OrmManagerException(String.Format("Expression {0} has no PropertyAlias", se.GetStaticString(MappingEngine)))
                             End If

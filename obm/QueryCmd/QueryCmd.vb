@@ -1626,9 +1626,11 @@ l1:
                                     _appendMain = True
                                 End If
 
-                                mpe.AppendJoin(tos, t, selSchema, _
-                                    tp.First, tp.First.GetRealType(mpe), mpe.GetEntitySchema(tp.First.GetRealType(mpe)), _
-                                    filter, _js, contextInfo, JoinType.Join)
+                                If _js.Find(Function(join) join.ObjectSource = tp.First) Is Nothing Then
+                                    mpe.AppendJoin(tos, t, selSchema,
+                                                   tp.First, tp.First.GetRealType(mpe), mpe.GetEntitySchema(tp.First.GetRealType(mpe)),
+                                                   filter, _js, contextInfo, JoinType.Join)
+                                End If
                             End If
                         Next
                     End If

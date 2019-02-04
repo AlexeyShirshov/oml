@@ -342,7 +342,7 @@ Namespace Expressions2
             _exp.Prepare(executor, mpe, contextInfo, stmt, isAnonym)
         End Sub
 
-        Private _intoPA As String
+        Friend _intoPA As String
         Public Function GetIntoPropertyAlias(Optional withoutColumn As Boolean = False) As String
             If Not String.IsNullOrEmpty(_intoPA) Then
                 Return _intoPA
