@@ -30,7 +30,7 @@ Partial Public MustInherit Class OrmManager
     Protected Friend Const Const_JoinStaticString As String = " - join - "
     Protected Friend Const GetTablePostfix As String = " - GetTable"
     Protected Const WithLoadConst As Boolean = False
-    Protected Const myConstLocalStorageString As String = "afoivnaodfvodfviogb3159fhbdofvad"
+    Protected Const myConstLocalStorageString As String = "worm:current-ctx"
     'Public Const CustomSort As String = "q890h5f130nmv90h1nv9b1v-9134fb"
 
     Protected _cache As CacheBase
@@ -273,21 +273,21 @@ Partial Public MustInherit Class OrmManager
 
     Public Shared Property CurrentManager() As OrmManager
         Get
-            'If System.Web.HttpContext.Current IsNot Nothing Then
-            '    Return CType(System.Web.HttpContext.Current.Items(myConstLocalStorageString), OrmManager)
-            'Else
-            '    Return _cur
-            'End If
+            If System.Web.HttpContext.Current IsNot Nothing Then
+                Return CType(System.Web.HttpContext.Current.Items(myConstLocalStorageString), OrmManager)
+            Else
+                Return _cur
+            End If
             'Return CType(Thread.GetData(LocalStorage), OrmManager)
-            Return _cur
+            'Return _cur
         End Get
         Protected Set(ByVal value As OrmManager)
-            'If System.Web.HttpContext.Current IsNot Nothing Then
-            '    System.Web.HttpContext.Current.Items(myConstLocalStorageString) = value
-            'Else
-            '    _cur = value
-            'End If
-            _cur = value
+            If System.Web.HttpContext.Current IsNot Nothing Then
+                System.Web.HttpContext.Current.Items(myConstLocalStorageString) = value
+            Else
+                _cur = value
+            End If
+            '_cur = value
         End Set
     End Property
 
