@@ -90,6 +90,7 @@ Public Class ObjectMappingEngine
     Public Shared SkipValue As Object = New Object
     Private _normTypesSpin As New SpinLockRef
     Public Event EndInitSchema(idic As IDictionary)
+    Public Event StartInitSchema()
 
     Public Sub New()
         MyClass.New(DefaultVersion)
@@ -1654,6 +1655,7 @@ Public Class ObjectMappingEngine
         Threading.Tasks.Task.Factory.StartNew(AddressOf GetEntityTypes)
     End Sub
     Protected Function CreateObjectSchema(ByRef names As IDictionary) As IDictionary
+        RaiseEvent StartInitSchema()
         Dim idic As New Specialized.HybridDictionary
         names = New Specialized.HybridDictionary
         For Each tp As Type In GetEntityTypes()
