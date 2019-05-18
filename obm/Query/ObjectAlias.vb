@@ -215,13 +215,13 @@ Namespace Query
                 Throw New NotImplementedException
             End If
         End Function
-        Friend Function Dump(mpe As ObjectMappingEngine) As String
+        Friend Function Dump(mpe As ObjectMappingEngine, Optional realType As Boolean = False) As String
             If _t IsNot Nothing Then
                 Return "type: {0}. gethashcode: {1}".Format2(_t, _t.GetHashCode)
             ElseIf Not String.IsNullOrEmpty(_en) Then
-                Return "entity: {0}. type gethashcode: {1}".Format2(_en, GetRealType(mpe).GetHashCode)
+                Return "entity: {0}. type gethashcode: {1}".Format2(_en, If(Not realType, GetRealType(mpe).GetHashCode, Nothing))
             ElseIf _a IsNot Nothing Then
-                Return "alias: {0}. type gethashcode: {1}".Format2(_a, GetRealType(mpe).GetHashCode)
+                Return "alias: {0}. type gethashcode: {1}".Format2(_a, If(Not realType, GetRealType(mpe).GetHashCode, Nothing))
             Else
                 Throw New NotImplementedException
             End If
@@ -317,7 +317,7 @@ Namespace Query
                         End If
 
                         If _calc Is Nothing Then
-                            Throw New ApplicationException(String.Format("EntityUnion {0} cannot be converted to type", Dump(mpe)))
+                            Throw New ApplicationException(String.Format("EntityUnion {0} cannot be converted to type", Dump(mpe, True)))
                         End If
 
                     End If
