@@ -10,15 +10,15 @@ Imports System.Runtime
 
 ' Review the values of the assembly attributes
 
-<Assembly: AssemblyTitle("Worm")> 
-<Assembly: AssemblyDescription("")> 
-<Assembly: AssemblyCompany("")> 
-<Assembly: AssemblyProduct("Web object-relational mapping framework")> 
-<Assembly: AssemblyCopyright("Copyright ©  2005")> 
-<Assembly: AssemblyTrademark("")> 
+<Assembly: AssemblyTitle("Worm")>
+<Assembly: AssemblyDescription("")>
+<Assembly: AssemblyCompany("")>
+<Assembly: AssemblyProduct("Web object-relational mapping framework")>
+<Assembly: AssemblyCopyright("Copyright ©  2005")>
+<Assembly: AssemblyTrademark("")>
 
-<Assembly: ComVisible(False)> 
-<Assembly: CLSCompliant(False)> 
+<Assembly: ComVisible(False)>
+<Assembly: CLSCompliant(False)>
 
 'The following GUID is for the ID of the typelib if this project is exposed to COM
 <Assembly: Guid("da3d66f3-2d20-4258-b71d-1e4eb84d0f39")>
@@ -37,4 +37,4 @@ Imports System.Runtime
 <Assembly: AssemblyFileVersion("4.1.213.19241")>
 
 '<Assembly: FileIOPermission(SecurityAction.RequestRefuse)> 
-<Assembly: ConstrainedExecution.ReliabilityContract(ConstrainedExecution.Consistency.MayCorruptInstance, ConstrainedExecution.Cer.MayFail)> 
+<Assembly: ConstrainedExecution.ReliabilityContract(ConstrainedExecution.Consistency.MayCorruptInstance, ConstrainedExecution.Cer.MayFail)>
