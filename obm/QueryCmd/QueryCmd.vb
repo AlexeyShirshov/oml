@@ -1273,8 +1273,8 @@ Namespace Query
                             Dim col As List(Of SelectExpression) = GetSelectList(de.Key)
                             If col.Count > 0 Then
                                 If AutoFields AndAlso _outer Is Nothing AndAlso Not _notSimpleMode AndAlso Not IsDistinct AndAlso _group Is Nothing Then
-                                    Dim createType As EntityUnion = Nothing
-                                    If Not _createTypes.TryGetValue(de.Key, createType) Then
+                                    Dim _createType As EntityUnion = Nothing
+                                    If Not _createTypes.TryGetValue(de.Key, _createType) Then
 l2:
                                         For Each m As MapField2Column In oschema.GetPKs
                                             Dim pa As String = m.PropertyAlias
@@ -1288,9 +1288,9 @@ l2:
                                             End If
                                         Next
                                     Else
-                                        Dim ct As Type = createType.GetRealType(mpe)
+                                        Dim ct As Type = _createType.GetRealType(mpe)
                                         Dim t As Type = de.Key.GetRealType(mpe)
-                                        If GetType(AnonymousEntity) IsNot ct AndAlso (t Is ct OrElse EntityUnion.EntityNameEquals(mpe, createType, de.Key)) Then
+                                        If GetType(AnonymousEntity) IsNot ct AndAlso (t Is ct OrElse EntityUnion.EntityNameEquals(mpe, _createType, de.Key)) Then
                                             GoTo l2
                                         End If
                                     End If
@@ -2437,6 +2437,8 @@ l1:
         Protected Function GetRealSelectedOS() As EntityUnion
             If SelectedEntities IsNot Nothing AndAlso SelectedEntities.Count > 0 Then
                 Return SelectedEntities(0).First
+            ElseIf CreateType IsNot Nothing Then
+                Return CreateType
             ElseIf _from IsNot Nothing AndAlso _from.ObjectSource IsNot Nothing Then
                 Return _from.ObjectSource
             ElseIf _from IsNot Nothing AndAlso _from.Table IsNot Nothing AndAlso GetType(SearchFragment).IsAssignableFrom(_from.Table.GetType) Then
