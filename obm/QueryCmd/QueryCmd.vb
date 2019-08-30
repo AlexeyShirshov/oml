@@ -2437,8 +2437,6 @@ l1:
         Protected Function GetRealSelectedOS() As EntityUnion
             If SelectedEntities IsNot Nothing AndAlso SelectedEntities.Count > 0 Then
                 Return SelectedEntities(0).First
-            ElseIf CreateType IsNot Nothing Then
-                Return CreateType
             ElseIf _from IsNot Nothing AndAlso _from.ObjectSource IsNot Nothing Then
                 Return _from.ObjectSource
             ElseIf _from IsNot Nothing AndAlso _from.Table IsNot Nothing AndAlso GetType(SearchFragment).IsAssignableFrom(_from.Table.GetType) Then
@@ -3746,7 +3744,13 @@ l1:
                 Throw New ArgumentNullException("mgr")
             End If
 
-            Dim st As Type = GetSelectedType(mgr.MappingEngine)
+            Dim st As Type = Nothing
+            If CreateType IsNot Nothing Then
+                st = CreateType.GetRealType(mgr.MappingEngine)
+            Else
+                st = GetSelectedType(mgr.MappingEngine)
+            End If
+
             Dim t As MethodInfo = Nothing
             If GetType(AnonymousEntity).IsAssignableFrom(st) Then
                 Return ToAnonymList(mgr)

@@ -488,11 +488,11 @@ Namespace Query.Database
                 'dbm.LoadMultipleObjects(_q.CreateType.GetRealType(dbm.MappingEngine), cmd, _q.propWithLoad, rr, GetFields(dbm.MappingEngine, _q, _sl(0)))
                 'Dim sl As List(Of SelectExpression) = _sl(_sl.Count - 1)
                 Dim sl As List(Of SelectExpression) = _q._sl
-                Dim selectType As Type = _q.GetSelectedType(_mgr.MappingEngine)
+                'Dim selectType As Type = 
                 'Dim createType As Type = _q.CreateType.GetRealType(dbm.MappingEngine)
-                Dim t As Type = selectType
+                Dim t As Type = _q.CreateType?.GetRealType(dbm.MappingEngine)
                 If t Is Nothing Then
-                    t = _q.CreateType.GetRealType(dbm.MappingEngine)
+                    t = _q.GetSelectedType(_mgr.MappingEngine)
                 End If
                 Dim batch As Pair(Of List(Of Object), FieldReference) = _q.GetBatchStruct
                 If batch IsNot Nothing Then
