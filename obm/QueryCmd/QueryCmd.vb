@@ -1602,7 +1602,7 @@ l1:
                 End If
                 'End If
 
-                Dim fromEU As EntityUnion = _from.GetFromEntity
+                Dim fromEU As EntityUnion = _from?.GetFromEntity
                 If fromEU IsNot Nothing Then
                     If Not _types.ContainsKey(fromEU) Then
                         _types.Add(fromEU, mpe.GetEntitySchema(fromEU.GetRealType(mpe)))
