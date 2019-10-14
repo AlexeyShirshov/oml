@@ -214,13 +214,18 @@ Namespace Entities.Meta
         Public Property PropertyType() As Type
             Get
                 If _pt Is Nothing Then
-                    Return PropertyInfo.PropertyType
+                    Return PropertyInfo?.PropertyType
                 End If
                 Return _pt
             End Get
             Set(ByVal value As Type)
                 _pt = value
             End Set
+        End Property
+        Public ReadOnly Property ReflectionProp() As PropertyInfo
+            Get
+                Return PropertyInfo
+            End Get
         End Property
 
         Public Property Attributes() As Field2DbRelations
