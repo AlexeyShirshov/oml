@@ -198,7 +198,7 @@ Public Class TestManagerRS
     Public Sub TestValidateCache()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim t2 As Table2 = New QueryCmd().GetByID(Of Table2)(1, mgr)
-            Dim tt As IList(Of Table2) = New QueryCmd().Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine))).ToList(Of Table2)(mgr)
+            Dim tt As IList(Of Table2) = New QueryCmd().Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1))).ToList(Of Table2)(mgr)
             Assert.AreEqual(2, tt.Count)
 
             t2.Tbl = New QueryCmd().GetByID(Of Table1)(2, mgr)
@@ -207,7 +207,7 @@ Public Class TestManagerRS
             Try
                 t2.SaveChanges(True)
 
-                tt = New QueryCmd().Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine))).ToList(Of Table2)(mgr)
+                tt = New QueryCmd().Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1))).ToList(Of Table2)(mgr)
                 Assert.AreEqual(1, tt.Count)
 
             Finally
@@ -225,7 +225,7 @@ Public Class TestManagerRS
             Dim tt As IList(Of Table2) = New QueryCmd().Where(New Ctor(GetType(Table2)).prop("Table1").eq(t1)).ToList(Of Table2)(mgr)
             Assert.AreEqual(2, tt.Count)
 
-            Dim t2 As New Table2(-100, mgr.Cache, mgr.MappingEngine)
+            Dim t2 As New Table2(-100)
             t2.Tbl = t1
 
             mgr.BeginTransaction()
@@ -244,12 +244,12 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestValidateCache3()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim t1 As Table1 = New Table1(1, mgr.Cache, mgr.MappingEngine)
+            Dim t1 As Table1 = New Table1(1)
             Dim tt As IList(Of Table2) = New QueryCmd().Where(New Ctor(GetType(Table2)).prop("Table1").eq(t1)).ToList(Of Table2)(mgr)
             Assert.AreEqual(2, tt.Count)
 
-            Dim t2 As New Table2(-100, mgr.Cache, mgr.MappingEngine)
-            t2.Tbl = New Table1(2, mgr.Cache, mgr.MappingEngine)
+            Dim t2 As New Table2(-100)
+            t2.Tbl = New Table1(2)
 
             mgr.BeginTransaction()
             Try
@@ -290,7 +290,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestAddBlob()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim t2 As New Table2(-100, mgr.Cache, mgr.MappingEngine)
+            Dim t2 As New Table2(-100)
 
             mgr.BeginTransaction()
 
@@ -320,7 +320,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestAddWithPK()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim t As New Table4(4, mgr.Cache, mgr.MappingEngine)
+            Dim t As New Table4(4)
             Dim g As Guid = t.GUID
             mgr.BeginTransaction()
 
@@ -337,7 +337,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestAddWithPK2()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("2"))
-            Dim t As New Table4(4, mgr.Cache, mgr.MappingEngine)
+            Dim t As New Table4(4)
 
 
             mgr.BeginTransaction()
@@ -435,7 +435,7 @@ Public Class TestManagerRS
 
             Assert.AreEqual(1, c2.Count)
 
-            Dim r1 As New Tables1to3(-100, mgr.Cache, mgr.MappingEngine)
+            Dim r1 As New Tables1to3(-100)
             r1.Title = "913nv"
             r1.Table1 = New QueryCmd().GetByID(Of Table1)(2, mgr)
             r1.Table3 = t3
@@ -503,7 +503,7 @@ Public Class TestManagerRS
 
             Assert.AreEqual(2, c.Count)
 
-            Dim r1 As New Tables1to3(-100, mgr.Cache, mgr.MappingEngine)
+            Dim r1 As New Tables1to3(-100)
             r1.Title = "913nv"
             r1.Table1 = t1
             r1.Table3 = t3
@@ -557,7 +557,7 @@ Public Class TestManagerRS
                 Assert.IsTrue(o.InternalProperties.IsLoaded)
             Next
 
-            Dim r1 As New Tables1to3(-100, mgr.Cache, mgr.MappingEngine)
+            Dim r1 As New Tables1to3(-100)
             r1.Title = "913nv"
             r1.Table1 = t1
             r1.Table3 = t3
@@ -717,12 +717,12 @@ Public Class TestManagerRS
             mgr.BeginTransaction()
             Try
                 Using st As New ModificationsTracker(mgr)
-                    Dim tt2 As Table33 = New Table33(-100, mgr.Cache, mgr.MappingEngine)
+                    Dim tt2 As Table33 = New Table33(-100)
                     st.Add(tt2)
                     tt2.RefObject = tt1
                     tt2.Code = 3
 
-                    Dim t3 As New Tables1to3(-101, mgr.Cache, mgr.MappingEngine)
+                    Dim t3 As New Tables1to3(-101)
                     st.Add(t3)
 
                     t3.Table1 = tt1
@@ -898,7 +898,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestCompositeInsert()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim e As New Composite(1, mgr.Cache, mgr.MappingEngine)
+            Dim e As New Composite(1)
             e.Message = "don"
             e.Message2 = "dionsd"
             mgr.BeginTransaction()
@@ -1072,7 +1072,7 @@ Public Class TestManagerRS
 
             mgr.BeginTransaction()
             Try
-                Dim t2 As New Table2(1934, mgr.Cache, mgr.MappingEngine)
+                Dim t2 As New Table2(1934)
                 t2.Tbl = New QueryCmd().GetByID(Of Table1)(1, mgr)
                 t2.Money = 2
                 t2.SaveChanges(True)
@@ -1121,7 +1121,7 @@ Public Class TestManagerRS
 
             mgr.BeginTransaction()
             Try
-                Dim t2 As New Table2(1934, mgr.Cache, mgr.MappingEngine)
+                Dim t2 As New Table2(1934)
                 t2.Tbl = New QueryCmd().GetByID(Of Table1)(1, mgr)
                 t2.SaveChanges(True)
 
@@ -1154,7 +1154,7 @@ Public Class TestManagerRS
 
                 Assert.AreEqual(1, c.Count)
 
-                Dim t As New Table1(GetIdentity, mgr.Cache, mgr.MappingEngine)
+                Dim t As New Table1(GetIdentity)
                 t.Code = 30
                 t.CreatedAt = Now
                 t.SaveChanges(True)
@@ -1194,7 +1194,7 @@ Public Class TestManagerRS
         'OrmReadOnlyDBManager.StmtSource.Listeners.Add(New Diagnostics.DefaultTraceListener)
         OrmReadOnlyDBManager.StmtSource.Listeners(0).TraceOutputOptions = TraceOptions.None
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim t1 As Table1 = New Table1(-345, mgr.Cache, mgr.MappingEngine)
+            Dim t1 As Table1 = New Table1(-345)
             Dim t2 As Table2 = New QueryCmd().GetByID(Of Table2)(1, mgr)
             t2.Tbl = t1
 
@@ -1215,7 +1215,7 @@ Public Class TestManagerRS
         'OrmReadOnlyDBManager.StmtSource.Listeners.Add(New Diagnostics.DefaultTraceListener)
         OrmReadOnlyDBManager.StmtSource.Listeners(0).TraceOutputOptions = TraceOptions.None
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim t1 As Table1 = New Table1(-345, mgr.Cache, mgr.MappingEngine)
+            Dim t1 As Table1 = New Table1(-345)
             t1.CreatedAt = Now
             Dim t2 As Table2 = New QueryCmd().GetByID(Of Table2)(1, mgr)
             t2.Tbl = t1
@@ -1318,7 +1318,7 @@ Public Class TestManagerRS
             Assert.IsTrue(t.InternalProperties.IsLoaded)
             Assert.IsTrue(mgr.IsInCachePrecise(t))
 
-            Dim t2 As New Table1(1, mgr.Cache, mgr.MappingEngine)
+            Dim t2 As New Table1(1)
             Assert.IsFalse(t2.InternalProperties.IsLoaded)
             Assert.IsFalse(mgr.IsInCachePrecise(t2))
 

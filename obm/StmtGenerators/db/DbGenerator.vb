@@ -205,11 +205,11 @@ Namespace Database
                 Return False
             End Get
         End Property
-        Protected Overridable Function InsertOutput(ByVal table As String, ByVal syncInsertPK As IEnumerable(Of Pair(Of String, Pair(Of String))), ByVal notSyncInsertPK As List(Of Pair(Of String)), ByVal co As IChangeOutputOnInsert) As String
+        Protected Overridable Function InsertOutput(ByVal table As String, ByVal syncInsertPK As IEnumerable(Of ColType), ByVal notSyncInsertPK As List(Of ITemplateFilterBase.ColParam), ByVal co As IChangeOutputOnInsert) As String
             Return String.Empty
         End Function
 
-        Protected Overridable Function DeclareOutput(ByVal sb As StringBuilder, ByVal syncInsertPK As IEnumerable(Of Pair(Of String, Pair(Of String)))) As String
+        Protected Overridable Function DeclareOutput(ByVal sb As StringBuilder, ByVal syncInsertPK As IEnumerable(Of ColType)) As String
             Return Nothing
         End Function
 
@@ -381,6 +381,7 @@ Namespace Database
             selSb.Append("select ")
 
             If original_type IsNot Nothing Then
+                Dim exec As New ExecutorCtx(original_type, schema)
                 If wideLoad Then
                     'Dim columns As String = mpe.GetSelectColumnList(original_type, mpe, arr, schema, Nothing)
                     'If Not String.IsNullOrEmpty(columns) Then
@@ -397,14 +398,14 @@ Namespace Database
                             selectedProperties.Add(New EntityExpression(m.PropertyAlias, original_type))
                         Next
                     End If
-                    selSb.Append(BinaryExpressionBase.CreateFromEnumerable(selectedProperties).MakeStatement(mpe, Nothing, Me, params, almgr, contextInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, New ExecutorCtx(original_type, schema)))
+                    selSb.Append(BinaryExpressionBase.CreateFromEnumerable(selectedProperties).MakeStatement(mpe, Nothing, Me, params, almgr, contextInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, exec))
                 Else
                     'mpe.GetPKList(original_type, mpe, schema, selSb, Nothing)
-                    Dim l As New List(Of EntityExpression)
-                    For Each mp As MapField2Column In schema.GetPKs
-                        l.Add(New EntityExpression(mp.PropertyAlias, original_type))
-                    Next
-                    selSb.Append(BinaryExpressionBase.CreateFromEnumerable(l).MakeStatement(mpe, Nothing, Me, params, almgr, contextInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, New ExecutorCtx(original_type, schema)))
+                    'Dim l As New List(Of EntityExpression)
+                    'For Each mp As MapField2Column In schema.GetPKs
+                    '    l.Add(New EntityExpression(mp.PropertyAlias, original_type))
+                    'Next
+                    selSb.Append(New EntityExpression(schema.GetPK.PropertyAlias, original_type).MakeStatement(mpe, Nothing, Me, params, almgr, contextInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, exec))
                 End If
             Else
                 selSb.Append("*")
@@ -543,9 +544,10 @@ Namespace Database
                     If relation.Constants IsNot Nothing Then
                         For Each f As ITemplateFilter In relation.Constants
                             sb.Append(",")
-                            Dim p As Pair(Of String) = f.MakeSingleQueryStmt(mpe, Me, Nothing, pmgr, Nothing)
-                            sb.Append(p.First)
-                            consts.Add(p.Second)
+                            For Each p In f.MakeSingleQueryStmt(mpe, Me, Nothing, pmgr, Nothing)
+                                sb.Append(p.Column)
+                                consts.Add(p.Param)
+                            Next
                         Next
                     End If
                     sb.Append(") values(")
@@ -603,7 +605,7 @@ Namespace Database
 
                     Dim params As New ParamMgr(Me, "p")
                     Dim deleted_tables As New Generic.Dictionary(Of SourceFragment, IFilter)
-
+                    Dim pk = oschema.GetPK
                     For Each p As PKDesc In obj.GetPKValues(oschema)
                         Dim dbt As String = "int"
                         'Dim c As EntityPropertyAttribute = mpe.GetColumnByPropertyAlias(type, p.PropertyAlias, oschema)
@@ -611,11 +613,11 @@ Namespace Database
                         '    c = New EntityPropertyAttribute()
                         '    c.PropertyAlias = p.PropertyAlias
                         'End If
-                        dbt = GetDBType(mpe, type, oschema, p.PropertyAlias, Nothing)
-                        del_cmd.Append(DeclareVariable("@id_" & p.PropertyAlias, dbt))
+                        dbt = GetDBType(mpe, type, oschema, pk.PropertyAlias, p.Column)
+                        del_cmd.Append(DeclareVariable("@id_" & p.Column.ClearSourceField, dbt))
                         del_cmd.Append(EndLine)
-                        del_cmd.Append("set @id_").Append(p.PropertyAlias).Append(" = ")
-                        del_cmd.Append(params.CreateParam(oschema.ChangeValueType(p.PropertyAlias, p.Value))).Append(EndLine)
+                        del_cmd.Append("set @id_").Append(p.Column.ClearSourceField).Append(" = ")
+                        del_cmd.Append(params.CreateParam(oschema.ChangeValueType(p.Column, p.Value))).Append(EndLine)
                     Next
 
                     Dim exec As New ExecutorCtx(type, relSchema)
@@ -642,19 +644,20 @@ Namespace Database
         End Function
 
         Protected Overridable Overloads Function GetDBType(ByVal mpe As ObjectMappingEngine, ByVal type As Type, ByVal os As IEntitySchema,
-            ByVal pa As String, ByVal sf As String) As String
+                                                           ByVal pa As String, ByVal sf As String) As String
+
             Dim m As MapField2Column = os.FieldColumnMap(pa)
-            Dim db As DBType = Nothing
+            Dim db As DBType? = Nothing
             If String.IsNullOrEmpty(sf) Then
-                db = m.SourceFields(0).DBType
+                db = m.SourceFields.FirstOrDefault?.DBType
             Else
-                db = m.SourceFields.Find(Function(s) s.SourceFieldExpression = sf).DBType
+                db = m.SourceFields.FirstOrDefault(Function(s) s.SourceFieldExpression = sf)?.DBType
             End If
 
-            If db.IsEmpty Then
+            If Not db.HasValue OrElse db.Value.IsEmpty Then
                 Return DbTypeConvertor.ToSqlDbType(m.PropertyInfo.PropertyType).ToString
             Else
-                Return FormatDBType(db)
+                Return FormatDBType(db.Value)
             End If
         End Function
 
@@ -696,12 +699,14 @@ Namespace Database
 
                         'If c IsNot Nothing Then
                         Dim att As Field2DbRelations = m.Attributes 'oschema.GetFieldColumnMap()(c.PropertyAlias).GetAttributes(c) 'GetAttributes(type, c)
-                        Dim propertyAlias As String = m.PropertyAlias
+                        'Dim propertyAlias As String = m.PropertyAlias
                         If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            o.AddFilter(New dc.EntityFilter(type, propertyAlias, New LiteralValue("@id_" & propertyAlias), FilterOperation.Equal))
+                            For Each sf In m.SourceFields
+                                o.AddFilter(New dc.TableFilter(oschema.Table, sf.SourceFieldExpression, New LiteralValue("@id_" & sf.SourceFieldExpression.ClearSourceField), FilterOperation.Equal))
+                            Next
                         ElseIf (att And Field2DbRelations.RV) = Field2DbRelations.RV Then
-                            Dim v As Object = ObjectMappingEngine.GetPropertyValue(obj, propertyAlias, oschema, m.PropertyInfo)
-                            o.AddFilter((New dc.EntityFilter(type, propertyAlias, New ScalarValue(v), FilterOperation.Equal)))
+                            Dim v As Object = ObjectMappingEngine.GetPropertyValue(obj, m.PropertyAlias, oschema, m.PropertyInfo)
+                            o.AddFilter((New dc.EntityFilter(type, m.PropertyAlias, New ScalarValue(v), FilterOperation.Equal)))
                         End If
                         'End If
                     Next
@@ -709,15 +714,12 @@ Namespace Database
                 ElseIf relSchema IsNot Nothing Then
                     Dim join As QueryJoin = CType(mpe.GetJoins(relSchema, tables(0), table, filterInfo), QueryJoin)
                     If Not QueryJoin.IsEmpty(join) Then
-                        Dim f As IFilter = join.Condition
+                        Dim pk = oschema.GetPK
+                        Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(mpe, join.Condition, type, pk.PropertyAlias, pk.SourceFields.Select(Function(it) "@id_" & it.SourceFieldExpression.ClearSourceField))
 
-                        For Each m As MapField2Column In oschema.GetPKs
-                            f = JoinFilter.ChangeEntityJoinToLiteral(mpe, join.Condition, type, m.PropertyAlias, "@id_" & m.PropertyAlias)
-
-                            If f Is Nothing Then
-                                f = JoinFilter.ChangeTableJoinToLiteral(Me, mpe, join.Condition, tables(0), m.SourceFields, "@id_" & m.PropertyAlias)
-                            End If
-                        Next
+                        If f Is Nothing Then
+                            f = JoinFilter.ChangeTableJoinToLiteral(Me, mpe, join.Condition, tables(0), pk.SourceFields, pk.SourceFields.Select(Function(it) "@id_" & it.SourceFieldExpression.ClearSourceField))
+                        End If
 
                         If f Is Nothing Then
                             Throw New ObjectMappingException("Cannot replace join")
@@ -731,8 +733,8 @@ Namespace Database
         End Sub
 
         Public Function Insert(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal contextInfo As IDictionary,
-            ByRef dbparams As ICollection(Of System.Data.Common.DbParameter),
-            ByRef selectedProperties As List(Of SelectExpression)) As String
+                               ByRef dbparams As ICollection(Of System.Data.Common.DbParameter),
+                               ByRef selectedProperties As List(Of SelectExpression)) As String
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException(NameOf(obj))
@@ -782,8 +784,7 @@ Namespace Database
                         Dim current As Object = ObjectMappingEngine.GetPropertyValue(obj, propertyAlias, TryCast(oschema, IEntitySchema), pi)
 
                         Dim att As Field2DbRelations = m.Attributes
-                        If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly OrElse
-                         (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault Then
+                        If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly OrElse (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault Then
                             Dim tb As SourceFragment = mpe.GetPropertyTable(es, propertyAlias)
 
                             Dim f As EntityFilter = Nothing
@@ -845,10 +846,10 @@ l1:
                             jn = CType(mpe.GetJoins(js, pkTable, join_table, contextInfo), QueryJoin)
                         End If
                         If Not QueryJoin.IsEmpty(jn) Then
-                            Dim f = JoinFilter.ChangeEntityJoinToLiteral(mpe, jn.Condition, real_t, pk.PropertyAlias, pk.GetPKParamName)
+                            Dim f = JoinFilter.ChangeEntityJoinToLiteral(mpe, jn.Condition, real_t, pk.PropertyAlias, pk.SourceFields.Select(Function(it) it.GetPKParamName4Insert))
 
                             If f Is Nothing Then
-                                f = JoinFilter.ChangeTableJoinToLiteral(Me, mpe, jn.Condition, pkTable, pk.SourceFields, pk.GetPKParamName)
+                                f = JoinFilter.ChangeTableJoinToLiteral(Me, mpe, jn.Condition, pkTable, pk.SourceFields, pk.SourceFields.Select(Function(it) it.GetPKParamName4Insert))
                             End If
 
                             If f Is Nothing Then
@@ -916,9 +917,9 @@ l1:
         End Structure
 
         Public Overridable Function Update(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity,
-            ByVal contextInfo As IDictionary, ByVal originalCopy As ICachedEntity, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter),
-            ByRef selectedProperties As Generic.List(Of SelectExpression),
-            ByRef updated_fields As IList(Of EntityFilter)) As String
+                                           ByVal contextInfo As IDictionary, ByVal originalCopy As ICachedEntity, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter),
+                                           ByRef selectedProperties As Generic.List(Of SelectExpression),
+                                           ByRef updated_fields As IList(Of EntityFilter)) As String
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj parameter cannot be nothing")
@@ -1041,7 +1042,7 @@ l1:
                         Next
 
                         If SupportIf() Then
-                            Dim varName As String = "@" & lastTbl.Name.Replace(".", "").Trim("["c, "]"c) & "_rownum"
+                            Dim varName As String = "@" & lastTbl.Name.ClearSourceField & "_rownum"
                             Dim lastError As String = Nothing
                             Dim lastErrStmt = DeclareVariableInc("@lastErr", "int", lastErrIdx, lastError)
                             Dim insSb As New StringBuilder
@@ -1073,7 +1074,7 @@ l1:
                                 For Each tbl As SourceFragment In syncUpdateProps _
                                     .ConvertAll(Function(e) esch.FieldColumnMap(e.ObjectProperty.PropertyAlias).Table)
 
-                                    Dim varName As String = "@" & tbl.Name.Replace(".", "").Trim("["c, "]"c) & "_rownum"
+                                    Dim varName As String = "@" & tbl.Name.ClearSourceField & "_rownum"
                                     upd_cmd.Append(varName).Append(" and ")
 
                                 Next
@@ -1083,11 +1084,11 @@ l1:
                             Dim sel_sb As New StringBuilder
                             Dim newAlMgr As AliasMgr = AliasMgr.Create
                             sel_sb.Append(SelectWithJoin(mpe, rt, esch.GetTables(), newAlMgr, params,
-                                Nothing, True, Nothing, Nothing, syncUpdateProps, esch, contextInfo))
+                                                         Nothing, True, Nothing, Nothing, syncUpdateProps, esch, contextInfo))
+
                             Dim cn As New Condition.ConditionConstructor
                             For Each p As PKDesc In obj.GetPKValues(oschema)
-                                Dim clm As String = esch.FieldColumnMap(p.PropertyAlias).SourceFieldExpression 'mpe.GetColumnNameByPropertyAlias(esch, p.PropertyAlias, False, Nothing)
-                                cn.AddFilter(New dc.TableFilter(mpe.GetPropertyTable(esch, p.PropertyAlias), clm, New ScalarValue(p.Value), FilterOperation.Equal))
+                                cn.AddFilter(New dc.TableFilter(esch.Table, p.Column, New ScalarValue(p.Value), FilterOperation.Equal))
                             Next
                             AppendWhere(mpe, rt, esch, cn.Condition, newAlMgr, sel_sb, contextInfo, params)
                             upd_cmd.Append(sel_sb)
@@ -1118,8 +1119,9 @@ l1:
                 l.Add(f)
             Next
 
-            Dim ins As InsertedTable = New InsertedTable(table, l)
-            ins.Executor = exec
+            Dim ins As InsertedTable = New InsertedTable(table, l) With {
+                .Executor = exec
+            }
             dic.Add(ins)
             Dim oldl As Integer = upd_cmd.Length
             upd_cmd.Append(EndLine).Append("if ").Append(rowCnt).Append(" = 0 and ").Append(lastError).Append(" = 0 ")
@@ -1384,9 +1386,9 @@ l2:
         End Function
 
         Protected Overridable Function FormInsert(ByVal mpe As ObjectMappingEngine, ByVal inserted_tables As List(Of InsertedTable),
-            ByVal ins_cmd As StringBuilder, ByVal type As Type, ByVal os As IEntitySchema,
-            ByVal selectedProperties As List(Of EntityExpression),
-            ByVal params As ICreateParam, ByVal contextInfo As IDictionary) As ICollection(Of System.Data.Common.DbParameter)
+                                                  ByVal ins_cmd As StringBuilder, ByVal type As Type, ByVal os As IEntitySchema,
+                                                  ByVal selectedProperties As List(Of EntityExpression),
+                                                  ByVal params As ICreateParam, ByVal contextInfo As IDictionary) As ICollection(Of System.Data.Common.DbParameter)
 
             If params Is Nothing Then
                 params = New ParamMgr(Me, "p")
@@ -1397,8 +1399,11 @@ l2:
             Dim fromTable As String = Nothing
 
             If inserted_tables.Count > 0 Then
-                Dim insertedPK As New List(Of Pair(Of String))
-                Dim syncInsertPK As New List(Of Pair(Of String, Pair(Of String)))
+                Dim insertedPK As New List(Of ITemplateFilterBase.ColParam)
+                Dim syncInsertPK As New List(Of ColType)
+                Dim pk = os.GetPK
+                Dim pkAttr = pk.Attributes
+
                 If selectedProperties IsNot Nothing Then
                     Dim col As Collections.IndexedCollection(Of String, MapField2Column) = os.FieldColumnMap
                     'Dim ie As ICollection = mpe.GetProperties(type, os)
@@ -1406,26 +1411,27 @@ l2:
                     '    ie = col
                     'End If
 
-                    For Each m As MapField2Column In col
-                        Dim pi As Reflection.PropertyInfo = m.PropertyInfo
-                        Dim att As Field2DbRelations = m.Attributes
-                        If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            Dim clm = m.SourceFieldExpression
-                            Dim s As String = m.GetPKParamName
-                            Dim dt As String = "int"
-                            Dim propertyAlias As String = m.PropertyAlias
-                            If pi IsNot Nothing Then 'AndAlso Not (pi.Name = "Identifier" AndAlso pi.DeclaringType.Name = GetType(OrmBaseT(Of )).Name) Then
-                                dt = GetDBType(mpe, type, os, propertyAlias, Nothing)
-                            End If
-                            ins_cmd.Append(DeclareVariable(s, dt))
-                            ins_cmd.Append(EndLine)
-                            insertedPK.Add(New Pair(Of String)(propertyAlias, s))
+                    For Each clm In pk.SourceFields
+                        Dim s As String = clm.GetPKParamName4Insert()
+                        Dim dt As String = "int"
+                        Dim db = clm.DBType
+                        Dim pi As Reflection.PropertyInfo = clm.PropertyInfo
+                        If pi IsNot Nothing Then 'AndAlso Not (pi.Name = "Identifier" AndAlso pi.DeclaringType.Name = GetType(OrmBaseT(Of )).Name) Then
 
-                            If (att And Field2DbRelations.SyncInsert) = Field2DbRelations.SyncInsert Then
-                                syncInsertPK.Add(New Pair(Of String, Pair(Of String))(propertyAlias, New Pair(Of String)(clm, dt)))
+                            If db.IsEmpty Then
+                                dt = DbTypeConvertor.ToSqlDbType(pi.PropertyType).ToString
+                            Else
+                                dt = FormatDBType(db)
                             End If
+
                         End If
-                        'End If
+                        ins_cmd.Append(DeclareVariable(s, dt))
+                        ins_cmd.Append(EndLine)
+                        insertedPK.Add(New ITemplateFilterBase.ColParam With {.Column = clm.SourceFieldExpression, .Param = s})
+
+                        If (pkAttr And Field2DbRelations.SyncInsert) = Field2DbRelations.SyncInsert Then
+                            syncInsertPK.Add(New ColType With {.Column = clm.SourceFieldExpression, .Type = dt})
+                        End If
                     Next
 
                     ins_cmd.Append(DeclareVariable("@rcount", "int"))
@@ -1454,7 +1460,8 @@ l2:
                         b = True
                     End If
 
-                    Dim notSyncInsertPK As New List(Of Pair(Of String))
+                    'explicit pk (passed to insert statement as param)
+                    Dim notSyncInsertPK As New List(Of ITemplateFilterBase.ColParam)
 
                     If item.Filters Is Nothing OrElse item.Filters.Count = 0 Then
                         ins_cmd.Append("insert into ").Append(GetTableName(item.Table, contextInfo)).Append(" ").Append(DefaultValues)
@@ -1462,28 +1469,30 @@ l2:
                         ins_cmd.Append("insert into ").Append(GetTableName(item.Table, contextInfo)).Append(" (")
                         Dim values_sb As New StringBuilder
                         values_sb.Append(" values(")
+
                         For Each f As ITemplateFilter In item.Filters
                             Dim ef As EntityFilter = TryCast(f, EntityFilter)
                             If ef IsNot Nothing Then
                                 CType(ef, IEntityFilter).PrepareValue = False
                             End If
-                            Dim p As Pair(Of String) = f.MakeSingleQueryStmt(mpe, Me, Nothing, params, item.Executor)
-                            If ef IsNot Nothing Then
-                                p = ef.MakeSingleQueryStmt(os, Me, mpe, Nothing, params, item.Executor)
-                                Dim att As Field2DbRelations = os.FieldColumnMap(ef.Template.PropertyAlias).Attributes
-                                If (att And Field2DbRelations.SyncInsert) = 0 AndAlso
-                                    (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                    If mpe.GetPropertyTable(os, ef.Template.PropertyAlias) Is item.Table Then
-                                        notSyncInsertPK.Add(New Pair(Of String)(ef.Template.PropertyAlias, p.Second))
-                                    Else
-                                        ins_cmd.Length = insStart
-                                        GoTo l1
+                            Dim p = f.MakeSingleQueryStmt(mpe, Me, Nothing, params, item.Executor)
+                            For Each cp In p
+                                If ef IsNot Nothing Then
+                                    'Dim p2 = ef.MakeSingleQueryStmt(os, Me, mpe, Nothing, params, item.Executor)
+                                    Dim att As Field2DbRelations = os.FieldColumnMap(ef.Template.PropertyAlias).Attributes
+                                    If (att And Field2DbRelations.SyncInsert) = 0 AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                        If mpe.GetPropertyTable(os, ef.Template.PropertyAlias) Is item.Table Then
+                                            notSyncInsertPK.Add(New ITemplateFilterBase.ColParam With {.Column = cp.Column, .Param = cp.Param})
+                                        Else
+                                            ins_cmd.Length = insStart
+                                            GoTo l1
+                                        End If
                                     End If
+                                    'End If
                                 End If
-                                'End If
-                            End If
-                            ins_cmd.Append(p.First).Append(",")
-                            values_sb.Append(p.Second).Append(",")
+                                ins_cmd.Append(cp.Column).Append(",")
+                                values_sb.Append(cp.Param).Append(",")
+                            Next
                         Next
 
                         ins_cmd.Length -= 1
@@ -1498,19 +1507,17 @@ l2:
                     If pk_table.Equals(item.Table) AndAlso selectedProperties IsNot Nothing Then
                         ins_cmd.Append(EndLine)
                         ins_cmd.Append("select @rcount = ").Append(RowCount)
-                        For Each pk As Pair(Of String) In insertedPK
-                            Dim propertyAlias As String = pk.First
-                            Dim pr As Pair(Of String) = notSyncInsertPK.Find(Function(p As Pair(Of String)) p.First = propertyAlias)
+                        For Each ipk In insertedPK
+                            Dim pr = notSyncInsertPK.FirstOrDefault(Function(p) p.Column = ipk.Column)
                             If pr IsNot Nothing Then
-                                ins_cmd.Append(", ").Append(pk.Second).Append(" = ").Append(pr.Second)
+                                ins_cmd.Append(", ").Append(ipk.Param).Append(" = ").Append(pr.Param)
                             Else
                                 Dim iv As IPKInsertValues = TryCast(os, IPKInsertValues)
                                 If iv IsNot Nothing Then
-                                    ins_cmd.Append(", ").Append(pk.Second).Append(" = ").Append(iv.GetValue(propertyAlias))
+                                    ins_cmd.Append(", ").Append(ipk.Param).Append(" = ").Append(iv.GetValue(ipk.Column))
                                 Else
-                                    Dim att As Field2DbRelations = os.FieldColumnMap(propertyAlias).Attributes
-                                    If (att Or Field2DbRelations.Identity) = Field2DbRelations.Identity Then
-                                        ins_cmd.Append(", ").Append(pk.Second).Append(" = ").Append(LastInsertID)
+                                    If (pkAttr And Field2DbRelations.Identity) = Field2DbRelations.Identity Then
+                                        ins_cmd.Append(", ").Append(ipk.Param).Append(" = ").Append(LastInsertID)
                                     End If
                                 End If
                             End If
@@ -1582,19 +1589,19 @@ l1:
                         Next
                         Dim fromsb As New StringBuilder
                         AppendFrom(mpe, almgr, contextInfo, selTbls, fromsb, params, TryCast(os, IMultiTableObjectSchema), type)
-                        selSb.Append(BinaryExpressionBase.CreateFromEnumerable(selectedProperties).MakeStatement(mpe, Nothing, Me, params, almgr, Nothing, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, New ExecutorCtx(type, os)))
+                        Dim executor As New ExecutorCtx(type, os)
+                        selSb.Append(BinaryExpressionBase.CreateFromEnumerable(selectedProperties).MakeStatement(mpe, Nothing, Me, params, almgr, contextInfo, MakeStatementMode.Select And MakeStatementMode.AddColumnAlias, executor))
                         'selSb.Append(" from ").Append(GetTableName(pk_table, contextInfo)).Append(" t1 where ")
                         selSb.Append(" from ").Append(fromsb.ToString)
                         'almgr.Replace(mpe, Me, pk_table, Nothing, selSb)
                         ins_cmd.Append(selSb.ToString).Append(" where ")
 
                         Dim cn As New PredicateLink
-                        For Each pk As Pair(Of String) In insertedPK
-                            Dim clm As String = os.FieldColumnMap(pk.First).SourceFieldExpression 'mpe.GetColumnNameByPropertyAlias(os, pk.First, False, Nothing)
-                            cn = CType(cn.[and](pk_table, clm).eq(New LiteralValue(pk.Second)), PredicateLink)
+                        For Each ipk In insertedPK
+                            cn = CType(cn.[and](pk_table, ipk.Column).eq(New LiteralValue(ipk.Param)), PredicateLink)
                         Next
                         'ins_cmd.Append(GetColumnNameByFieldName(os, GetPrimaryKeys(type, os)(0).PropertyAlias)).Append(" = @id")
-                        ins_cmd.Append(cn.Filter.MakeQueryStmt(mpe, Nothing, Me, Nothing, Nothing, almgr, Nothing))
+                        ins_cmd.Append(cn.Filter.MakeQueryStmt(mpe, Nothing, Me, executor, contextInfo, almgr, Nothing))
                     End If
                 End If
             End If
@@ -1662,8 +1669,8 @@ l1:
     End Class
 
     Public Class InsertedTable
-        Private _tbl As SourceFragment
-        Private _f As List(Of ITemplateFilter)
+        Private ReadOnly _tbl As SourceFragment
+        Private ReadOnly _f As List(Of ITemplateFilter)
         Private _ex As Query.IExecutionContext
 
         Public Sub New(ByVal tbl As SourceFragment, ByVal f As List(Of ITemplateFilter))
@@ -1693,12 +1700,19 @@ l1:
         End Property
 
     End Class
-
+    Public Class ColType
+        Public Column As String
+        Public Type As String
+    End Class
     Module Extensions
         <Extension>
-        Public Function GetPKParamName(m As MapField2Column) As String
-            Dim clm As String = m.SourceFieldExpression
+        Public Function GetPKParamName4Insert(col As SourceField) As String
+            Dim clm As String = col.SourceFieldExpression.ClearSourceField
             Return "@pk_" & clm
+        End Function
+        <Extension>
+        Public Function ClearSourceField(sf As String) As String
+            Return sf.Replace(".", "").Trim("]"c, "["c, """"c)
         End Function
     End Module
 End Namespace

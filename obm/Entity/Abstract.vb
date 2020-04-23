@@ -11,7 +11,7 @@ Namespace Entities
     Public Class ObjectSavedArgs
         Inherits EventArgs
 
-        Private _sa As OrmManager.SaveAction
+        Private ReadOnly _sa As OrmManager.SaveAction
 
         Public Sub New(ByVal saveAction As OrmManager.SaveAction)
             _sa = saveAction
@@ -27,21 +27,21 @@ Namespace Entities
     Public Class PropertyChangedEventArgs
         Inherits EventArgs
 
-        Private _prev As Object
+        Private ReadOnly _prev As Object
         Public ReadOnly Property PreviousValue() As Object
             Get
                 Return _prev
             End Get
         End Property
 
-        Private _current As Object
+        Private ReadOnly _current As Object
         Public ReadOnly Property CurrentValue() As Object
             Get
                 Return _current
             End Get
         End Property
 
-        Private _fieldName As String
+        Private ReadOnly _fieldName As String
         Public ReadOnly Property PropertyAlias() As String
             Get
                 Return _fieldName
@@ -58,8 +58,8 @@ Namespace Entities
     Public Class LoadingWrapper
         Implements IDisposable
 
-        Private _oldL As Boolean
-        Private _e As _IEntity
+        Private ReadOnly _oldL As Boolean
+        Private ReadOnly _e As _IEntity
 
         Public Sub New(ByVal o As Object)
             Dim e As _IEntity = TryCast(o, _IEntity)
@@ -77,15 +77,19 @@ Namespace Entities
     End Class
 
     Public Interface IOptimizedValues
-        Sub SetValueOptimized(ByVal propertyAlias As String, ByVal schema As IEntitySchema, ByVal value As Object)
-        Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As IEntitySchema) As Object
+        Function SetValueOptimized(ByVal propertyAlias As String, ByVal schema As IEntitySchema, ByVal value As Object) As Boolean
+        Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As IEntitySchema, ByRef found As Boolean) As Object
+    End Interface
+    Public Interface IOptimizeSetValue
+        Delegate Sub SetValueDelegate(entity As Object, value As Object)
+        Function GetOptimizedDelegate(ByVal propertyAlias As String) As SetValueDelegate
     End Interface
 
     Public Interface _IEntity
         Inherits IEntity
         Sub BeginLoading()
         Sub EndLoading()
-        Sub Init(ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
+        Sub Init(ByVal mpe As ObjectMappingEngine)
         Function GetMgr() As IGetManager
         ReadOnly Property ObjName() As String
         'Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String) As IDisposable
@@ -147,8 +151,9 @@ Namespace Entities
 
     Public Interface _ICachedEntity
         Inherits ICachedEntity
-        Overloads Sub Init(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
+        'Overloads Sub Init(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Sub PKLoaded(ByVal pkCount As Integer, oschema As IPropertyMap)
+        Sub PKLoaded(ByVal pkCount As Integer, propertyAlias As String)
         ReadOnly Property IsPKLoaded() As Boolean
         Property UpdateCtx() As UpdateCtx
         Function ForseUpdate(ByVal propertyAlias As String) As Boolean
@@ -212,11 +217,12 @@ Namespace Entities
     End Interface
 
     Public Interface IEntityFactory
-        Function CreateContainingEntity(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal value As Object) As _IEntity
+        Function CreateContainingEntity(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal values As IEnumerable(Of PKDesc)) As Object
+        Function ExtractValues(mpe As ObjectMappingEngine, oschema As IEntitySchema, ByVal propertyAlias As String) As IEnumerable(Of PKDesc)
     End Interface
 
     Public Interface IStorageValueConverter
-        Function CreateValue(ByVal oschema As IEntitySchema, ByVal m As MapField2Column, ByVal propertyAlias As String, ByVal value As Object) As Object
+        Function CreateValue(ByVal oschema As IEntitySchema, ByVal m As MapField2Column, ByVal propertyAlias As String, column As String, ByVal value As Object) As Object
     End Interface
 
     Public Interface _ICachedEntityEx
@@ -266,7 +272,7 @@ Namespace Entities
 
     Public Interface ISinglePKEntity
         Inherits _ICachedEntityEx, IRelations
-        Shadows Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
+        'Shadows Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Property Identifier() As Object
 #If OLDM2M Then
         Function GetOldName(ByVal id As Object) As String
@@ -395,7 +401,7 @@ Namespace Entities
     Public Class PKWrapper
         Implements IKeyProvider
 
-        Private _id As IEnumerable(Of PKDesc)
+        Private ReadOnly _id As IEnumerable(Of PKDesc)
         Private _str As String
 
         ''' <summary>
@@ -426,7 +432,7 @@ Namespace Entities
                 Dim find As Boolean
                 For j As Integer = 0 To ids.Count - 1
                     Dim p2 As PKDesc = ids(j)
-                    If p.PropertyAlias = p2.PropertyAlias Then
+                    If p.Column = p2.Column Then
                         If p.Value.GetType IsNot p2.Value.GetType Then
                             Dim o As Object = Nothing, o2 As Object = p.Value
                             Try
@@ -462,7 +468,7 @@ Namespace Entities
             If String.IsNullOrEmpty(_str) Then
                 Dim sb As New StringBuilder
                 For Each pk As PKDesc In _id
-                    sb.Append(pk.PropertyAlias).Append(" = ").Append(pk.Value)
+                    sb.Append(pk.Column).Append(" = ").Append(pk.Value)
                 Next
                 _str = sb.ToString
             End If

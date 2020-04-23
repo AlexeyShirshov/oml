@@ -9,15 +9,15 @@ Namespace Database
 
         Private disposedValue As Boolean
         Private _disposing As Boolean
-        Private _disposeMgr As Boolean
+        Private ReadOnly _disposeMgr As Boolean
         Private _mgr As OrmManager
-        Private _saver As ObjectListSaver
+        Private ReadOnly _saver As ObjectListSaver
         Private _restore As OnErrorEnum
-        Private _cm As ICreateManager
+        Private ReadOnly _cm As ICreateManager
         Protected _created As Boolean
-        Private _ss As OrmManager.SchemaSwitcher
-        Private _syncObj As New Dictionary(Of ICachedEntity, Object)
-        Private _intermediate As New List(Of _ICachedEntity)
+        Private ReadOnly _ss As OrmManager.SchemaSwitcher
+        Private ReadOnly _syncObj As New Dictionary(Of ICachedEntity, Object)
+        Private ReadOnly _intermediate As New List(Of _ICachedEntity)
         Private _inSavepoint As Boolean
 
         Public Event SaveComplete(ByVal logicalCommited As Boolean, ByVal dbCommit As Boolean)
@@ -205,9 +205,8 @@ Namespace Database
             Dim o As Object = _syncObj(sender)
             _syncObj.Remove(sender)
             Dim oschema As IEntitySchema = _mgr.MappingEngine.GetEntitySchema(o.GetType)
-            ObjectMappingEngine.InitPOCO( _
-                o.GetType, oschema, CType(sender, ComponentModel.ICustomTypeDescriptor), _
-                _mgr.MappingEngine, sender, o, _mgr.Cache, _mgr.ContextInfo, crMan:=_mgr.GetCreateManager)
+            ObjectMappingEngine.InitPOCO(o.GetType, oschema, CType(sender, ComponentModel.ICustomTypeDescriptor),
+                                         _mgr.MappingEngine, sender, o, _mgr.Cache, _mgr.ContextInfo, crMan:=_mgr.GetCreateManager)
         End Sub
         Public Overridable Sub Delete(ByVal obj As _ICachedEntity)
             If obj Is Nothing Then

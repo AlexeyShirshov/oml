@@ -170,8 +170,7 @@ End Class
             Dim dic As New System.Collections.Hashtable
 
             mgr.Cache.CacheListBehavior = Cache.CacheListBehavior.CacheOrThrowException
-            AddHandler q.CacheDictionaryRequired, Function(qr As QueryCmd, args As QueryCmd.CacheDictionaryRequiredEventArgs) _
-                                                     s(args, dic)
+            AddHandler q.CacheDictionaryRequired, Sub(qr As QueryCmd, args As QueryCmd.CacheDictionaryRequiredEventArgs) s(args, dic)
 
             Assert.AreEqual(0, dic.Count)
 
@@ -187,9 +186,9 @@ End Class
         End Using
     End Sub
 
-    Private Function s(ByVal args As QueryCmd.CacheDictionaryRequiredEventArgs, ByVal dic As System.Collections.IDictionary) As Boolean
+    Private Sub s(ByVal args As QueryCmd.CacheDictionaryRequiredEventArgs, ByVal dic As System.Collections.IDictionary)
         args.GetDictionary = Function(key As String) dic
-    End Function
+    End Sub
 
     <TestMethod(), ExpectedException(GetType(QueryCmdException))> Public Sub TestSortThrow()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New ObjectMappingEngine("1"))

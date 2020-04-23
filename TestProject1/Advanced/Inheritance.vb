@@ -53,7 +53,8 @@ Imports Worm
         Private _id As Integer
         Private _dt As Date
 
-        <EntityProperty("id", Field2DbRelations.PrimaryKey)> _
+        <EntityProperty(Field2DbRelations.PrimaryKey)>
+        <SourceField("id")>
         Public Overridable Property ID() As Integer
             Get
                 Return _id
@@ -63,7 +64,8 @@ Imports Worm
             End Set
         End Property
 
-        <EntityProperty("dt", Field2DbRelations.SyncInsert Or Field2DbRelations.InsertDefault)> _
+        <EntityProperty(Field2DbRelations.SyncInsert Or Field2DbRelations.InsertDefault)>
+        <SourceField("dt")>
         Public Property CreateDt() As Date
             Get
                 Using Read("CreateDt")
@@ -93,7 +95,7 @@ Imports Worm
 
         Private _name As String
 
-        <EntityProperty("name")> _
+        <SourceField("name")>
         Public Property Name() As String
             Get
                 Using Read("Name")
@@ -115,7 +117,7 @@ Imports Worm
 
         Private _code As Integer
 
-        <EntityProperty("code")> _
+        <SourceField("code")>
         Public Property Code() As Integer
             Get
                 Using Read("Code")
@@ -129,7 +131,8 @@ Imports Worm
             End Set
         End Property
 
-        <EntityProperty("pk", Field2DbRelations.PrimaryKey)> _
+        <EntityProperty(Field2DbRelations.PrimaryKey)>
+        <SourceField("pk")>
         Public Overrides Property ID() As Integer
             Get
                 Return MyBase.ID
@@ -369,8 +372,8 @@ End Class
                 Get
                     If _idx Is Nothing Then
                         _idx = New OrmObjectIndex
-                        _idx.Add(New MapField2Column("ID", "id", _tbl, Field2DbRelations.PK))
-                        _idx.Add(New MapField2Column("CreateDt", "dt", _tbl, Field2DbRelations.SyncInsert Or Field2DbRelations.InsertDefault))
+                        _idx.Add(New MapField2Column("ID", _tbl, Field2DbRelations.PK, New SourceField("id")))
+                        _idx.Add(New MapField2Column("CreateDt", _tbl, Field2DbRelations.SyncInsert Or Field2DbRelations.InsertDefault, New SourceField("dt")))
                     End If
                     Return _idx
                 End Get
@@ -418,7 +421,7 @@ End Class
                     If _idx Is Nothing Then
                         _idx = New OrmObjectIndex
                         _idx.AddRange(MyBase.GetFieldColumnMap)
-                        _idx.Add(New MapField2Column("Name", "name", _tbl(1)))
+                        _idx.Add(New MapField2Column("Name", _tbl(1), "name"))
                     End If
                     Return _idx
                 End Get
@@ -475,8 +478,8 @@ End Class
                         _idx = New OrmObjectIndex
                         _idx.AddRange(MyBase.GetFieldColumnMap)
                         _idx.Remove("ID")
-                        _idx.Add(New MapField2Column("ID", "pk", _tbl(1), Field2DbRelations.PK))
-                        _idx.Add(New MapField2Column("Code", "code", _tbl(1)))
+                        _idx.Add(New MapField2Column("ID", _tbl(1), Field2DbRelations.PK, New SourceField("pk")))
+                        _idx.Add(New MapField2Column("Code", _tbl(1), "code"))
                     End If
                     Return _idx
                 End Get

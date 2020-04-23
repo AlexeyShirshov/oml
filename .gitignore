@@ -28,3 +28,10 @@
 /.vs/Worm/v16/Server/sqlite3/storage.ide-shm
 /.vs/Worm/v16/Server/sqlite3/storage.ide
 /.vs/Worm/v16/Server/sqlite3/db.lock
+/ASPNETHosting/bin/Debug
+/MySQL/bin/Debug
+/MySQLTests/bin/Debug
+/.vs/Worm/v16/TestStore/0
+/packages/MySql.Data.6.9.12
+/TestProject1/bin
+/net3.5/linq/bin/Debug

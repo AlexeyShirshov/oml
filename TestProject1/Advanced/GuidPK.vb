@@ -8,7 +8,7 @@ Public Class GuidPK
     Private _code As Integer
     Private _id As Guid
 
-    <EntityPropertyAttribute("code")> _
+    <SourceField("code")>
     Public Property Code() As Integer
         Get
             Using Read("Code")
@@ -22,7 +22,8 @@ Public Class GuidPK
         End Set
     End Property
 
-    <EntityPropertyAttribute("pk", Field2DbRelations.PrimaryKey, "ID", DBType:="uniqueidentifier")> _
+    <EntityProperty(Field2DbRelations.PrimaryKey, "ID")>
+    <SourceField("pk", SourceFieldType:="uniqueidentifier")>
     Public Overrides Property Identifier() As Object
         Get
             Return _id
@@ -47,12 +48,17 @@ Public Class GuidPK
     'End Sub
 End Class
 
-<Entity("1", Tablename:="dbo.complex_pk")> _
+<Entity("1", TableName:="dbo.complex_pk")>
 Public Class ComplexPK
     Inherits CachedLazyLoad
 
     Private _code As String
-    <EntityPropertyAttribute(Field2DbRelations.PK, column:="code")> Public Property Code() As String
+    Private _i As Integer
+    Private _name As String
+
+    <EntityProperty(Field2DbRelations.PK)>
+    <SourceField("code")>
+    Public Property Code() As String
         Get
             Using Read("Code")
                 Return _code
@@ -65,8 +71,9 @@ Public Class ComplexPK
         End Set
     End Property
 
-    Private _i As Integer
-    <EntityPropertyAttribute(Field2DbRelations.PK, column:="i")> Public Property Int() As Integer
+    <EntityProperty(Field2DbRelations.PK)>
+    <SourceField("i")>
+    Public Property Int() As Integer
         Get
             Using Read("Int")
                 Return _i
@@ -79,8 +86,7 @@ Public Class ComplexPK
         End Set
     End Property
 
-    Private _name As String
-    <EntityPropertyAttribute(column:="name")> Public Property Name() As String
+    <SourceField("name")> Public Property Name() As String
         Get
             Using Read("Name")
                 Return _name
@@ -105,7 +111,7 @@ Public Class NonCache
     Private _code As Integer
     Private _id As Guid
 
-    <EntityPropertyAttribute(column:="code")> _
+    <SourceField("code")>
     Public Property Code() As Integer
         Get
             'Using Read("Code")
@@ -119,7 +125,7 @@ Public Class NonCache
         End Set
     End Property
 
-    <EntityPropertyAttribute(PropertyAlias:="ID", Behavior:=Field2DbRelations.PrimaryKey, column:="pk")> _
+    <EntityProperty(Field2DbRelations.PrimaryKey, "ID", "pk")>
     Public Property Identifier() As Object
         Get
             'Using Read("ID")

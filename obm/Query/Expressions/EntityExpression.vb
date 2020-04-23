@@ -2,6 +2,7 @@
 Imports Worm.Entities.Meta
 Imports System.Collections.Generic
 Imports CoreFramework
+Imports System.Linq
 
 Namespace Expressions2
     <Serializable>
@@ -73,11 +74,40 @@ Namespace Expressions2
         Public Function GetExpressions() As IExpression() Implements IExpression.GetExpressions
             Return New IExpression() {Me}
         End Function
+        Public Function GetMap(ByVal mpe As ObjectMappingEngine, ByVal executor As Query.IExecutionContext) As MapField2Column
+            Dim map As MapField2Column = Nothing
+            Dim oschema As IEntitySchema = Nothing
+
+            If _op.Entity.IsQuery Then
+                Dim tbl = _op.Entity.ObjectAlias.Tbl
+                If tbl Is Nothing Then
+                    tbl = New SourceFragment
+                    _op.Entity.ObjectAlias.Tbl = tbl
+                End If
+                map = New MapField2Column(_op.PropertyAlias, tbl, executor.FindColumn(mpe, _op.PropertyAlias))
+            Else
+                Try
+                    Dim t As Type = _op.Entity.GetRealType(mpe)
+
+                    If executor Is Nothing Then
+                        oschema = mpe.GetEntitySchema(t)
+                        map = oschema.FieldColumnMap(_op.PropertyAlias)
+                    Else
+                        oschema = executor.GetEntitySchema(mpe, t)
+                        map = executor.GetFieldColumnMap(oschema, t)(_op.PropertyAlias)
+                    End If
+                Catch ex As KeyNotFoundException
+                    Throw New ObjectMappingException(String.Format("There is no column for property {0} ", _op.Entity.ToStaticString(mpe) & "." & _op.PropertyAlias, ex))
+                End Try
+            End If
+
+            Return map
+        End Function
 
         Public Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef,
-            ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam,
-            ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, ByVal stmtMode As MakeStatementMode,
-            ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
+                                      ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam,
+                                      ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, ByVal stmtMode As MakeStatementMode,
+                                      ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
 
             Dim map As MapField2Column = Nothing
             Dim tbl As SourceFragment = Nothing
@@ -90,7 +120,7 @@ Namespace Expressions2
                     tbl = New SourceFragment
                     _op.Entity.ObjectAlias.Tbl = tbl
                 End If
-                map = New MapField2Column(_op.PropertyAlias, executor.FindColumn(mpe, _op.PropertyAlias), tbl)
+                map = New MapField2Column(_op.PropertyAlias, tbl, executor.FindColumn(mpe, _op.PropertyAlias))
             Else
                 Try
                     Dim t As Type = _op.Entity.GetRealType(mpe)
@@ -114,20 +144,26 @@ Namespace Expressions2
                     [alias] = almgr.GetAlias(tbl, _op.Entity) & stmt.Selector
                 Catch ex As KeyNotFoundException
                     Throw New ObjectMappingException("There is no alias for table {0}({1}). AlMgr dump: {2}. Mpe mark: {3}. IEntitySchema {5}-{4}. Type hash code: {6}".Format2(
-                                                     tbl.RawName, tbl.UniqueName(_op.Entity), TryCast(almgr, AliasMgr)?.Dump, mpe.Mark, oschema.GetHashCode, oschema.GetType, _op.Entity.GetRealType(mpe).GetHashCode), ex)
+                                                     tbl.RawName, tbl.UniqueName(_op.Entity), TryCast(almgr, AliasMgr)?.Dump, mpe.Mark, oschema?.GetHashCode, oschema?.GetType, _op.Entity.GetRealType(mpe).GetHashCode), ex)
                 End Try
             Else
                 [alias] = tbl.UniqueName(_op.Entity) & mpe.Delimiter
             End If
 
             Dim sb As New StringBuilder
-            Dim lastPostfix As Integer = 1
+            'Dim lastPostfix As Integer = 1
+            Dim sep = ","
+            Dim args As New IEntityPropertyExpression.FormatBehaviourArgs
+            RaiseEvent FormatBehaviour(Me, args)
+
+            If args.CustomStatement IsNot Nothing Then
+                sep = args.CustomStatement.Separator
+                'lastPostfix = 5
+            End If
+
             For Each sf As SourceField In map.SourceFields
                 Dim idx_beg As Integer = sb.Length
                 sb.Append([alias] & sf.SourceFieldExpression)
-
-                Dim args As New IEntityPropertyExpression.FormatBehaviourArgs
-                RaiseEvent FormatBehaviour(Me, args)
 
                 If args.NeedAlias Then
                     If Not String.IsNullOrEmpty(sf.SourceFieldAlias) AndAlso (stmtMode And MakeStatementMode.AddColumnAlias) = MakeStatementMode.AddColumnAlias Then
@@ -143,15 +179,15 @@ Namespace Expressions2
                         sb.Append(args.CustomStatement.MakeStatement(mpe, fromClause, stmt, paramMgr,
                             almgr, contextInfo, stmtMode, executor, sf))
                     End If
-                    sb.Append(" and ")
-                    lastPostfix = 5
-                Else
-                    sb.Append(",")
                 End If
+
+                sb.Append(sep)
 
             Next
 
-            sb.Length -= lastPostfix
+            If sb.Length > 0 Then
+                sb.Length -= sep.Length
+            End If
 
             Return sb.ToString
         End Function

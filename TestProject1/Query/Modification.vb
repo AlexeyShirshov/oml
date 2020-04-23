@@ -86,8 +86,8 @@ Imports Worm.Criteria
         Inherits SinglePKEntityBase
 
         Private _id As Guid
-
-        <EntityPropertyAttribute(Field2DbRelations.PrimaryKey, Column:="pk", DBType:="uniqueidentifier")> _
+        <EntityProperty(Field2DbRelations.PrimaryKey)>
+        <SourceField("pk", SourceFieldType:="uniqueidentifier")>
         Public Overrides Property Identifier() As Object
             Get
                 Return _id
@@ -99,7 +99,7 @@ Imports Worm.Criteria
 
         Private _code As Integer
 
-        <EntityPropertyAttribute(Column:="code")> _
+        <SourceField("code")>
         Public Property Code() As Integer
             Get
                 Return _code
@@ -117,7 +117,8 @@ Imports Worm.Criteria
 
         Private _id As Guid
 
-        <EntityPropertyAttribute(Field2DbRelations.PrimaryKey, Column:="pk", DBType:="uniqueidentifier")> _
+        <EntityProperty(Field2DbRelations.PrimaryKey)>
+        <SourceField("pk", SourceFieldType:="uniqueidentifier")>
         Public Property Identifier() As Object
             Get
                 Return _id
@@ -129,7 +130,7 @@ Imports Worm.Criteria
 
         Private _code As Integer
 
-        <EntityPropertyAttribute(Column:="code")> _
+        <SourceField("code")>
         Public Property Code() As Integer
             Get
                 Return _code

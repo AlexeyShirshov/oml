@@ -5,6 +5,7 @@ Imports Worm.Expressions2
 Imports System.Reflection
 Imports Worm.Entities.Meta
 Imports Worm.Collections
+Imports System.Linq
 
 #Const CustomIndexedCollection = True
 
@@ -53,8 +54,10 @@ Namespace Entities.Meta
         Private _dbType As DBType
         Private _columnName As String
         Private _exp As String
-        Private _pk As String
-
+        Private ReadOnly _pk As String
+        Public Sub New(columnName As String)
+            _exp = columnName
+        End Sub
         Public Property SourceFieldExpression() As String
             Get
                 Return _exp
@@ -82,117 +85,151 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        Public Property PrimaryKey() As String
-            Get
-                Return _pk
-            End Get
-            Set(ByVal value As String)
-                _pk = value
-            End Set
-        End Property
+        'Public Property PrimaryKey() As String
+        '    Get
+        '        Return _pk
+        '    End Get
+        '    Set(ByVal value As String)
+        '        _pk = value
+        '    End Set
+        'End Property
+        Public Property PropertyInfo As Reflection.PropertyInfo
+#Region " cache "
+        Friend Converter As MapField2Column.ConverterDelegate
+        Friend OptimizedSetValue As IOptimizeSetValue.SetValueDelegate
+#End Region
     End Class
 
     Public Class MapField2Column
         Implements ICloneable
-
+        ''' <summary>
+        ''' Default property alias for primary key
+        ''' </summary>
+        Public Const PK As String = "bMt7cfoofUOLdeiQa8uAsg"
         Private _propertyAlias As String
-        Private _newattributes As Field2DbRelations
+        Private _attributes As Field2DbRelations
         Private _tbl As SourceFragment
-        Private _sf As New List(Of SourceField)
+        Private _sf As IEnumerable(Of SourceField)
         Private _pt As Type
-        Private _feature As String
-        Private _availFrom As String
-        Private _availTo As String
+        'Private _feature As String
+        'Private _availFrom As String
+        'Private _availTo As String
 
+#Region " cache "
         Friend PropertyInfo As Reflection.PropertyInfo
         Friend Index As Integer = -1
         Friend Schema As IEntitySchema
+        Friend Converter As ConverterDelegate
+        Friend Shared EmptyConverter As New ConverterDelegate(Function(i, j, k) 1)
+        Friend Delegate Function ConverterDelegate(ByVal propType As Type, dbType As Type, value As Object) As Object
+        Friend OptimizedSetValue As IOptimizeSetValue.SetValueDelegate
+        Friend Shared EmptyOptimizedSetValue As New IOptimizeSetValue.SetValueDelegate(Sub(i, j)
+                                                                                       End Sub)
+#End Region
+        Public Sub New(ByVal tableName As SourceFragment, ByVal attributes As Field2DbRelations)
+            _propertyAlias = PK
+            _tbl = tableName
+            _attributes = attributes
+        End Sub
+        Friend Sub New(ByVal propertyAlias As String)
+            _propertyAlias = propertyAlias
+        End Sub
 
-        Public Sub New(ByVal propertyAlias As String, ByVal tableName As SourceFragment, ByVal newAttributes As Field2DbRelations)
+        Public Sub New(ByVal propertyAlias As String, ByVal tableName As SourceFragment, ByVal attributes As Field2DbRelations)
             _propertyAlias = propertyAlias
             _tbl = tableName
-            _newattributes = newAttributes
+            _attributes = attributes
         End Sub
 
-        Public Sub New(ByVal propertyAlias As String, ByVal columnExpressions As IEnumerable(Of String), ByVal tableName As SourceFragment)
-            MyClass.New(propertyAlias, tableName, Field2DbRelations.None)
-            For Each e As String In columnExpressions
-                _sf.Add(New SourceField With {.SourceFieldExpression = e})
-            Next
-        End Sub
+        'Public Sub New(ByVal propertyAlias As String, ByVal columnExpressions As IEnumerable(Of String), ByVal tableName As SourceFragment)
+        '    MyClass.New(propertyAlias, tableName, Field2DbRelations.None)
+        '    For Each e As String In columnExpressions
+        '        _sf.Add(New SourceField With {.SourceFieldExpression = e})
+        '    Next
+        'End Sub
 
-        Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment)
-            MyClass.New(propertyAlias, tableName, Field2DbRelations.None)
-            _sf.Add(New SourceField() With {.SourceFieldExpression = columnExpression})
-        End Sub
+        'Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment)
+        '    MyClass.New(propertyAlias, tableName, Field2DbRelations.None)
+        '    _sf.Add(New SourceField() With {.SourceFieldExpression = columnExpression})
+        'End Sub
 
-        Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
-            ByVal newAttributes As Field2DbRelations)
+        'Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
+        '    ByVal newAttributes As Field2DbRelations)
+        '    MyClass.New(propertyAlias, tableName, newAttributes)
+        '    _sf.Add(New SourceField() With {.SourceFieldExpression = columnExpression})
+        'End Sub
+
+        'Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
+        '    ByVal newAttributes As Field2DbRelations, ByVal dbType As DBType)
+        '    MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
+        '    _sf(0).DBType = dbType
+        'End Sub
+
+        'Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
+        '    ByVal newAttributes As Field2DbRelations, ByVal dbType As String)
+        '    MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
+        '    _sf(0).DBType = New DBType(dbType)
+        'End Sub
+
+        'Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
+        '    ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal size As Integer)
+        '    MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
+        '    _sf(0).DBType = New DBType(dbType, size)
+        'End Sub
+
+        'Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
+        '    ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal size As Integer, ByVal nullable As Boolean)
+        '    MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
+        '    _sf(0).DBType = New DBType(dbType, size, nullable)
+        'End Sub
+
+        'Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
+        '    ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal nullable As Boolean)
+        '    MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
+        '    _sf(0).DBType = New DBType(dbType, nullable)
+        'End Sub
+        Public Sub New(ByVal propertyAlias As String, ByVal tableName As SourceFragment, ByVal newAttributes As Field2DbRelations, ParamArray sourceFields() As SourceField)
             MyClass.New(propertyAlias, tableName, newAttributes)
-            _sf.Add(New SourceField() With {.SourceFieldExpression = columnExpression})
+            _sf = sourceFields
         End Sub
-
-        Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
-            ByVal newAttributes As Field2DbRelations, ByVal dbType As DBType)
-            MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
-            _sf(0).DBType = dbType
+        Public Sub New(ByVal propertyAlias As String, ByVal tableName As SourceFragment, ParamArray sourceFields() As SourceField)
+            MyClass.New(propertyAlias, tableName, Field2DbRelations.None)
+            _sf = sourceFields
         End Sub
-
-        Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
-            ByVal newAttributes As Field2DbRelations, ByVal dbType As String)
-            MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
-            _sf(0).DBType = New DBType(dbType)
+        Public Sub New(ByVal propertyAlias As String, ByVal tableName As SourceFragment, ParamArray sourceFields() As String)
+            MyClass.New(propertyAlias, tableName, sourceFields.Select(Function(it) New SourceField(it)).ToArray)
         End Sub
-
-        Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
-            ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal size As Integer)
-            MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
-            _sf(0).DBType = New DBType(dbType, size)
-        End Sub
-
-        Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
-            ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal size As Integer, ByVal nullable As Boolean)
-            MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
-            _sf(0).DBType = New DBType(dbType, size, nullable)
-        End Sub
-
-        Public Sub New(ByVal propertyAlias As String, ByVal columnExpression As String, ByVal tableName As SourceFragment, _
-            ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal nullable As Boolean)
-            MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
-            _sf(0).DBType = New DBType(dbType, nullable)
-        End Sub
-
         Public Function GetAttributes(ByVal c As EntityPropertyAttribute) As Field2DbRelations
-            If _newattributes = Field2DbRelations.None Then
+            If _attributes = Field2DbRelations.None Then
                 Return c.Behavior()
             Else
-                Return _newattributes
+                Return _attributes
             End If
         End Function
-        Public Property Feature As String
-            Get
-                Return _feature
-            End Get
-            Set(value As String)
-                _feature = value
-            End Set
-        End Property
-        Public Property AvailFrom As String
-            Get
-                Return _availFrom
-            End Get
-            Set(value As String)
-                _availFrom = value
-            End Set
-        End Property
-        Public Property AvailTo As String
-            Get
-                Return _availTo
-            End Get
-            Set(value As String)
-                _availTo = value
-            End Set
-        End Property
+        'Public Property Feature As String
+        '    Get
+        '        Return _feature
+        '    End Get
+        '    Set(value As String)
+        '        _feature = value
+        '    End Set
+        'End Property
+        'Public Property AvailFrom As String
+        '    Get
+        '        Return _availFrom
+        '    End Get
+        '    Set(value As String)
+        '        _availFrom = value
+        '    End Set
+        'End Property
+        'Public Property AvailTo As String
+        '    Get
+        '        Return _availTo
+        '    End Get
+        '    Set(value As String)
+        '        _availTo = value
+        '    End Set
+        'End Property
         Public Property Table() As SourceFragment
             Get
                 Return _tbl
@@ -230,46 +267,46 @@ Namespace Entities.Meta
 
         Public Property Attributes() As Field2DbRelations
             Get
-                Return _newattributes
+                Return _attributes
             End Get
             Set(ByVal value As Field2DbRelations)
-                _newattributes = value
+                _attributes = value
             End Set
         End Property
 
-        Public Property SourceFields() As List(Of SourceField)
+        Public Property SourceFields() As IEnumerable(Of SourceField)
             Get
                 Return _sf
             End Get
-            Set(ByVal value As List(Of SourceField))
+            Set(ByVal value As IEnumerable(Of SourceField))
                 _sf = value
             End Set
         End Property
 
-        Public ReadOnly Property SourceFieldExpression() As String
-            Get
-                If _sf.Count > 1 Then
-                    Throw New OrmObjectException(String.Format("Propety {0} of type {1} schema {2} has muliple source fields", _
-                        _propertyAlias, If(PropertyInfo Is Nothing, "unknown", PropertyInfo.DeclaringType.ToString), _
-                        If(Schema Is Nothing, "unknown", Schema.GetType.ToString)))
-                End If
-                Return _sf(0).SourceFieldExpression
-            End Get
-        End Property
+        'Public ReadOnly Property SourceFieldExpression() As String
+        '    Get
+        '        If _sf.Count > 1 Then
+        '            Throw New OrmObjectException(String.Format("Propety {0} of type {1} schema {2} has muliple source fields", _
+        '                _propertyAlias, If(PropertyInfo Is Nothing, "unknown", PropertyInfo.DeclaringType.ToString), _
+        '                If(Schema Is Nothing, "unknown", Schema.GetType.ToString)))
+        '        End If
+        '        Return _sf(0).SourceFieldExpression
+        '    End Get
+        'End Property
 
-        Public ReadOnly Property SourceFieldAlias() As String
-            Get
-                If _sf.Count > 1 Then
-                    Throw New OrmObjectException(String.Format("Propety {0} of type {1} schema {2} has muliple source fields", _
-                        _propertyAlias, If(PropertyInfo Is Nothing, "unknown", PropertyInfo.DeclaringType.ToString), _
-                        If(Schema Is Nothing, "unknown", Schema.GetType.ToString)))
-                End If
-                Return _sf(0).SourceFieldAlias
-            End Get
-        End Property
+        'Public ReadOnly Property SourceFieldAlias() As String
+        '    Get
+        '        If _sf.Count > 1 Then
+        '            Throw New OrmObjectException(String.Format("Propety {0} of type {1} schema {2} has muliple source fields", _
+        '                _propertyAlias, If(PropertyInfo Is Nothing, "unknown", PropertyInfo.DeclaringType.ToString), _
+        '                If(Schema Is Nothing, "unknown", Schema.GetType.ToString)))
+        '        End If
+        '        Return _sf(0).SourceFieldAlias
+        '    End Get
+        'End Property
 
         Public Function Clone() As Object Implements System.ICloneable.Clone
-            Return New MapField2Column(Me._propertyAlias, Table, Me._newattributes) With {.SourceFields = New List(Of SourceField)(_sf)}
+            Return New MapField2Column(Me._propertyAlias, Table, Me._attributes) With {.SourceFields = _sf.ToArray}
         End Function
 
         ''' <summary>
@@ -310,41 +347,47 @@ Namespace Entities.Meta
                 Return (Attributes And Field2DbRelations.Factory) = Field2DbRelations.Factory
             End Get
         End Property
+        Public ReadOnly Property IsVirtual() As Boolean
+            Get
+                Return (Attributes And Field2DbRelations.Virtual) = Field2DbRelations.Virtual
+            End Get
+        End Property
 
         Private Sub InitFK(ByVal oschema As IEntitySchema)
-            If oschema IsNot Nothing Then
-                Dim pk As MapField2Column = Nothing
-                For Each pm As MapField2Column In oschema.GetPKs
-                    If pk IsNot Nothing Then
-                        Throw New NotSupportedException("Multiple pks not supported")
-                    End If
-                    pk = pm
-                Next
-                SourceFields(0).PrimaryKey = pk.PropertyAlias
-            End If
+            'If oschema IsNot Nothing Then
+            '    Dim pk As MapField2Column = Nothing
+            '    For Each pm As MapField2Column In oschema.GetPKs
+            '        If pk IsNot Nothing Then
+            '            Throw New NotSupportedException("Multiple pks not supported")
+            '        End If
+            '        pk = pm
+            '    Next
+            '    SourceFields(0).PrimaryKey = pk.PropertyAlias
+            'End If
         End Sub
 
         Friend Sub ApplyForeignKey(ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, ByVal names As IDictionary)
-            If SourceFields.Count = 1 AndAlso String.IsNullOrEmpty(SourceFields(0).PrimaryKey) AndAlso Worm.ObjectMappingEngine.IsEntityType(PropertyType) AndAlso mpe IsNot Nothing Then
-                Dim oschema As IEntitySchema = CType(idic(PropertyType), IEntitySchema)
-                If oschema Is Nothing Then
-                    'oschema = ObjectMappingEngine.GetEntitySchema(PropertyType, mpe, idic, names)
-                    AddHandler mpe.EndInitSchema,
-                        Sub(dic As IDictionary)
-                            Dim _o As IEntitySchema = CType(dic(PropertyType), IEntitySchema)
+            'If SourceFields.Count = 1 AndAlso Worm.ObjectMappingEngine.IsEntityType(PropertyType) AndAlso mpe IsNot Nothing Then 'AndAlso String.IsNullOrEmpty(SourceFields(0).PrimaryKey)
+            '    Dim oschema As IEntitySchema = CType(idic(PropertyType), IEntitySchema)
+            '    If oschema Is Nothing Then
+            '        'oschema = ObjectMappingEngine.GetEntitySchema(PropertyType, mpe, idic, names)
+            '        AddHandler mpe.EndInitSchema,
+            '            Sub(dic As IDictionary)
+            '                Dim schema As IEntitySchema = CType(dic(PropertyType), IEntitySchema)
 
-                            If _o Is Nothing Then
-                                _o = ObjectMappingEngine.GetEntitySchema(PropertyType, mpe, idic, names)
-                            End If
+            '                If schema Is Nothing Then
+            '                    schema = ObjectMappingEngine.GetEntitySchema(PropertyType, mpe, idic, names)
+            '                End If
 
-                            If _o IsNot Nothing Then
-                                InitFK(_o)
-                            End If
-                        End Sub
-                End If
-                InitFK(oschema)
-            End If
+            '                If schema IsNot Nothing Then
+            '                    InitFK(schema)
+            '                End If
+            '            End Sub
+            '    End If
+            '    InitFK(oschema)
+            'End If
         End Sub
+        Public Property DefaultValue As Object
     End Class
 
     Public Class RelationDesc
@@ -400,8 +443,8 @@ Namespace Entities.Meta
         End Function
 
         Class cls
-            Private _ids As List(Of Object)
-            Private _f As FieldReference
+            Private ReadOnly _ids As List(Of Object)
+            Private ReadOnly _f As FieldReference
 
             Public Sub New(ByVal ids As List(Of Object))
                 _ids = ids
@@ -542,11 +585,13 @@ Namespace Entities.Meta
                 If loadWithObjects Then
                     rcmd.WithLoad(True)
                 Else
-                    Dim se As New List(Of SelectExpression)
-                    For Each mp As MapField2Column In oschema.GetPKs
-                        se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
-                    Next
-                    se.Add(FCtor.prop(op))
+                    'For Each mp As MapField2Column In oschema.GetPKs
+                    '    se.Add(New SelectExpression(New ObjectProperty(op.Entity, oschema.GetPK.PropertyAlias)))
+                    'Next
+                    Dim se As New List(Of SelectExpression) From {
+                        New SelectExpression(New ObjectProperty(op.Entity, oschema.GetPK.PropertyAlias)),
+                        FCtor.prop(op)
+                    }
                     rcmd.Select(se.ToArray)
                 End If
 
@@ -673,11 +718,13 @@ Namespace Entities.Meta
                 If loadWithObjects Then
                     rcmd.WithLoad(True)
                 Else
-                    Dim se As New List(Of SelectExpression)
-                    For Each mp As MapField2Column In oschema.GetPKs
-                        se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
-                    Next
-                    se.Add(FCtor.prop(op))
+                    'For Each mp As MapField2Column In oschema.GetPKs
+                    '    se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
+                    'Next
+                    Dim se As New List(Of SelectExpression) From {
+                        New SelectExpression(New ObjectProperty(op.Entity, oschema.GetPK.PropertyAlias)),
+                        FCtor.prop(op)
+                    }
                     rcmd.Select(se.ToArray)
                 End If
 
@@ -802,11 +849,13 @@ Namespace Entities.Meta
                 If loadWithObjects Then
                     rcmd.WithLoad(True)
                 Else
-                    Dim se As New List(Of SelectExpression)
-                    For Each mp As MapField2Column In oschema.GetPKs
-                        se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
-                    Next
-                    se.Add(FCtor.prop(op))
+                    'For Each mp As MapField2Column In oschema.GetPKs
+                    '    se.Add(New SelectExpression(New ObjectProperty(op.Entity, mp.PropertyAlias)))
+                    'Next
+                    Dim se As New List(Of SelectExpression) From {
+                        New SelectExpression(New ObjectProperty(op.Entity, oschema.GetPK.PropertyAlias)),
+                        FCtor.prop(op)
+                    }
                     rcmd.Select(se.ToArray)
                 End If
 
@@ -856,7 +905,7 @@ Namespace Entities.Meta
         Public ReadOnly Mapping As System.Data.Common.DataTableMapping
         Public ReadOnly ConnectedType As Type
 
-        Private _const() As IFilter
+        Private ReadOnly _const() As IFilter
 
         Public Const DirKey As String = "xxx%direct$"
         Public Const ReversePrefix As String = "$rev$"

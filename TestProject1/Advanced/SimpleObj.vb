@@ -8,7 +8,7 @@ Public Class SimpleObj
 
     Private _title As String
 
-    <EntityPropertyAttribute(column:="name")> _
+    <SourceField("name")>
     Public Property Title() As String
         Get
             Using Read("Title")
@@ -23,7 +23,8 @@ Public Class SimpleObj
     End Property
 
     Private _id As Integer
-    <EntityProperty("id", Field2DbRelations.PrimaryKey, DBType:="int")> _
+    <EntityProperty(Field2DbRelations.PrimaryKey)>
+    <SourceField("id", SourceFieldType:="int")>
     Public Overrides Property Identifier() As Object
         Get
             Return _id
@@ -40,7 +41,7 @@ Public Class SimpleObjWithoutLazyLoad
 
     Private _title As String
 
-    <EntityPropertyAttribute(column:="name")> _
+    <SourceField("name")>
     Public Property Title() As String
         Get
             Return _title
@@ -51,7 +52,7 @@ Public Class SimpleObjWithoutLazyLoad
     End Property
 
     Private _code As Integer
-    <EntityPropertyAttribute(column:="code")> _
+    <SourceField("code")>
     Public Property Code() As Integer
         Get
             Return _code
@@ -62,7 +63,8 @@ Public Class SimpleObjWithoutLazyLoad
     End Property
 
     Private _id As Integer
-    <EntityProperty("id", Field2DbRelations.PrimaryKey, DBType:="int")> _
+    <EntityProperty(Field2DbRelations.PrimaryKey)>
+    <SourceField("id", SourceFieldType:="int")>
     Public Overrides Property Identifier() As Object
         Get
             Return _id
@@ -94,7 +96,7 @@ Public Class SimpleObj2
     End Property
 
     Private _m As Decimal
-    <EntityPropertyAttribute(column:="m")> _
+    <SourceField("m")>
     Public Property Money() As Decimal
         Get
             Using Read("Money")
@@ -109,7 +111,8 @@ Public Class SimpleObj2
     End Property
 
     Private _id As Integer
-    <EntityProperty("id", Field2DbRelations.PrimaryKey, DBType:="int")> _
+    <EntityProperty(Field2DbRelations.PrimaryKey)>
+    <SourceField("id", SourceFieldType:="int")>
     Public Overrides Property Identifier() As Object
         Get
             Return _id
@@ -137,7 +140,7 @@ Public Class SimpleObj3
     End Property
 
     Private _m As Decimal
-    <EntityPropertyAttribute(column:="m")> _
+    <SourceField("m")>
     Public Property Money() As Decimal
         Get
             Return _m
@@ -148,7 +151,8 @@ Public Class SimpleObj3
     End Property
 
     Private _id As Integer
-    <EntityProperty("id", Field2DbRelations.PrimaryKey, DBType:="int")> _
+    <EntityProperty(Field2DbRelations.PrimaryKey)>
+    <SourceField("id", SourceFieldType:="int")>
     Public Overrides Property Identifier() As Object
         Get
             Return _id
@@ -165,7 +169,7 @@ Public Class SimpleObj4
 
     Private _s As Pod.cls4
 
-    <EntityProperty("table1_id")> _
+    <EntityProperty("table1_id")>
     Public Property Obj1() As Pod.cls4
         Get
             Using Read("Obj1")
@@ -180,7 +184,7 @@ Public Class SimpleObj4
     End Property
 
     Private _m As Decimal
-    <EntityPropertyAttribute(column:="m")> _
+    <SourceField("m")>
     Public Property Money() As Decimal
         Get
             Using Read("Money")
@@ -195,7 +199,8 @@ Public Class SimpleObj4
     End Property
 
     Private _id As Integer
-    <EntityProperty("id", Field2DbRelations.PrimaryKey, DBType:="int")> _
+    <EntityProperty(Field2DbRelations.PrimaryKey)>
+    <SourceField("id", SourceFieldType:="int")>
     Public Overrides Property Identifier() As Object
         Get
             Return _id

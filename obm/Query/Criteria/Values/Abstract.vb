@@ -40,4 +40,8 @@ Namespace Criteria.Values
         ReadOnly Property Value() As Object
         Function Eval(ByVal v As Object, ByVal mpe As ObjectMappingEngine, ByVal template As OrmFilterTemplate) As EvalResult
     End Interface
+    Public Interface IFilterMultiValue
+        Inherits IEvaluableValue
+        ReadOnly Property Params As IEnumerable(Of IEvaluableValue)
+    End Interface
 End Namespace

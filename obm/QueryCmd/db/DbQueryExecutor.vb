@@ -724,11 +724,12 @@ l1:
                 sb.Append("(")
                 For Each f As String In ifields
                     Dim m As MapField2Column = os.FieldColumnMap(f)
-                    sb.Append(m.SourceFieldExpression).Append(",")
-                    If tf IsNot Nothing AndAlso Not replaced Then
-                        sb.Replace("{290ghern}", tf.GetRealTable(m.SourceFieldExpression))
-                        replaced = True
-                    End If
+                    Throw New NotImplementedException
+                    'sb.Append(m.SourceFieldExpression).Append(",")
+                    'If tf IsNot Nothing AndAlso Not replaced Then
+                    '    sb.Replace("{290ghern}", tf.GetRealTable(m.SourceFieldExpression))
+                    '    replaced = True
+                    'End If
                 Next
                 sb.Length -= 1
                 sb.Append(")")
@@ -937,7 +938,7 @@ l1:
 
                     'sb.Append(s.EndLine).Append(j.MakeSQLStmt(mpe, s, filterInfo, almgr, params, osrc_))
 
-                    Dim frompk As String = mpe.GetSinglePK(stt, fromOS) 'mpe.GetPrimaryKeys(stt, fromOS)(0).PropertyAlias 
+                    Dim frompk As String = mpe.GetPrimaryKey(stt, fromOS) 'mpe.GetPrimaryKeys(stt, fromOS)(0).PropertyAlias 
                     Dim jf As New JoinFilter(tbl_real, s.FTSKey, stt, frompk, Criteria.FilterOperation.Equal)
 
                     If ctxF IsNot Nothing Then
@@ -1018,7 +1019,7 @@ l1:
 
                         Dim pkname As String = Nothing
                         'If selectedType IsNot Nothing Then
-                        pkname = mpe.GetSinglePK(selectedType, selSchema) 'mpe.GetPrimaryKeys(selectedType, selSchema)(0).PropertyAlias
+                        pkname = mpe.GetPrimaryKey(selectedType, selSchema) 'mpe.GetPrimaryKeys(selectedType, selSchema)(0).PropertyAlias
                         'End If
                         join.InjectJoinFilter(mpe, selectedType, pkname, pk.First, pk.Second)
                     End If
@@ -1079,8 +1080,8 @@ l1:
                                 Throw New ExecutorException(String.Format("M2M relation between {0} and {1} not found", t, t2))
                             End If
 
-                            Dim t2_pk As String = mpe.GetSinglePK(t2, oschema2)
-                            Dim t1_pk As String = mpe.GetSinglePK(t, oschema)
+                            Dim t2_pk As String = mpe.GetPrimaryKey(t2, oschema2)
+                            Dim t1_pk As String = mpe.GetPrimaryKey(t, oschema)
 
                             Dim rcmd As RelationCmd = TryCast(query, RelationCmd)
                             If rcmd IsNot Nothing Then

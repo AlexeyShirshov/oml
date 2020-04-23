@@ -90,11 +90,11 @@ Namespace Entities.Meta
     End Interface
 
     Public Interface IPKInsertValues
-        Function GetValue(ByVal propertyAlias As String) As String
+        Function GetValue(ByVal column As String) As String
     End Interface
 
     Public Interface IChangeOutputOnInsert
-        Function GetColumn(ByVal propertyAlias As String, ByVal column As String) As String
+        Function GetColumn(ByVal table As String, ByVal column As String) As String
     End Interface
     'Public Interface IFactory
     '    Sub CreateObject(ByVal field As String, ByVal value As Object)
@@ -171,5 +171,9 @@ Namespace Entities.Meta
         Function Convert(mpe As ObjectMappingEngine, prop As String, s As String, ByRef val As Object) As Boolean
         Delegate Function FallBackDelegate() As Object
     End Interface
-
+    Public Interface IVersionable
+        Property SchemaVersion() As String
+        Property SchemaVersionOperator() As SchemaVersionOperatorEnum
+        Property Feature As String
+    End Interface
 End Namespace

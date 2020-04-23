@@ -26,9 +26,11 @@ Namespace Database.Storedprocs
         End Sub
 
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
-            Dim et As New PerfCounter
+            'Dim et As New PerfCounter
+            Dim et As New Stopwatch
             Dim r As Integer = cmd.ExecuteNonQuery()
-            _exec = et.GetTime
+            et.Stop()
+            _exec = et.Elapsed
             Dim out As New Dictionary(Of String, Object)
             If CheckForReturnValue(r) Then
                 Dim op As IEnumerable(Of OutParam) = GetOutParams()
@@ -112,11 +114,11 @@ Namespace Database.Storedprocs
 
 #End Region
 
-            Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
-                Dim l As New List(Of Pair(Of String, Object))
+            Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of ParamValue)
+                Dim l As New List(Of ParamValue)
                 If _obj IsNot Nothing AndAlso _obj.Length > 0 Then
                     For i As Integer = 0 To _obj.Length - 1
-                        l.Add(New Pair(Of String, Object)(_names(i).Trim, _obj(i)))
+                        l.Add(New ParamValue(_names(i).Trim) With {.Value = _obj(i)})
                     Next
                 End If
                 Return l

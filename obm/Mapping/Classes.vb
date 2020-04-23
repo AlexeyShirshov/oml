@@ -8,21 +8,39 @@ Namespace Entities.Meta
     ''' </summary>
     <Serializable()> _
     Public Class PKDesc
-        ''' <summary>
-        ''' Имя поля
-        ''' </summary>
-        Public ReadOnly PropertyAlias As String
+        '''' <summary>
+        '''' Имя поля
+        '''' </summary>
+        'Public ReadOnly PropertyAlias As String
+        Public ReadOnly Column As String
         ''' <summary>
         ''' Значение поля
         ''' </summary>
         Public ReadOnly Value As Object
+        '''' <summary>
+        '''' Инициализирует объект
+        '''' </summary>
+        '''' <param name="propAlias">Имя поля</param>
+        '''' <param name="value">Значение поля</param>
+        'Public Sub New(ByVal propAlias As String, ByVal value As Object)
+        '    Me.PropertyAlias = propAlias
+        '    Me.Value = value
+        'End Sub
         ''' <summary>
         ''' Инициализирует объект
         ''' </summary>
-        ''' <param name="propAlias">Имя поля</param>
+        ''' <param name="column">Имя поля</param>
         ''' <param name="value">Значение поля</param>
-        Public Sub New(ByVal propAlias As String, ByVal value As Object)
-            Me.PropertyAlias = propAlias
+        Public Sub New(ByVal column As String, ByVal value As Object)
+            If String.IsNullOrEmpty(column) Then
+                Throw New ArgumentNullException(NameOf(column))
+            End If
+
+            If value Is Nothing Then
+                Throw New ArgumentNullException(NameOf(value))
+            End If
+
+            Me.Column = column
             Me.Value = value
         End Sub
     End Class
@@ -31,9 +49,9 @@ Namespace Entities.Meta
     Public Class SourceFragment
         Implements ICloneable
 
-        Private _table As String
-        Private _schema As String
-        Private _uqName As String = Guid.NewGuid.GetHashCode.ToString
+        Private ReadOnly _table As String
+        Private ReadOnly _schema As String
+        Private ReadOnly _uqName As String = Guid.NewGuid.GetHashCode.ToString
         '#If DEBUG Then
         '        Private _stack As String = Environment.StackTrace
         '#End If
@@ -116,11 +134,11 @@ Namespace Entities.Meta
     Public Class SearchFragment
         Inherits SourceFragment
 
-        Private _eu As EntityUnion
-        Private _searchString As String
-        Private _st As SearchType
-        Private _queryFields() As String
-        Private _top As Integer = Integer.MinValue
+        Private ReadOnly _eu As EntityUnion
+        Private ReadOnly _searchString As String
+        Private ReadOnly _st As SearchType
+        Private ReadOnly _queryFields() As String
+        Private ReadOnly _top As Integer = Integer.MinValue
         Private _f As IFtsStringFormatter
         Private _searchSection As String
         'Private _context As Object
@@ -371,8 +389,8 @@ Namespace Entities.Meta
     Public Class AliasMgr
         Implements IPrepareTable
 
-        Private _defaultAliases As Generic.IDictionary(Of SourceFragment, String)
-        Private _objectAlises As Generic.IDictionary(Of QueryAlias, Generic.IDictionary(Of SourceFragment, String))
+        Private ReadOnly _defaultAliases As Generic.IDictionary(Of SourceFragment, String)
+        Private ReadOnly _objectAlises As Generic.IDictionary(Of QueryAlias, Generic.IDictionary(Of SourceFragment, String))
         Private _cnt As Integer
 
         Private Sub New(ByVal aliases As Generic.IDictionary(Of SourceFragment, String))
@@ -488,7 +506,7 @@ Namespace Entities.Meta
 
         Private Class FProxy
 
-            Private _t As Type
+            Private ReadOnly _t As Type
 
             Public Sub New(ByVal t As Type)
                 _t = t
@@ -500,8 +518,8 @@ Namespace Entities.Meta
             End Function
         End Class
 
-        Private _toks() As String
-        Private _del As ValueForSearchDelegate
+        Private ReadOnly _toks() As String
+        Private ReadOnly _del As ValueForSearchDelegate
         'Private _sectionName As String
 
         Public Sub New(ByVal s As String, ByVal sectionName As String)

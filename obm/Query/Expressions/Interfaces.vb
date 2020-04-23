@@ -146,6 +146,7 @@ Namespace Expressions2
             Class CustomStatementClass
                 Public FromLeft As Boolean
                 Public MakeStatement As MakeStatementDelegate
+                Public Separator As String = " and "
             End Class
 
             Private _notNeedAlias As Boolean

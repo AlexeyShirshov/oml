@@ -12,9 +12,10 @@ Imports System.ComponentModel
 'Imports Worm.Database.Criteria.Core
 
 Namespace Query
+#Disable Warning IDE1006 ' Naming Styles
 
     Public Class JCtor
-        Private _j As New List(Of QueryJoin)
+        Private ReadOnly _j As New List(Of QueryJoin)
 
 #Region " Inner joins "
         Public Shared Function join(ByVal t As Type, Optional hint As String = Nothing) As JoinCondition
@@ -186,8 +187,9 @@ Namespace Query
         End Function
 
         Protected Shared Function CreateJC(ByVal j As QueryJoin) As JC3
-            Dim _j As New List(Of QueryJoin)
-            _j.Add(j)
+            Dim _j As New List(Of QueryJoin) From {
+                j
+            }
             Return New JC3(_j)
         End Function
 
@@ -271,8 +273,9 @@ Namespace Query
             End Sub
 
             Public Sub New(ByVal join As QueryJoin)
-                _jc = New List(Of QueryJoin)
-                _jc.Add(join)
+                _jc = New List(Of QueryJoin) From {
+                    join
+                }
             End Sub
 
             Protected Overridable Sub PreAdd()
@@ -463,7 +466,7 @@ Namespace Query
     End Class
 
     Public Class JoinCondition
-        Private _j As List(Of QueryJoin)
+        Private ReadOnly _j As List(Of QueryJoin)
 
         Public Sub New(ByVal l As List(Of QueryJoin))
             _j = l
@@ -559,4 +562,5 @@ Namespace Query
         '    Return c
         'End Function
     End Class
+#Enable Warning IDE1006 ' Naming Styles
 End Namespace

@@ -342,17 +342,17 @@ Public Class MyUserDef
         Get
             If _idx Is Nothing Then
                 _idx = New OrmObjectIndex
-                _idx.Add(New MapField2Column("LastActivity", "last_activity", Table))
-                _idx.Add(New MapField2Column("IsAnonymous", "is_anonymous", Table))
-                _idx.Add(New MapField2Column("UserName", "username", Table))
-                _idx.Add(New MapField2Column("ID", "id", Table))
-                _idx.Add(New MapField2Column("Field", "field", Table))
-                _idx.Add(New MapField2Column("Password", "password", Table))
-                _idx.Add(New MapField2Column("Email", "email", Table))
-                _idx.Add(New MapField2Column("FailedPasswordAttemtCount", "failcnt", Table))
-                _idx.Add(New MapField2Column("FailedPasswordAttemtStart", "faildt", Table))
-                _idx.Add(New MapField2Column("IsLocked", "islocked", Table))
-                _idx.Add(New MapField2Column("LastLockedAt", "lastlocked", Table))
+                _idx.Add(New MapField2Column("LastActivity", Table, "last_activity"))
+                _idx.Add(New MapField2Column("IsAnonymous", Table, "is_anonymous"))
+                _idx.Add(New MapField2Column("UserName", Table, "username"))
+                _idx.Add(New MapField2Column("ID", Table, "id"))
+                _idx.Add(New MapField2Column("Field", Table, "field"))
+                _idx.Add(New MapField2Column("Password", Table, "password"))
+                _idx.Add(New MapField2Column("Email", Table, "email"))
+                _idx.Add(New MapField2Column("FailedPasswordAttemtCount", Table, "failcnt"))
+                _idx.Add(New MapField2Column("FailedPasswordAttemtStart", Table, "faildt"))
+                _idx.Add(New MapField2Column("IsLocked", Table, "islocked"))
+                _idx.Add(New MapField2Column("LastLockedAt", Table, "lastlocked"))
             End If
             Return _idx
         End Get
@@ -442,8 +442,8 @@ Public Class MyRoleDef
         Get
             If _idx Is Nothing Then
                 _idx = New OrmObjectIndex
-                _idx.Add(New MapField2Column("ID", "id", Table))
-                _idx.Add(New MapField2Column("Name", "roleName", Table))
+                _idx.Add(New MapField2Column("ID", Table, "id"))
+                _idx.Add(New MapField2Column("Name", Table, "roleName"))
             End If
             Return _idx
         End Get

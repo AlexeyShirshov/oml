@@ -138,7 +138,10 @@ Namespace Expressions2
             sb.Append(Left.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor))
 
             If Right IsNot Nothing Then
-                sb.Append(",").Append(Right.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor))
+                Dim rp = Right.MakeStatement(mpe, fromClause, stmt, paramMgr, almgr, contextInfo, stmtMode, executor)
+                If Not String.IsNullOrEmpty(rp) Then
+                    sb.Append(",").Append(rp)
+                End If
             End If
 
             If _parentheses Then

@@ -203,8 +203,8 @@ Namespace Criteria.Core
             Return New CustomFilter(CType(Template, CustomValue), vc)
         End Function
 
-        Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
-            ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal executor As Query.IExecutionContext) As Pair(Of String)
+        Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator,
+                                                      ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal executor As Query.IExecutionContext) As IEnumerable(Of ITemplateFilterBase.ColParam)
             Throw New NotImplementedException
         End Function
     End Class

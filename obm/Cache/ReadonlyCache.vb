@@ -21,17 +21,17 @@ Namespace Cache
         Public ReadOnly DateTimeCreated As Date
 
         Private _filters As IDictionary
-        Private _nonExist As New Dictionary(Of Type, HashSet(Of PKWrapper))
-        Private _loadTimes As New Dictionary(Of Type, Pair(Of Integer, TimeSpan))
-        Private _lock As New Object
-        Private _lock2 As New Object
-        Private _list_converter As IListObjectConverter
+        Private ReadOnly _nonExist As New Dictionary(Of Type, HashSet(Of PKWrapper))
+        Private ReadOnly _loadTimes As New Dictionary(Of Type, Pair(Of Integer, TimeSpan))
+        Private ReadOnly _lock As New Object
+        Private ReadOnly _lock2 As New Object
+        Private ReadOnly _list_converter As IListObjectConverter
         'Private _modifiedobjects As IDictionary
         Private _externalObjects As IDictionary(Of String, Object)
         Private _newMgr As INewObjectsStore = New NewObjectStore
-        Private _m2m_dep As New Dictionary(Of String, Dictionary(Of String, Dictionary(Of String, Object)))
+        Private ReadOnly _m2m_dep As New Dictionary(Of String, Dictionary(Of String, Dictionary(Of String, Object)))
 
-        Public Event RegisterEntityCreation(ByVal sender As CacheBase, ByVal e As IEntity)
+        'Public Event RegisterEntityCreation(ByVal sender As CacheBase, ByVal e As IEntity)
         'Public Event RegisterObjectCreation(ByVal sender As CacheBase, ByVal t As Type, ByVal id As Integer)
         Public Event RegisterObjectRemoval(ByVal sender As CacheBase, ByVal obj As ICachedEntity)
 
@@ -89,10 +89,9 @@ Namespace Cache
             End If
             Throw New NotImplementedException(String.Format("Mark {0} is not supported", mark))
         End Function
-
-        Public Overridable Sub RegisterCreation(ByVal obj As IEntity)
-            RaiseEvent RegisterEntityCreation(Me, obj)
-        End Sub
+        'Public Overridable Sub RegisterCreation(ByVal obj As IEntity)
+        '    RaiseEvent RegisterEntityCreation(Me, obj)
+        'End Sub
 
         '        Public Overridable Sub RegisterCreation(ByVal t As Type, ByVal id As Integer)
         '            RaiseEvent RegisterObjectCreation(Me, t, id)
@@ -515,14 +514,16 @@ Namespace Cache
                             ll.Add(id, Nothing)
                         End If
                     Else
-                        ll = New Dictionary(Of String, Object)
-                        ll.Add(id, Nothing)
+                        ll = New Dictionary(Of String, Object) From {
+                            {id, Nothing}
+                        }
                         l.Add(key, ll)
                     End If
                 Else
                     l = New Dictionary(Of String, Dictionary(Of String, Object))
-                    Dim ll As New Dictionary(Of String, Object)
-                    ll.Add(id, Nothing)
+                    Dim ll As New Dictionary(Of String, Object) From {
+                        {id, Nothing}
+                    }
                     l.Add(key, ll)
                     _m2m_dep.Add(obj.GetName, l)
                 End If
@@ -596,19 +597,19 @@ Namespace Cache
             End Using
         End Sub
 
-        Public Function CustomObject(Of T As {New, Class})(ByVal o As T) As ICachedEntity
-            Throw New NotImplementedException
-        End Function
+        'Public Function CustomObject(Of T As {New, Class})(ByVal o As T) As ICachedEntity
+        '    Throw New NotImplementedException
+        'End Function
 
-        Public Function GetKeyFromPK(Of T As {New, ISinglePKEntity})(ByVal id As Object) As Integer
-            Dim o As T = SinglePKEntity.CreateKeyEntity(Of T)(id, Me, Nothing)
-            Return o.Key
-        End Function
+        'Public Function GetKeyFromPK(Of T As {New, ISinglePKEntity})(ByVal id As Object) As Integer
+        '    Dim o As T = SinglePKEntity.CreateKeyEntity(Of T)(id, Me, Nothing)
+        '    Return o.Key
+        'End Function
 
-        Public Function GetKeyFromPK(ByVal pk() As PKDesc, ByVal type As Type) As Integer
-            Dim o As IKeyProvider = CType(CachedEntity.CreateObject(pk, type, Me, Nothing), IKeyProvider)
-            Return o.Key
-        End Function
+        'Public Function GetKeyFromPK(ByVal pk() As PKDesc, ByVal type As Type) As Integer
+        '    Dim o As IKeyProvider = CType(CachedEntity.CreateObject(pk, type, Me, Nothing), IKeyProvider)
+        '    Return o.Key
+        'End Function
 
         Public Function GetFromCache(ByVal obj As ICachedEntity, ByVal mpe As ObjectMappingEngine) As ICachedEntity
             If obj Is Nothing Then
@@ -641,7 +642,7 @@ Namespace Cache
                 Throw New OrmManagerException("Collection for " & t.Name & " not exists")
             End If
 
-            Return dic.Contains(New CacheKey(SinglePKEntity.CreateKeyEntity(id, t, Me, mpe)))
+            Return dic.Contains(New CacheKey(SinglePKEntity.CreateKeyEntity(id, t, mpe)))
         End Function
 
         Public Property NewObjectManager() As INewObjectsStore
@@ -664,10 +665,10 @@ Namespace Cache
         '    Return FindObjectInCache(Nothing, obj, load, checkOnCreate, dic, addOnCreate, mgr, False, mgr.MappingEngine.GetEntitySchema(obj.GetType))
         'End Function
 
-        Public Function FindObjectInCache(ByVal type As Type, ByVal obj As Object, _
-            ByVal id As PKWrapper, ByVal cb As ICacheBehavior, _
-            ByVal entityDictionary As IDictionary, ByVal addIfNotFound As Boolean, _
-            ByVal fromDb As Boolean) As Object
+        Public Function FindObjectInCache(ByVal type As Type, ByVal obj As Object,
+                                          ByVal id As PKWrapper, ByVal cb As ICacheBehavior,
+                                          ByVal entityDictionary As IDictionary, ByVal addIfNotFound As Boolean,
+                                          ByVal fromDb As Boolean) As Object
 
             Dim a As Object = entityDictionary(id)
             'Dim oc As ObjectModification = Nothing
@@ -708,7 +709,7 @@ Namespace Cache
         Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type, _
             ByVal add2CacheOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As ISinglePKEntity
 
-            Dim o As ISinglePKEntity = SinglePKEntity.CreateKeyEntity(id, type, Me, mpe)
+            Dim o As ISinglePKEntity = SinglePKEntity.CreateKeyEntity(id, type, mpe)
             o.SetObjectState(ObjectState.NotLoaded)
 
             Dim cb As ICacheBehavior = TryCast(mpe.GetEntitySchema(type), ICacheBehavior)
@@ -724,7 +725,7 @@ Namespace Cache
         Public Function GetEntityOrOrmFromCacheOrCreate(Of T As {New, _ICachedEntity})( _
             ByVal pk As IEnumerable(Of PKDesc), ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As T
 
-            Dim o As T = CachedEntity.CreateObject(Of T)(pk, Me, mpe)
+            Dim o As T = CachedEntity.CreateObject(Of T)(pk, mpe)
 
             o.SetObjectState(ObjectState.NotLoaded)
 
@@ -736,7 +737,7 @@ Namespace Cache
         Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})( _
             ByVal pk As IEnumerable(Of PKDesc), ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As T
 
-            Dim o As T = CachedEntity.CreateEntity(Of T)(pk, Me, mpe)
+            Dim o As T = CachedEntity.CreateEntity(Of T)(pk, mpe)
 
             o.SetObjectState(ObjectState.NotLoaded)
 
@@ -747,7 +748,7 @@ Namespace Cache
 
         Public Function GetEntityFromCacheOrCreate(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type, _
             ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As Object
-            Dim o As Object = CachedEntity.CreateObject(pk, type, Me, mpe)
+            Dim o As Object = CachedEntity.CreateObject(pk, type, mpe)
             Dim pkw As PKWrapper = Nothing
             Dim ce As _ICachedEntity = TryCast(o, _ICachedEntity)
             Dim e As _IEntity = TryCast(o, _ICachedEntity)
@@ -766,7 +767,7 @@ Namespace Cache
 
         Public Function GetEntityFromCacheOrCreate(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type, _
             ByVal addOnCreate As Boolean, ByVal dic As IDictionary, ByVal mpe As ObjectMappingEngine) As Object
-            Dim o As Object = CachedEntity.CreateObject(pk, type, Me, mpe)
+            Dim o As Object = CachedEntity.CreateObject(pk, type, mpe)
             Dim pkw As PKWrapper = Nothing
             Dim ce As _ICachedEntity = TryCast(o, _ICachedEntity)
             Dim e As _IEntity = TryCast(o, _ICachedEntity)
@@ -837,7 +838,7 @@ Namespace Cache
             '    pk.Add(pkd)
             'Next
             Dim pks As IEnumerable(Of PKDesc) = oschema.GetPKs(o)
-            Dim c As _ICachedEntity = CachedEntity.CreateEntity(pks.ToArray, GetType(AnonymousCachedEntity), Me, mpe)
+            Dim c As _ICachedEntity = CachedEntity.CreateEntity(pks.ToArray, GetType(AnonymousCachedEntity), mpe)
             Dim cc As IKeyProvider = TryCast(o, IKeyProvider)
             If cc IsNot Nothing Then
                 CType(c, AnonymousCachedEntity).SetKey(cc.Key)

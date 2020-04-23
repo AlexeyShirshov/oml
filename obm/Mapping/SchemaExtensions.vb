@@ -6,29 +6,70 @@ Imports System.Linq
 Namespace Entities.Meta
     Public Module SchemaExtensions
         <Extension>
-        Public Function GetPKs(ByVal oschema As IEntitySchema, ByVal obj As Object) As IEnumerable(Of PKDesc)
-            If oschema Is Nothing Then
-                Throw New ArgumentNullException("oschema")
+        Public Function GetPKs(ByVal obj As Object, Optional mpe As ObjectMappingEngine = Nothing) As IEnumerable(Of PKDesc)
+            Dim op As IOptimizePK = TryCast(obj, IOptimizePK)
+            If op IsNot Nothing Then
+                Return op.GetPKValues()
+            Else
+                Dim oschema As IEntitySchema = Nothing
+                Dim o = TryCast(obj, IEntity)
+                If o IsNot Nothing Then
+                    oschema = o.GetEntitySchema(mpe)
+                End If
+
+                If oschema IsNot Nothing Then
+                    Dim l As New List(Of PKDesc)
+
+                    Dim pk = oschema.GetPK
+
+                    For Each sf In pk.SourceFields
+                        l.Add(New PKDesc(sf.SourceFieldExpression, ObjectMappingEngine.GetPropertyValue(obj, MakePKName(pk.PropertyAlias, sf.SourceFieldExpression), oschema, sf.PropertyInfo)))
+                    Next
+
+                    Return l
+                End If
             End If
 
-            Dim l As New List(Of PKDesc)
-
-            For Each mp As MapField2Column In oschema.GetPKs
-                l.Add(New PKDesc(mp.PropertyAlias, ObjectMappingEngine.GetPropertyValue(obj, mp.PropertyAlias, oschema, mp.PropertyInfo)))
-            Next
-            Return l
+            Return {}
         End Function
         <Extension>
-        Public Iterator Function GetPKs(ByVal oschema As IPropertyMap) As IEnumerable(Of MapField2Column)
+        Public Function GetPKs(ByVal oschema As IEntitySchema, ByVal obj As Object) As IEnumerable(Of PKDesc)
+            Dim op As IOptimizePK = TryCast(obj, IOptimizePK)
+            If op IsNot Nothing Then
+                Return op.GetPKValues()
+            Else
+                If oschema Is Nothing Then
+                    Throw New ArgumentNullException("oschema")
+                End If
+
+                Dim l As New List(Of PKDesc)
+
+                Dim pk = oschema.GetPK
+
+                If pk.SourceFields.Count > 1 Then
+                    For Each sf In pk.SourceFields
+                        l.Add(New PKDesc(sf.SourceFieldExpression, ObjectMappingEngine.GetPropertyValue(obj, MakePKName(pk.PropertyAlias, sf.SourceFieldExpression), oschema, sf.PropertyInfo)))
+                    Next
+                Else
+                    l.Add(New PKDesc(pk.SourceFields(0).SourceFieldExpression, ObjectMappingEngine.GetPropertyValue(obj, pk.PropertyAlias, oschema, pk.PropertyInfo)))
+                End If
+
+                Return l
+            End If
+        End Function
+        <Extension>
+        Public Function GetPK(ByVal oschema As IPropertyMap) As MapField2Column
             If oschema Is Nothing Then
                 Throw New ArgumentNullException("oschema")
             End If
 
             For Each mp As MapField2Column In oschema.FieldColumnMap
                 If mp.IsPK Then
-                    Yield mp
+                    Return mp
                 End If
             Next
+
+            Return Nothing
         End Function
         <Extension>
         Public Function GetTables(ByVal schema As IEntitySchema) As SourceFragment()
@@ -44,9 +85,10 @@ Namespace Entities.Meta
         End Function
         <Extension>
         Public Function GetPKTable(ByVal schema As IPropertyMap, Optional ByVal t As Type = Nothing) As SourceFragment
-            For Each m As MapField2Column In schema.GetPKs
-                Return m.Table
-            Next
+            Return schema.GetPK?.Table
+            'For Each m As MapField2Column In schema.GetPKs
+            '    Return m.Table
+            'Next
             'For Each ea As EntityPropertyAttribute In GetProperties(t, schema).Keys
             '    If (GetAttributes(schema, ea) And Field2DbRelations.PK) = Field2DbRelations.PK Then
             '        Return GetPropertyTable(schema, ea.PropertyAlias)
@@ -154,15 +196,16 @@ Namespace Entities.Meta
             If oschema Is Nothing Then
                 Throw New ArgumentNullException(NameOf(oschema))
             End If
-            Dim pk As String = Nothing
-            For Each mp As MapField2Column In oschema.GetPKs
-                If String.IsNullOrEmpty(pk) Then
-                    pk = mp.PropertyAlias
-                Else
-                    Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", If(getTypeFunc Is Nothing, oschema.GetType, getTypeFunc())))
-                End If
-            Next
-            Return pk
+            Return oschema.GetPK.PropertyAlias
+            'Dim pk As String = Nothing
+            'For Each mp As MapField2Column In oschema.GetPKs
+            '    If String.IsNullOrEmpty(pk) Then
+            '        pk = mp.PropertyAlias
+            '    Else
+            '        Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", If(getTypeFunc Is Nothing, oschema.GetType, getTypeFunc())))
+            '    End If
+            'Next
+            'Return pk
         End Function
         <Extension>
         Public Function GetPropertyTypeByName(ByVal oschema As IPropertyMap, ByVal type As Type, ByVal propertyAlias As String) As Type

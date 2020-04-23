@@ -96,8 +96,8 @@ Imports Worm.Query
             Get
                 If _idx Is Nothing Then
                     Dim idx As New OrmObjectIndex
-                    idx.Add(New MapField2Column("ID", "@id", Table))
-                    idx.Add(New MapField2Column("Title", "@name", Table))
+                    idx.Add(New MapField2Column("ID", Table, "@id"))
+                    idx.Add(New MapField2Column("Title", Table, "@name"))
                     _idx = idx
                 End If
                 Return _idx

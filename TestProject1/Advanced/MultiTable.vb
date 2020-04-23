@@ -18,7 +18,7 @@ Public Class MultiTable
 
     Private _title As String
 
-    <EntityPropertyAttribute(column:="msg")> _
+    <SourceField("msg")>
     Public Property Msg() As String
         Get
             Using Read("Msg")
@@ -68,8 +68,8 @@ Public MustInherit Class MultiTableSchemaBase
         Get
             If _idx Is Nothing Then
                 Dim idx As New OrmObjectIndex
-                idx.Add(New MapField2Column("ID", "id", Table))
-                idx.Add(New MapField2Column("Msg", "msg", Table))
+                idx.Add(New MapField2Column("ID", Table, "id"))
+                idx.Add(New MapField2Column("Msg", Table, "msg"))
                 _idx = idx
             End If
             Return _idx

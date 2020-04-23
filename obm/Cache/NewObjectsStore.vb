@@ -113,9 +113,10 @@ Namespace Cache
             End If
 
             Dim l As New List(Of PKDesc)
-            For Each m As MapField2Column In mpe.GetEntitySchema(t).GetPKs
-                Dim id As Object = GetPKValue(t, m.PropertyAlias, m.PropertyInfo.PropertyType, m.PropertyInfo.DeclaringType)
-                l.Add(New PKDesc(m.PropertyAlias, id))
+            Dim pk = mpe.GetEntitySchema(t).GetPK
+            For Each sf In pk.SourceFields
+                Dim id As Object = GetPKValue(t, pk.PropertyAlias, sf.PropertyInfo.PropertyType, sf.PropertyInfo.DeclaringType)
+                l.Add(New PKDesc(sf.SourceFieldExpression, id))
             Next
             Return l.ToArray
         End Function

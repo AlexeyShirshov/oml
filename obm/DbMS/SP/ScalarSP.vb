@@ -42,8 +42,8 @@ Namespace Database.Storedprocs
             Return CType(MyBase.GetResult(mgr), TypeWrap(Of T)).Value
         End Function
 
-        Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
-            Return New List(Of Pair(Of String, Object))
+        Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of ParamValue)
+            Return New List(Of ParamValue)
         End Function
 
         Protected Class ScalarProcSimple(Of T2 As Structure)
@@ -73,11 +73,11 @@ Namespace Database.Storedprocs
                 _names = names
             End Sub
 
-            Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
-                Dim l As New List(Of Pair(Of String, Object))
+            Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of ParamValue)
+                Dim l As New List(Of ParamValue)
                 If _obj IsNot Nothing Then
                     For i As Integer = 0 To _obj.Length - 1
-                        l.Add(New Pair(Of String, Object)(_names(i).Trim, _obj(i)))
+                        l.Add(New ParamValue(_names(i).Trim) With {.Value = _obj(i)})
                     Next
                 End If
                 Return l

@@ -86,7 +86,7 @@ Public Class TestSchema
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t3 As ICollection(Of Table2) = New QueryCmd().SelectEntity(GetType(Table2), True).Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine))).ToList(Of Table2)(mgr)
+            Dim t3 As ICollection(Of Table2) = New QueryCmd().SelectEntity(GetType(Table2), True).Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1))).ToList(Of Table2)(mgr)
 
             Assert.AreEqual(2, t3.Count)
 
@@ -103,7 +103,7 @@ Public Class TestSchema
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t3 As ICollection(Of Table2) = New QueryCmd().Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine))).ToList(Of Table2)(mgr)
+            Dim t3 As ICollection(Of Table2) = New QueryCmd().Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1))).ToList(Of Table2)(mgr)
 
             Assert.AreEqual(2, t3.Count)
 
@@ -111,7 +111,7 @@ Public Class TestSchema
                 Assert.IsFalse(t2.InternalProperties.IsLoaded)
             Next
 
-            For Each t2 As Table2 In New QueryCmd().SelectEntity(GetType(Table2), True).Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine))).ToList(Of Table2)(mgr)
+            For Each t2 As Table2 In New QueryCmd().SelectEntity(GetType(Table2), True).Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1))).ToList(Of Table2)(mgr)
                 Assert.IsTrue(t2.InternalProperties.IsLoaded)
             Next
         End Using
@@ -122,7 +122,7 @@ Public Class TestSchema
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim tt() As Table1 = New Table1() {New Table1(10, mgr.Cache, mgr.MappingEngine), New Table1(11, mgr.Cache, mgr.MappingEngine), New Table1(15, mgr.Cache, mgr.MappingEngine)}
+            Dim tt() As Table1 = New Table1() {New Table1(10), New Table1(11), New Table1(15)}
             Dim col As New Worm.ReadOnlyList(Of Table1)(New List(Of Table1)(tt))
             col.LoadObjects()
 
@@ -154,7 +154,7 @@ Public Class TestSchema
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim tt() As Table1 = New Table1() {New Table1(10, mgr.Cache, mgr.MappingEngine), New Table1(11, mgr.Cache, mgr.MappingEngine), New Table1(15, mgr.Cache, mgr.MappingEngine)}
+            Dim tt() As Table1 = New Table1() {New Table1(10), New Table1(11), New Table1(15)}
             Dim col As New Worm.ReadOnlyList(Of Table1)(New List(Of Table1)(tt))
             Assert.AreEqual(0, col.LoadObjects().Count)
 
@@ -180,13 +180,13 @@ Public Class TestSchema
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim q As New QueryCmd()
             q.AutoJoins = True
-            Dim t2 As IList(Of Table2) = q.SelectEntity(GetType(Table2), True).Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine))) _
+            Dim t2 As IList(Of Table2) = q.SelectEntity(GetType(Table2), True).Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1))) _
                 .OrderBy(SCtor.prop(GetType(Table1), "DT").asc).ToList(Of Table2)(mgr)
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.AreEqual(4, t2(1).Identifier)
 
-            t2 = New QueryCmd().SelectEntity(GetType(Table2), True).Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1, mgr.Cache, mgr.MappingEngine))) _
+            t2 = New QueryCmd().SelectEntity(GetType(Table2), True).Where(New Ctor(GetType(Table2)).prop("Table1").eq(New Table1(1))) _
                 .OrderBy(SCtor.prop(GetType(Table2), "DTs").desc).ToList(Of Table2)(mgr)
 
             Assert.AreEqual(4, t2(0).Identifier)

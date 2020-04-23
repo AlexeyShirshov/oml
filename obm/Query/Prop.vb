@@ -19,7 +19,7 @@ Namespace Query
 
         Private _op As ObjectProperty
         Private _tf As Pair(Of SourceFragment, String)
-        Private _c As Criteria.Values.CustomValue
+        Private _c As Criteria.Values.IFilterValue
 
         Protected Sub New()
         End Sub
@@ -48,11 +48,11 @@ Namespace Query
             _tf = New Pair(Of SourceFragment, String)(table, column)
         End Sub
 
-        Public Sub New(ByVal customFilter As Criteria.Values.CustomValue)
-            _c = customFilter
+        Public Sub New(ByVal value As Criteria.Values.IFilterValue)
+            _c = value
         End Sub
 
-        Public ReadOnly Property CustomTemplate() As Criteria.Values.CustomValue
+        Public ReadOnly Property FilterValue() As Criteria.Values.IFilterValue
             Get
                 Return _c
             End Get
@@ -145,7 +145,7 @@ Namespace Query
             target._op = _op.Clone
 
             If _c IsNot Nothing Then
-                target._c = _c.Clone
+                target._c = TryCast(_c.Clone, IFilterValue)
             End If
 
             If _tf IsNot Nothing Then

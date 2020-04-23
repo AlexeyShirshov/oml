@@ -42,11 +42,15 @@ Namespace Database.Storedprocs
 
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
             Dim result As Object = InitResult()
-            Dim et As New PerfCounter
+            'Dim et As New PerfCounter
+            Dim et As New Stopwatch
             Using dr As System.Data.Common.DbDataReader = mgr.ExecuteReaderCmd(cmd)
-                _exec = et.GetTime
+                et.Stop()
+                _exec = et.Elapsed
                 Dim i As Integer = 0
-                Dim ft As New PerfCounter
+                'Dim ft As New PerfCounter
+                Dim ft As New Stopwatch()
+                ft.Start()
                 Do While dr.Read
                     ProcessReader(mgr, i, dr, result)
                 Loop
@@ -56,7 +60,8 @@ Namespace Database.Storedprocs
                         ProcessReader(mgr, i, dr, result)
                     Loop
                 Loop
-                _fecth = ft.GetTime
+                ft.Stop()
+                _fecth = ft.Elapsed
                 EndProcess(result, mgr)
                 For Each p As OutParam In GetOutParams()
                     If _out Is Nothing Then
@@ -122,11 +127,11 @@ Namespace Database.Storedprocs
                 _obj = params
             End Sub
 
-            Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
-                Dim l As New List(Of Pair(Of String, Object))
+            Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of ParamValue)
+                Dim l As New List(Of ParamValue)
                 If _obj IsNot Nothing Then
                     For i As Integer = 0 To _obj.Length - 1
-                        l.Add(New Pair(Of String, Object)(_names(i).Trim, _obj(i)))
+                        l.Add(New ParamValue(_names(i).Trim) With {.Value = _obj(i)})
                     Next
                 End If
                 Return l

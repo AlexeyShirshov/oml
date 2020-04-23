@@ -15,8 +15,8 @@ Public Class Composite
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        Init(id, cache, schema)
+    Public Sub New(ByVal id As Integer)
+        _id = id
     End Sub
 
     Private _id As Integer
@@ -94,9 +94,9 @@ Public Class CompositeSchema
         Get
             If _idx Is Nothing Then
                 Dim idx As New OrmObjectIndex
-                idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.First)))
-                idx.Add(New MapField2Column("Title", "msg", GetTables()(Tables.First)))
-                idx.Add(New MapField2Column("Title2", "msg", GetTables()(Tables.Second)))
+                idx.Add(New MapField2Column("ID", GetTables()(Tables.First), "id"))
+                idx.Add(New MapField2Column("Title", GetTables()(Tables.First), "msg"))
+                idx.Add(New MapField2Column("Title2", GetTables()(Tables.Second), "msg"))
                 _idx = idx
             End If
             Return _idx
@@ -145,8 +145,8 @@ Public Class CompositeEditableSchema
         Get
             If _idx Is Nothing Then
                 Dim idx As New OrmObjectIndex
-                idx.Add(New MapField2Column("ID", "id", Table))
-                idx.Add(New MapField2Column("Title", "msg", Table))
+                idx.Add(New MapField2Column("ID", Table, "id"))
+                idx.Add(New MapField2Column("Title", Table, "msg"))
                 _idx = idx
             End If
             Return _idx

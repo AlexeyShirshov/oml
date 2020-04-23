@@ -40,8 +40,8 @@ Public Class Table1
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        Init(id, cache, schema)
+    Public Sub New(ByVal id As Integer)
+        _id = id
     End Sub
 
     <EntityProperty(Field2DbRelations.PrimaryKey)> _
@@ -90,8 +90,8 @@ Public Class Table1
         End Get
     End Property
 
-    Public Overridable Sub SetValue( _
-        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
+    Public Overridable Function SetValueOptimized(
+        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) As Boolean Implements IOptimizedValues.SetValueOptimized
         Select Case fieldName
             Case "Title"
                 Name = CStr(value)
@@ -110,24 +110,27 @@ Public Class Table1
             Case "ID"
                 Identifier = value
             Case Else
-                Throw New NotSupportedException(fieldName)
-                'MyBase.SetValue(pi, fieldName, oschema, value)
+                Return False
         End Select
-    End Sub
 
-    Public Overridable Overloads Function GetValue( _
-        ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object Implements IOptimizedValues.GetValueOptimized
+        Return True
+    End Function
+
+    Public Overridable Overloads Function GetValueOptimized(ByVal propertyAlias As String, ByVal oschema As IEntitySchema, ByRef found As Boolean) As Object Implements IOptimizedValues.GetValueOptimized
+        found = True
         If propertyAlias = "ddd" Then
             Return Name
         ElseIf propertyAlias = "ID" Then
             Return _id
         Else
-            Return GetValueReflection(propertyAlias, oschema)
+            found = False
+            'Return GetValueReflection(propertyAlias, oschema)
             'Return oschema.GetFieldColumnMap(fieldName).GetValue(Me)
             'Return GetMappingEngine.GetProperty(Me.GetType, oschema, fieldName).GetValue(Me, Nothing)
             'Throw New NotSupportedException(fieldName)
             'Return MyBase.GetValue(pi, fieldName, oschema)
         End If
+        Return Nothing
     End Function
 
     <EntityProperty(PropertyAlias:="Title")> _
@@ -236,12 +239,12 @@ Public Class Table1Implementation
         Get
             If _idx Is Nothing Then
                 _idx = New OrmObjectIndex
-                _idx.Add(New MapField2Column("ID", "id", Table))
-                _idx.Add(New MapField2Column("Title", "name", Table))
-                _idx.Add(New MapField2Column("Enum", "enum", Table))
-                _idx.Add(New MapField2Column("EnumStr", "enum_str", Table))
-                _idx.Add(New MapField2Column("Code", "code", Table))
-                _idx.Add(New MapField2Column("DT", "dt", Table))
+                _idx.Add(New MapField2Column("ID", Table, "id"))
+                _idx.Add(New MapField2Column("Title", Table, "name"))
+                _idx.Add(New MapField2Column("Enum", Table, "enum"))
+                _idx.Add(New MapField2Column("EnumStr", Table, "enum_str"))
+                _idx.Add(New MapField2Column("Code", Table, "code"))
+                _idx.Add(New MapField2Column("DT", Table, "dt"))
             End If
             Return _idx
         End Get
@@ -365,6 +368,8 @@ Public Class Table1Implementation
                                     Return 1 * _st
                                 End If
                             End If
+                        Case Else
+                            Throw New NotImplementedException(_s.ToString)
                     End Select
                 End If
             End If

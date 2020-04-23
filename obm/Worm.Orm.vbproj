@@ -48,7 +48,7 @@
     <AssemblyVersionSettings>None.None.IncrementOnDemand.None</AssemblyVersionSettings>
     <AssemblyFileVersionSettings>None.None.Increment.DateStamp</AssemblyFileVersionSettings>
     <PrimaryVersionType>AssemblyVersionAttribute</PrimaryVersionType>
-    <AssemblyVersion>4.1.7.1</AssemblyVersion>
+    <AssemblyVersion>4.2.0.1</AssemblyVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -204,12 +204,15 @@
     <Compile Include="DbMS\BulkLoad\SqlServerBuildLoader.vb" />
     <Compile Include="Entity\EntityExtensions.vb" />
     <Compile Include="Entity\EntityWrapper.vb" />
+    <Compile Include="GlobalSuppressions.vb" />
     <Compile Include="Managers\db\AppLockManager.vb" />
     <Compile Include="Managers\db\ConnectionMgr.vb" />
     <Compile Include="Managers\db\ErrorHandling.vb" />
     <Compile Include="Managers\db\IDataReaderAbstraction.vb" />
     <Compile Include="Managers\db\ModificationsTracker.vb" />
+    <Compile Include="Mapping\Converters.vb" />
     <Compile Include="Mapping\SchemaExtensions.vb" />
+    <Compile Include="Query\Criteria\Values\CachedEntityValue.vb" />
     <Compile Include="Web\InitMappingEngineModule.vb" />
     <Compile Include="QueryCmd\db\BaseProvider.vb" />
     <Compile Include="IDataContext.vb" />
@@ -372,7 +375,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
-  <PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <PostBuildEvent>$(SolutionDir)ilmerge /log /t:library /keyfile:$(SolutionDir)obm\worm.snk /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /xmldocs /lib:"C:\Program Files (x86)\Microsoft ASP.NET\ASP.NET Web Pages\v2.0\Assemblies" /out:$(TargetDir)$(TargetName)-Full.dll $(TargetPath) $(TargetDir)CoreFramework.dll
 $(SolutionDir)ilmerge /log /t:library /keyfile:$(SolutionDir)obm\worm.snk /targetplatform:v4,C:\Windows\Microsoft.NET\Framework64\v4.0.30319 /xmldocs  /lib:"C:\Program Files (x86)\Microsoft ASP.NET\ASP.NET Web Pages\v2.0\Assemblies" /out:$(TargetPath) $(TargetDir)$(TargetName)-Full.dll
 del /Q $(TargetDir)$(TargetName)-Full*</PostBuildEvent>

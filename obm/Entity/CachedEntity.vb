@@ -14,7 +14,7 @@ Namespace Entities
     Public Class OrmObjectException
         Inherits Exception
 
-        Private _obj As ICachedEntity
+        Private ReadOnly _obj As ICachedEntity
 
         Public Sub New()
             ' Add other code for custom properties here.
@@ -65,12 +65,12 @@ Namespace Entities
         'Protected Friend _needAccept As New Generic.List(Of AcceptState)
         <NonSerialized()> _
         Protected _hasPK As Boolean
-        <NonSerialized()> _
-        Private _alterLock As New Object
+        <NonSerialized()>
+        Private ReadOnly _alterLock As New Object
         '<NonSerialized()> _
         'Private _copy As ICachedEntity
         <NonSerialized()>
-        Private _props As New ConcurrentDictionary(Of String, Object)
+        Private ReadOnly _props As New ConcurrentDictionary(Of String, Object)
 
         '<EditorBrowsable(EditorBrowsableState.Never)> _
         'Public Class AcceptState
@@ -78,9 +78,9 @@ Namespace Entities
         'End Class
 
         Public Class RelatedObject
-            Private _dst As CachedEntity
-            Private _srcProps() As String
-            Private _dstProps() As String
+            Private ReadOnly _dst As CachedEntity
+            Private ReadOnly _srcProps() As String
+            Private ReadOnly _dstProps() As String
 
             Public Sub New(ByVal src As CachedEntity, ByVal properties() As String, _
                            ByVal dst As CachedEntity, ByVal dstProps() As String)
@@ -123,7 +123,7 @@ Namespace Entities
 
         <EditorBrowsable(EditorBrowsableState.Never)> _
         Public Class InternalClass
-            Private _o As CachedEntity
+            Private ReadOnly _o As CachedEntity
 
             Public Sub New(ByVal o As CachedEntity)
                 _o = o
@@ -340,18 +340,18 @@ Namespace Entities
             Return r
         End Function
 
-        Protected Overrides Sub Init(ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine)
-            Throw New NotSupportedException
-        End Sub
+        'Protected Overrides Sub Init(ByVal schema As ObjectMappingEngine)
+        '    Throw New NotSupportedException
+        'End Sub
 
         Protected Overridable Sub PKLoaded(ByVal pkCount As Integer, props As IPropertyMap) Implements _ICachedEntityEx.PKLoaded
+            PKLoaded(pkCount, props.GetPK.PropertyAlias)
+        End Sub
+        Protected Overridable Sub PKLoaded(ByVal pkCount As Integer, propertyAlias As String) Implements _ICachedEntityEx.PKLoaded
             _key = GetCacheKey()
             _hasPK = True
-            For Each p In props.GetPKs
-                SetLoaded(p.PropertyAlias, True)
-            Next
+            SetLoaded(propertyAlias, True)
         End Sub
-
         'Private Function CheckIsAllLoaded(ByVal mpe As ObjectMappingEngine, _
         '    ByVal loadedColumns As Integer, ByVal map As Collections.IndexedCollection(Of String, MapField2Column)) As Boolean Implements _ICachedEntity.CheckIsAllLoaded
         '    Using SyncHelper(False)
@@ -721,16 +721,16 @@ Namespace Entities
             'End If
         End Sub
 
-        Protected Sub _Init(ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine)
-            MyBase.Init(cache, mpe)
+        Protected Sub _Init(ByVal mpe As ObjectMappingEngine)
+            MyBase.Init(mpe)
         End Sub
 
 
-        Protected Overridable Overloads Sub Init(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) Implements _ICachedEntity.Init
-            _Init(cache, mpe)
-            OrmManager.SetPK(Me, pk, mpe)
-            PKLoaded(pk.Count, GetEntitySchema(mpe))
-        End Sub
+        'Protected Overridable Overloads Sub Init(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) Implements _ICachedEntity.Init
+        '    _Init(cache, mpe)
+        '    OrmManager.SetPK(Me, pk, mpe)
+        '    PKLoaded(pk.Count, GetEntitySchema(mpe))
+        'End Sub
 
 #Region " Xml Serialization "
 
@@ -854,7 +854,7 @@ l1:
                             'If pk.Second IsNot Nothing Then
                             '    v = pk.Second.ToString
                             'End If
-                            .WriteAttributeString(pk.PropertyAlias, pk.Value.ToString)
+                            .WriteAttributeString(pk.Column, pk.Value.ToString)
                             .WriteEndElement()
                         Next
                     End If
@@ -864,8 +864,8 @@ l1:
             End With
         End Sub
 
-        Protected Sub ReadValue(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal reader As XmlReader, _
-            ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal oschema As IEntitySchema)
+        Protected Sub ReadValue(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal reader As XmlReader,
+                                ByVal map As Collections.IndexedCollection(Of String, MapField2Column), ByVal oschema As IEntitySchema)
             reader.Read()
             Dim m As MapField2Column = map(propertyAlias)
             Select Case reader.NodeType
@@ -887,7 +887,7 @@ l1:
                     If m.IsFactory Then
                         Dim f As IEntityFactory = TryCast(Me, IEntityFactory)
                         If f IsNot Nothing Then
-                            Dim e As _IEntity = f.CreateContainingEntity(mgr, propertyAlias, pk)
+                            Dim e As _IEntity = TryCast(f.CreateContainingEntity(mgr, propertyAlias, pk), _IEntity)
                             'If e IsNot Nothing Then
                             '    e.SetMgrString(IdentityString)
                             '    RaiseObjectLoaded(e)
@@ -925,7 +925,7 @@ l1:
             Return l.ToArray
         End Function
 
-        Protected Sub ReadValues(ByVal mgr As OrmManager, ByVal reader As XmlReader, _
+        Protected Sub ReadValues(ByVal mgr As OrmManager, ByVal reader As XmlReader,
             ByVal oschema As IEntitySchema, ByVal mpe As ObjectMappingEngine)
             With reader
                 .MoveToFirstAttribute()
@@ -942,7 +942,7 @@ l1:
                         Dim value As String = .Value
                         If value = "xxx:nil" Then value = Nothing
                         If fv IsNot Nothing Then
-                            value = CStr(fv.CreateValue(oschema, m, .Name, value))
+                            value = CStr(fv.CreateValue(oschema, m, .Name, .Name, value))
                         End If
 
                         Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
@@ -992,7 +992,7 @@ l1:
                         Dim value As String = .Value
                         If value = "xxx:nil" Then value = Nothing
                         If fv IsNot Nothing Then
-                            value = CStr(fv.CreateValue(oschema, m, .Name, value))
+                            value = CStr(fv.CreateValue(oschema, m, .Name, .Name, value))
                         End If
 
                         If GetType(ISinglePKEntity).IsAssignableFrom(pi.PropertyType) Then
@@ -1582,7 +1582,7 @@ l1:
             Dim pks2 As IEnumerable(Of PKDesc) = obj.GetPKValues(Nothing)
             For i As Integer = 0 To pks.Count - 1
                 Dim pk As PKDesc = pks(i)
-                If pk.PropertyAlias <> pks2(i).PropertyAlias OrElse Not pk.Value.Equals(pks2(i).Value) Then
+                If pk.Column <> pks2(i).Column OrElse Not Object.Equals(pk.Value, pks2(i).Value) Then
                     Return False
                 End If
             Next
@@ -1695,7 +1695,7 @@ l1:
                     If Not IsPKLoaded Then Throw New OrmObjectException(String.Format("Entity of type {0} has no primary key", Me.GetType))
                     Dim r As New StringBuilder
                     For Each pk As PKDesc In Me.GetPKValues(Nothing)
-                        r.Append(pk.PropertyAlias).Append(":").Append(pk.Value.ToString).Append(",")
+                        r.Append(pk.Column).Append(":").Append(pk.Value.ToString).Append(",")
                     Next
                     _us = r.ToString
                 End If
@@ -1763,8 +1763,8 @@ l1:
         Private _copy As ICachedEntity
         '<NonSerialized()> _
         'Private _old_state As ObjectState
-        <NonSerialized()> _
-        Private _sl As New SpinLockRef
+        <NonSerialized()>
+        Private ReadOnly _sl As New SpinLockRef
 
         <NonSerialized()>
         Public Event OriginalCopyRemoved(ByVal sender As ICachedEntity) Implements IUndoChanges.OriginalCopyRemoved

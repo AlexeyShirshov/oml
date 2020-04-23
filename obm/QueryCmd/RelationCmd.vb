@@ -469,7 +469,7 @@ Namespace Query
                     Dim prd As Boolean = (AppendMain.HasValue AndAlso AppendMain.Value) OrElse _WithLoad(m2mEU, mpe) OrElse IsFTS OrElse
                         NeedAppendMain(m2mEU)
                     If prd OrElse mt IsNot Nothing Then
-                        Dim pka As String = mpe.GetSinglePK(m2mType, oschema)
+                        Dim pka As String = mpe.GetPrimaryKey(m2mType, oschema)
                         AppendMain = True
                         Dim jf As New JoinFilter(table, selected_r.Column, m2mEU, pka, _fo)
                         Dim jn As New QueryJoin(table, JoinType.Join, jf)
@@ -504,7 +504,7 @@ l1:
                                 'Dim selt As EntityUnion = SelectTypes(0).First
                             Else
                                 'Dim pk As EntityPropertyAttribute = mpe.GetPrimaryKeys(m2mType)(0)
-                                Dim pka As String = mpe.GetSinglePK(m2mType, oschema)
+                                Dim pka As String = mpe.GetPrimaryKey(m2mType, oschema)
                                 Dim te As New TableExpression(table, selected_r.Column)
                                 te.SetEntity(ideu)
                                 _sl.Add(New SelectExpression(te) With { _
@@ -547,7 +547,7 @@ l1:
                         Dim heu As New EntityUnion(hostType)
                         Dim hschema As IEntitySchema = mpe.GetEntitySchema(hostType)
                         _types.Add(heu, hschema)
-                        Dim hpk As String = mpe.GetSinglePK(hostType, hschema) 'mpe.GetPrimaryKeys(hostType, hschema)(0).PropertyAlias
+                        Dim hpk As String = mpe.GetPrimaryKey(hostType, hschema) 'mpe.GetPrimaryKeys(hostType, hschema)(0).PropertyAlias
                         _sl.Add(New SelectExpression(table, filtered_r.Column, hpk, heu))
 
                         AddEntityToSelectList(heu, False)
@@ -569,9 +569,10 @@ l1:
                                 AddTypeFields(mpe, _sl, SelectedEntities(0), Nothing, isAnonym, stmt)
                                 'Dim selt As EntityUnion = SelectTypes(0).First
                             Else
-                                For Each mp As MapField2Column In oschema.GetPKs
-                                    _sl.Add(New SelectExpression(New ObjectProperty(m2mEU, mp.PropertyAlias)))
-                                Next
+                                'For Each mp As MapField2Column In oschema.GetPKs
+                                '    _sl.Add(New SelectExpression(New ObjectProperty(m2mEU, mp.PropertyAlias)))
+                                'Next
+                                _sl.Add(New SelectExpression(New ObjectProperty(m2mEU, oschema.GetPK.PropertyAlias)))
                             End If
                         End If
 

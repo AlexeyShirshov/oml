@@ -237,7 +237,7 @@ Namespace Query
             Inherits EventArgs
 
             Private _dic As IDictionary
-            Private _key As String
+            Private ReadOnly _key As String
 
             Public Sub New(ByVal key As String)
                 _key = key
@@ -261,11 +261,11 @@ Namespace Query
 
         <EditorBrowsable(EditorBrowsableState.Never)> _
         Class svct
-            Private _oldct As Dictionary(Of EntityUnion, EntityUnion)
+            Private ReadOnly _oldct As Dictionary(Of EntityUnion, EntityUnion)
             Protected _types As ObjectModel.ReadOnlyCollection(Of Pair(Of EntityUnion, Boolean?))
-            Private _cmd As QueryCmd
-            Private _f As FromClauseDef
-            Private _sssl As ObjectModel.ReadOnlyCollection(Of SelectExpression)
+            Private ReadOnly _cmd As QueryCmd
+            Private ReadOnly _f As FromClauseDef
+            Private ReadOnly _sssl As ObjectModel.ReadOnlyCollection(Of SelectExpression)
 
             Private _dontReset As Boolean
 
@@ -378,7 +378,7 @@ Namespace Query
         Public Class GetDynamicKey4FilterEventArgs
             Inherits EventArgs
 
-            Private _f As IGetFilter
+            Private ReadOnly _f As IGetFilter
             Private _key As String
 
             Public Sub New(ByVal f As IGetFilter)
@@ -462,8 +462,8 @@ Namespace Query
                     Return Not EmptyCustomInfo.Equals(_o)
                 End Get
             End Property
-            Private _executed As Boolean
-            Private _mgr As OrmManager
+            Private ReadOnly _executed As Boolean
+            Private ReadOnly _mgr As OrmManager
 
             Public ReadOnly Property FromCache() As Boolean
                 Get
@@ -515,21 +515,21 @@ Namespace Query
 
             Property Context As Object
 
-            Private _ex As Exception
+            Private ReadOnly _ex As Exception
             Public ReadOnly Property Exception() As Exception
                 Get
                     Return _ex
                 End Get
             End Property
 
-            Private _conn As Object
+            Private ReadOnly _conn As Object
             Public ReadOnly Property Connection() As Object
                 Get
                     Return _conn
                 End Get
             End Property
 
-            Private _mgr As OrmManager
+            Private ReadOnly _mgr As OrmManager
             Public ReadOnly Property OrmManager() As OrmManager
                 Get
                     Return _mgr
@@ -567,21 +567,21 @@ Namespace Query
 
             Property Context As Object
 
-            Private _ex As Exception
+            Private ReadOnly _ex As Exception
             Public ReadOnly Property Exception() As Exception
                 Get
                     Return _ex
                 End Get
             End Property
 
-            Private _cmd As Object
+            Private ReadOnly _cmd As Object
             Public ReadOnly Property Command() As Object
                 Get
                     Return _cmd
                 End Get
             End Property
 
-            Private _mgr As OrmManager
+            Private ReadOnly _mgr As OrmManager
             Public ReadOnly Property OrmManager() As OrmManager
                 Get
                     Return _mgr
@@ -857,48 +857,33 @@ Namespace Query
             Dim pa As String = Nothing
             Dim ids As New List(Of Object)
             Dim pks As New List(Of IEnumerable(Of PKDesc))
-            Dim i As New Dictionary(Of String, List(Of Object))
 
             For Each o As ICachedEntity In e2load
                 Dim pk As IEnumerable(Of PKDesc) = o.GetPKValues(Nothing)
                 If pk.Count = 1 Then
-                    pa = pk(0).PropertyAlias
+                    pa = pk(0).Column
                     ids.Add(pk(0).Value)
                 Else
                     pks.Add(pk)
-                    For Each p As PKDesc In pk
-                        Dim l As List(Of Object) = Nothing
-                        If Not i.TryGetValue(p.PropertyAlias, l) Then
-                            l = New List(Of Object)
-                            i.Add(p.PropertyAlias, l)
-                        End If
-                        l.Add(p.Value)
-                    Next
                 End If
             Next
 
             If ids.Count > 0 Then
                 OptimizeInFilter(Ctor.prop(realType, pa).in(ids).Filter)
             ElseIf pks.Count > 0 Then
-                If pks.Count < 100 Then
-                    For Each kv As KeyValuePair(Of String, List(Of Object)) In i
-                        WhereAnd(Ctor.prop(realType, kv.Key).in(kv.Value))
+                Dim gpp As New List(Of Criteria.PredicateLink)
+                For Each pk As PKDesc() In pks
+                    Dim pp As Criteria.PredicateLink = Nothing
+                    For Each p As PKDesc In pk
+                        If pp Is Nothing Then
+                            pp = Ctor.prop(realType, p.Column).eq(p.Value)
+                        Else
+                            pp = pp.and(realType, p.Column).eq(p.Value)
+                        End If
                     Next
-                Else
-                    Dim gpp As New List(Of Criteria.PredicateLink)
-                    For Each pk As PKDesc() In pks
-                        Dim pp As Criteria.PredicateLink = Nothing
-                        For Each p As PKDesc In pk
-                            If pp Is Nothing Then
-                                pp = Ctor.prop(realType, p.PropertyAlias).eq(p.Value)
-                            Else
-                                pp = pp.and(realType, p.PropertyAlias).eq(p.Value)
-                            End If
-                        Next
-                        gpp.Add(pp)
-                    Next
-                    OptimizeInFilter(gpp)
-                End If
+                    gpp.Add(pp)
+                Next
+                OptimizeInFilter(gpp)
             Else
                 Throw New InvalidOperationException
             End If
@@ -1196,7 +1181,8 @@ Namespace Query
         Private Sub AddExpression2SelectList(ByVal se As SelectExpression, ByVal mpe As ObjectMappingEngine, isAnonym As Boolean)
             _sl.Add(se)
             If (_outer IsNot Nothing OrElse _rn IsNot Nothing) AndAlso String.IsNullOrEmpty(se.ColumnAlias) Then
-                If String.IsNullOrEmpty(se.IntoPropertyAlias) AndAlso Not isAnonym Then
+                Dim pa = se.GetIntoPropertyAlias
+                If String.IsNullOrEmpty(pa) AndAlso Not isAnonym Then
                     'Dim t As Type = Nothing
                     'If se.ObjectProperty.Entity IsNot Nothing Then
                     '    t = se.ObjectProperty.Entity.GetRealType(mpe)
@@ -1206,7 +1192,7 @@ Namespace Query
                     'End If
                     se.ColumnAlias = "[cl" & _sl.Count & "]"
                 Else
-                    se.ColumnAlias = "[" & se.GetIntoPropertyAlias & "]"
+                    se.ColumnAlias = "[" & pa & "]"
                 End If
             End If
             If TypeOf se.Operand Is PropertyAliasExpression AndAlso String.IsNullOrEmpty(se.GetIntoPropertyAlias) Then
@@ -1276,7 +1262,9 @@ Namespace Query
                                     Dim _createType As EntityUnion = Nothing
                                     If Not _createTypes.TryGetValue(de.Key, _createType) Then
 l2:
-                                        For Each m As MapField2Column In oschema.GetPKs
+                                        'For Each m As MapField2Column In oschema.GetPKs
+                                        If True Then
+                                            Dim m = oschema.GetPK
                                             Dim pa As String = m.PropertyAlias
                                             If Not col.Exists(Function(c) c.GetIntoPropertyAlias = pa) Then
                                                 Dim se As New SelectExpression(de.Key, pa)
@@ -1286,7 +1274,8 @@ l2:
                                                     AddExpression2SelectList(se, mpe, isAnonym)
                                                 End If
                                             End If
-                                        Next
+                                            'Next
+                                        End If
                                     Else
                                         Dim ct As Type = _createType.GetRealType(mpe)
                                         Dim t As Type = de.Key.GetRealType(mpe)
@@ -1494,7 +1483,7 @@ l1:
                                     p = d.Value
                                 End If
                             Next
-                            AddTypeFields(mpe, _sl, tp, If(p IsNot Nothing, p.First, Nothing), isAnonym, stmt)
+                            AddTypeFields(mpe, _sl, tp, p?.First, isAnonym, stmt)
                             'If tp.Second Then
                             '    Throw New NotImplementedException
                             'Else
@@ -2033,26 +2022,30 @@ l1:
                 Next
             Else
                 If FromClause IsNot Nothing AndAlso FromClause.QueryEU IsNot Nothing AndAlso FromClause.QueryEU.IsQuery Then
-                    For Each c As MapField2Column In oschema.GetPKs
-                        Dim se As New SelectExpression(New PropertyAliasExpression(c.PropertyAlias)) With { _
+                    'For Each c As MapField2Column In oschema.GetPKs
+                    Dim c = oschema.GetPK
+                    Dim se As New SelectExpression(New PropertyAliasExpression(c.PropertyAlias)) With { _
                                 .Into = tp.First, .IntoPropertyAlias = c.PropertyAlias _
                             }
                         se.Attributes = c.Attributes
                         cl.Add(se)
-                    Next
+                    'Next
                 Else
                     If IsFTS Then
-                        Dim pk As String = mpe.GetSinglePK(t, oschema)
-                        Dim se As New SelectExpression(_from.Table, stmt.FTSKey, pk)
-                        se.Into = tp.First
-                        se.Attributes = Field2DbRelations.PK
+                        Dim pk As String = mpe.GetPrimaryKey(t, oschema)
+                        Dim se As New SelectExpression(_from.Table, stmt.FTSKey, pk) With {
+                            .Into = tp.First,
+                            .Attributes = Field2DbRelations.PK
+                        }
                         _sl.Add(se)
                     Else
-                        For Each c As MapField2Column In oschema.GetPKs
-                            Dim se As New SelectExpression(tp.First, c.PropertyAlias)
-                            se.Attributes = c.Attributes
-                            cl.Add(se)
-                        Next
+                        'For Each c As MapField2Column In oschema.GetPKs
+                        Dim c = oschema.GetPK
+                        Dim se As New SelectExpression(tp.First, c.PropertyAlias) With {
+                            .Attributes = c.Attributes
+                        }
+                        cl.Add(se)
+                        'Next
                     End If
                 End If
             End If
@@ -2128,12 +2121,11 @@ l1:
         ''' <param name="sb"></param>
         ''' <param name="cb"></param>
         ''' <param name="mpe"></param>
-        ''' <param name="contextInfo"></param>
         ''' <returns></returns>
         ''' <remarks></remarks>
-        Protected Friend Function GetStaticKey(ByVal sb As StringBuilder, _
-            ByVal cb As Cache.CacheListBehavior, _
-            ByVal mpe As ObjectMappingEngine) As Boolean
+        Protected Friend Function GetStaticKey(ByVal sb As StringBuilder,
+                                               ByVal cb As Cache.CacheListBehavior,
+                                               ByVal mpe As ObjectMappingEngine) As Boolean
 
             If Not _prepared Then
                 Throw New QueryCmdException("Command not prepared", Me)
@@ -3711,10 +3703,10 @@ l1:
                 Try
                     SelectClause = Nothing
                     Dim st As Type = selOS.GetRealType(mgr.MappingEngine)
-                    Dim spk As String = mgr.MappingEngine.GetSinglePK(st)
+                    Dim spk As String = mgr.MappingEngine.GetPrimaryKey(st)
                     Dim types As ICollection(Of Type) = mgr.MappingEngine.GetDerivedTypes(st)
                     For Each tt As Type In types
-                        Dim pk As String = mgr.MappingEngine.GetSinglePK(tt)
+                        Dim pk As String = mgr.MappingEngine.GetPrimaryKey(tt)
                         Join(JCtor.left_join(tt).on(selOS, spk).eq(tt, pk))
                         AddEntityToSelectList(tt, withLoad)
                     Next
@@ -4285,10 +4277,11 @@ l1:
             Return r
         End Function
 
-        Private Sub InitPOCO(ByVal rt As Type, _
-            ByVal ctd As ComponentModel.ICustomTypeDescriptor, ByVal mpe As ObjectMappingEngine, _
-            ByVal e As _IEntity, ByVal ro As Object, ByVal cache As Cache.CacheBase, ByVal contextInfo As Object, _
-            Optional ByVal pref As String = Nothing)
+        Private Sub InitPOCO(ByVal rt As Type,
+                             ByVal ctd As ComponentModel.ICustomTypeDescriptor, ByVal mpe As ObjectMappingEngine,
+                             ByVal e As _IEntity, ByVal ro As Object, ByVal cache As Cache.CacheBase, ByVal contextInfo As Object,
+                             Optional ByVal pref As String = Nothing)
+
             Dim oschema As IEntitySchema = Nothing
             If _poco IsNot Nothing Then
                 oschema = CType(_poco(rt), IEntitySchema)
@@ -4326,15 +4319,18 @@ l1:
                     v = Nothing
                 End If
                 'pi.SetValue(ro, v, Nothing)
-                Dim pit As Type = pi.PropertyType
+
                 Dim vals() As PKDesc = Nothing
                 'If ObjectMappingEngine.IsEntityType(pit, mpe) Then
                 '    vals = mpe.GetPKs(v, GetEntitySchema(mpe, pit))
                 'Else
                 vals = New PKDesc() {New PKDesc(pa, v)}
                 'End If
-                v = ObjectMappingEngine.AssignValue2Property(pit, mpe, cache, vals, ro, map, m.PropertyAlias, TryCast(ro, IPropertyLazyLoad), m, oschema, Nothing, CreateManager)
-                If v IsNot Nothing AndAlso _poco IsNot Nothing AndAlso _poco.Contains(pit) Then
+
+                'v = ObjectMappingEngine.AssignValue2Property(pit, mpe, cache, vals, ro, map, m.PropertyAlias, TryCast(ro, IPropertyLazyLoad), m, oschema, Nothing, CreateManager)
+                Dim newo = mpe.ParseValueFromStorage(m.Attributes, ro, m, m.PropertyAlias, oschema, cache, CreateManager, vals, TryCast(ro, IPropertyLazyLoad), Nothing)
+                Dim pit As Type = newo?.GetType
+                If newo IsNot Nothing AndAlso _poco IsNot Nothing AndAlso _poco.Contains(pit) Then
                     InitPOCO(pit, ctd, mpe, e, v, cache, contextInfo, m.PropertyAlias)
                 End If
             Next
@@ -5234,7 +5230,7 @@ l1:
             Return c
         End Function
 
-        Friend Function GetFieldsIdx() As Collections.IndexedCollection(Of String, MapField2Column)
+        Friend Function GetFieldsIdx(mpe As ObjectMappingEngine) As Collections.IndexedCollection(Of String, MapField2Column)
             Dim c As New OrmObjectIndex
 
             'For Each p As SelectExpression In q.SelectList
@@ -5242,9 +5238,9 @@ l1:
             'Next
 
             If _sl IsNot Nothing Then
-                SelectExpression.GetMapping(c, _sl)
+                SelectExpression.GetMapping(c, _sl, mpe, Me)
             Else
-                SelectExpression.GetMapping(c, SelectList)
+                SelectExpression.GetMapping(c, SelectList, mpe, Me)
             End If
             'If q.Aggregates IsNot Nothing Then
             '    For Each p As AggregateBase In q.Aggregates
@@ -5262,7 +5258,7 @@ l1:
             If s Is Nothing Then
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = GetFieldsIdx(mpe, t)
                 If fields.Count = 0 Then
-                    fields = GetFieldsIdx()
+                    fields = GetFieldsIdx(mpe)
                 End If
 
                 If fields.Count = 0 Then
@@ -5565,11 +5561,7 @@ l1:
                             For Each su As SelectUnion In col
                                 If su.EntityUnion IsNot Nothing Then
                                     Dim map As MapField2Column = GetFieldColumnMap(_types(su.EntityUnion), su.EntityUnion.GetRealType(mpe))(p)
-                                    If Not String.IsNullOrEmpty(map.SourceFieldAlias) Then
-                                        Return New String() {map.SourceFieldAlias}
-                                    Else
-                                        Return map.SourceFields.ConvertAll(Function(item) item.SourceFieldExpression).ToArray
-                                    End If
+                                    Return map.SourceFields.Select(Function(item) CoreFramework.StringExtensions.Coalesce(item.SourceFieldAlias, item.SourceFieldExpression)).ToArray
                                 End If
                             Next
 
@@ -5936,8 +5928,9 @@ l1:
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As QueryCmd = Nothing
             If f Is Nothing Then
-                q = New QueryCmd()
-                q.Name = name
+                q = New QueryCmd With {
+                    .Name = name
+                }
             Else
                 q = f.Create(name)
             End If
@@ -6575,8 +6568,9 @@ l1:
                     f = New FromClauseDef(selEU)
                 End If
 
-                Dim q As New QueryCmd(_getMgr)
-                q.SpecificMappingEngine = SpecificMappingEngine
+                Dim q As New QueryCmd(_getMgr) With {
+                    .SpecificMappingEngine = SpecificMappingEngine
+                }
                 q.From(CType(Clone(), QueryCmd) _
                      .[Select](FCtor.Exp(s1).count().into("Count")) _
                      .From(f) _
@@ -6610,7 +6604,7 @@ l1:
                 tt = eu.GetRealType(GetMappingEngine)
                 Dim oldf As IGetFilter = Filter
                 Try
-                    WhereAnd(Ctor.prop(eu, GetMappingEngine.GetSinglePK(tt)).eq(o))
+                    WhereAnd(Ctor.prop(eu, GetMappingEngine.GetPrimaryKey(tt)).eq(o))
                     Return SingleOrDefaultDyn(Of T)() IsNot Nothing
                 Finally
                     _filter = oldf
@@ -6627,7 +6621,7 @@ l1:
                 tt = eu.GetRealType(GetMappingEngine)
                 Dim oldf As IGetFilter = Filter
                 Try
-                    WhereAnd(Ctor.prop(eu, GetMappingEngine.GetSinglePK(tt)).eq(o))
+                    WhereAnd(Ctor.prop(eu, GetMappingEngine.GetPrimaryKey(tt)).eq(o))
                     Return SingleOrDefault(Of T)() IsNot Nothing
                 Finally
                     _filter = oldf

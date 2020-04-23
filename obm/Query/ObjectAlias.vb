@@ -12,7 +12,7 @@ Namespace Query
         Private _t As Type
         Private _en As String
         Private _q As Worm.Query.QueryCmd
-        Private _uqName As String
+        Private ReadOnly _uqName As String
         Private _tbl As Entities.Meta.SourceFragment
         Public Sub New(ByVal t As Type)
             _t = t
@@ -441,7 +441,13 @@ Namespace Query
                 _pa = value
             End Set
         End Property
+        Public Function IsEmpty() As Boolean
+            If String.IsNullOrEmpty(PropertyAlias) AndAlso _e Is Nothing Then
+                Return True
+            End If
 
+            Return False
+        End Function
         Public Const PrimaryKeyReference As String = "19rfas$%*&^ldfj"
 
         Public Sub New(ByVal entityName As String, ByVal propertyAlias As String)
@@ -477,7 +483,7 @@ Namespace Query
 
         Public Function GetPropertyAlias(ByVal mpe As ObjectMappingEngine) As String
             If mpe IsNot Nothing AndAlso PropertyAlias = PrimaryKeyReference Then
-                Return mpe.GetSinglePK(Entity.GetRealType(mpe))
+                Return mpe.GetPrimaryKey(Entity.GetRealType(mpe))
             End If
 
             Return PropertyAlias
@@ -563,8 +569,9 @@ Namespace Query
             Return Clone()
         End Function
         Public Function Clone() As ObjectProperty
-            Dim n As New ObjectProperty
-            n._pa = _pa
+            Dim n As New ObjectProperty With {
+                ._pa = _pa
+            }
             If _e IsNot Nothing Then
                 n._e = _e.Clone
             End If

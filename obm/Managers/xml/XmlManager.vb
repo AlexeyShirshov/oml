@@ -6,13 +6,14 @@ Imports Worm.Entities
 Imports Worm.Criteria.Joins
 Imports Worm.Query.Sorting
 Imports CoreFramework.CFDebugging
+Imports System.Linq
 
 Namespace Xml
     Partial Public Class QueryManager
         Inherits OrmManager
 
-        Private _fileName As String
-        Private _stream As IO.Stream
+        Private ReadOnly _fileName As String
+        Private ReadOnly _stream As IO.Stream
         Private _exec As TimeSpan
         Private _fetch As TimeSpan
 
@@ -212,9 +213,11 @@ Namespace Xml
 
             Dim original_type As Type = GetType(T)
             Dim nav As XPathNavigator = GetNavigator()
-            Dim et As New PerfCounter
+            'Dim et As New PerfCounter
+            Dim et As New Stopwatch
             Dim nodes As XPathNodeIterator = nav.Select(xpath)
-            _exec = et.GetTime
+            et.Stop()
+            _exec = et.Elapsed
 
             'If values Is Nothing Then
             '    values = New Generic.List(Of T)
@@ -223,11 +226,13 @@ Namespace Xml
             'Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
             Dim dic As IDictionary = GetDictionary(original_type)
             Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(original_type)
-            Dim ft As New PerfCounter
+            'Dim ft As New PerfCounter
+            Dim ft As New Stopwatch
             Do While nodes.MoveNext
                 LoadFromNodeIterator(Of T)(nodes.Current.Clone, dic, values, _loadedInLastFetch, oschema)
             Loop
-            _fetch = ft.GetTime
+            ft.Stop()
+            _fetch = ft.Elapsed
             'Return CType(CreateReadonlyList(original_type, CType(values, System.Collections.IList)), Global.Worm.ReadOnlyEntityList(Of T))
             'Return New ReadOnlyList(Of T)(CType(values, List(Of T)))
         End Sub
@@ -284,8 +289,13 @@ Namespace Xml
             Dim original_type As Type = obj.GetType
             Dim cnt As Integer
             Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
-            For Each m As MapField2Column In oschema.GetPKs
-                Dim attr As String = m.SourceFieldExpression
+            Dim fv As IStorageValueConverter = TryCast(obj, IStorageValueConverter)
+            Dim svo = TryCast(oschema, IOptimizeSetValue)
+            Dim pk = oschema.GetPK
+            Dim pks As New List(Of PKDesc2)
+
+            For Each sf In pk.SourceFields
+                Dim attr As String = sf.SourceFieldExpression
                 Dim n As XPathNavigator = node.Clone
                 Dim nodes As XPathNodeIterator = n.Select(attr)
                 Dim sn As Boolean
@@ -294,12 +304,53 @@ Namespace Xml
                         Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                     End If
 
-                    ObjectMappingEngine.AssignValue2PK(obj, False, oschema, ll, m, m.PropertyAlias, nodes.Current.Value)
-                    'ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
+                    Dim value As Object = nodes.Current.Value
+
+                    If fv IsNot Nothing Then
+                        value = fv.CreateValue(oschema, pk, pk.PropertyAlias, sf.SourceFieldAlias, value)
+                    End If
+
+                    Dim pi = sf.PropertyInfo
+
+                    If pi Is Nothing Then
+                    Else
+                        If sf.Converter Is Nothing Then
+                            If pi.PropertyType Is value.GetType Then
+                                sf.Converter = MapField2Column.EmptyConverter
+                            Else
+                                sf.Converter = Converters.GetConverter(pi.PropertyType, value.GetType)
+                            End If
+                        End If
+
+                        If sf.Converter IsNot MapField2Column.EmptyConverter Then
+                            value = sf.Converter(pi.PropertyType, value.GetType, value)
+                        End If
+                    End If
+
+                    If sf.OptimizedSetValue Is Nothing Then
+                        If svo IsNot Nothing Then
+                            sf.OptimizedSetValue = svo.GetOptimizedDelegate(sf.SourceFieldExpression)
+                        Else
+                            sf.OptimizedSetValue = MapField2Column.EmptyOptimizedSetValue
+                        End If
+                    End If
+
+                    pks.Add(New PKDesc2(sf.SourceFieldExpression, value, sf.PropertyInfo, sf.OptimizedSetValue))
+
                     sn = True
                     cnt += 1
                 Loop
             Next
+
+            If pks.All(Function(it) it.svo IsNot Nothing AndAlso it.svo IsNot MapField2Column.EmptyOptimizedSetValue) Then
+                For Each pkasd In pks
+                    pkasd.svo(obj, pkasd.Value)
+                Next
+            Else
+                ObjectMappingEngine.SetPK(obj, pks, oschema)
+            End If
+
+
             obj.PKLoaded(cnt, oschema)
             Return cnt > 0
         End Function
@@ -312,27 +363,37 @@ Namespace Xml
             Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
             For Each m As MapField2Column In map
                 If Not m.IsPK Then
-                    Dim attr As String = m.SourceFieldExpression
-                    Dim n As XPathNavigator = node.Clone
-                    Dim nodes As XPathNodeIterator = n.Select(attr)
-                    Dim sn As Boolean
-                    Do While nodes.MoveNext
-                        If sn Then
-                            Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
-                        End If
-                        ParseValueFromStorage(False, m.Attributes, obj, m, m.PropertyAlias, oschema, map, New PKDesc() {New PKDesc(m.PropertyAlias, nodes.Current.Value)}, ll, Nothing)
-                        'ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
-                        'If orm IsNot Nothing Then orm.SetLoaded(m.PropertyAlias, True, True, map, MappingEngine)
-                        sn = True
-                        cnt += 1
-                    Loop
+                    Dim l As New List(Of PKDesc)
+                    For Each sf In m.SourceFields
+                        Dim attr As String = sf.SourceFieldExpression
+                        Dim n As XPathNavigator = node.Clone
+                        Dim nodes As XPathNodeIterator = n.Select(attr)
+                        Dim sn As Boolean
+                        Do While nodes.MoveNext
+                            If sn Then
+                                Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
+                            End If
+
+                            l.Add(New PKDesc(sf.SourceFieldExpression, nodes.Current.Value))
+
+                            'ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
+                            'If orm IsNot Nothing Then orm.SetLoaded(m.PropertyAlias, True, True, map, MappingEngine)
+                            sn = True
+                            cnt += 1
+                        Loop
+                    Next
+
+                    MappingEngine.ParseValueFromStorage(m.Attributes, obj, m, m.PropertyAlias, oschema, Cache, GetCreateManager, l, ll, Nothing)
                 Else
                     If ll IsNot Nothing Then SetLoaded(ll, m.PropertyAlias, True)
                 End If
             Next
+
             If ll IsNot Nothing Then
-                CheckIsAllLoaded(ll, MappingEngine, cnt, map)
+                Return CheckIsAllLoaded(ll, MappingEngine, cnt, map)
             End If
+
+            Return False
         End Function
 
         Public Overrides Function GetEntityCloneFromStorage(ByVal obj As Entities._ICachedEntity) As Entities.ICachedEntity

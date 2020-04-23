@@ -133,7 +133,7 @@ Imports Worm
         End Property
 
         Private _title As String
-        <EntityProperty("name")> Public Property Title() As String
+        <SourceField("name")> Public Property Title() As String
             Get
                 Return _title
             End Get
@@ -189,9 +189,9 @@ Imports Worm
                 Get
                     If _m Is Nothing Then
                         _m = New OrmObjectIndex
-                        _m("ID") = New MapField2Column("ID", "id", _tbl, Field2DbRelations.PrimaryKey)
-                        _m("Title") = New MapField2Column("Title", "name", _tbl)
-                        _m("Code") = New MapField2Column("Code", "code", _tbl)
+                        _m("ID") = New MapField2Column("ID", _tbl, Field2DbRelations.PrimaryKey, New SourceField("id"))
+                        _m("Title") = New MapField2Column("Title", _tbl, "name")
+                        _m("Code") = New MapField2Column("Code", _tbl, "code")
                     End If
                     Return _m
                 End Get

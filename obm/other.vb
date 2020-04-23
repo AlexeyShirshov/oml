@@ -3,6 +3,7 @@ Imports System.Runtime.CompilerServices
 Imports System.Runtime.InteropServices
 Imports System.Data
 Imports Worm.Criteria.Core
+Imports Worm.Database
 
 ''' <summary>
 ''' Модуль небольших функций для внутреннего использования по всему солюшену
@@ -114,8 +115,8 @@ Public Module helper
     ''' </summary>
     ''' <remarks></remarks>
     Public Class MergeResult
-        Private _pairs As ICollection(Of Pair(Of Integer))
-        Private _rest As ICollection(Of Integer)
+        Private ReadOnly _pairs As ICollection(Of Pair(Of Integer))
+        Private ReadOnly _rest As ICollection(Of Integer)
 
         ''' <summary>
         ''' Конструктор класса
@@ -214,6 +215,10 @@ Public Module helper
         End Using
     End Function
 
+    Public Function MakePKName(propertyAlias As String, column As String) As String
+        'Return propertyAlias & "_" & column.ClearSourceField
+        Return column.ClearSourceField
+    End Function
 End Module
 
 Public Class ObjectWrap(Of T)
@@ -483,7 +488,7 @@ Public NotInheritable Class DbTypeConvertor
 
 
     ' Fields
-    Private Shared _DbTypeList As ArrayList = New ArrayList
+    Private Shared ReadOnly _DbTypeList As ArrayList = New ArrayList
 
     ' Nested Types
     <StructLayout(LayoutKind.Sequential)> _
@@ -542,7 +547,7 @@ Public Class OnExitScopeAction
     'Public Delegate Sub Action(Of T)(ByVal t1 As T)
     'Public Delegate Sub Action(Of T, T2)(ByVal t1 As T, ByVal t2 As T2)
 
-    Private _action As Action
+    Private ReadOnly _action As Action
 
     Public Sub New(ByVal action As Action)
         _action = action

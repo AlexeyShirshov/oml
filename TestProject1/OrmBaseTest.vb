@@ -20,7 +20,7 @@ Imports Worm.Expressions2
         Assert.IsTrue(schemaV1.SupportFullTextSearch)
 
         Dim s As New Worm.ObjectMappingEngine("1")
-        Dim o As New Entity(10, Nothing, s)
+        Dim o As New Entity(10)
         Dim t As Type = GetType(Entity)
 
         Assert.AreEqual(1, s.GetTables(t).Length)
@@ -89,16 +89,16 @@ Imports Worm.Expressions2
     Public Sub TestInsert()
         Dim schemaV1 As New Worm.ObjectMappingEngine("1")
         Dim gen As New SQL2000Generator
-        Dim o As New Entity(10, Nothing, schemaV1)
+        Dim o As New Entity(10)
         Dim t As Type = GetType(Entity)
 
         Dim params As ICollection(Of Data.Common.DbParameter) = Nothing
         Dim sel As List(Of SelectExpression) = Nothing
 
-        Dim expected As String = "declare @pk_id Int" & vbCrLf & _
-            "declare @rcount int" & vbCrLf & _
-            "insert into dbo.ent1 default values" & vbCrLf & _
-            "select @rcount = @@rowcount, @pk_id = scope_identity()" & vbCrLf & _
+        Dim expected As String = "declare @pk_id int" & vbCrLf &
+            "declare @rcount int" & vbCrLf &
+            "insert into dbo.ent1 default values" & vbCrLf &
+            "select @rcount = @@rowcount, @pk_id = scope_identity()" & vbCrLf &
             "if @rcount > 0 select t1.id from dbo.ent1 t1 where t1.id = @pk_id"
 
         Assert.AreEqual(expected, gen.Insert(schemaV1, o, Nothing, params, sel))
@@ -114,18 +114,18 @@ Imports Worm.Expressions2
     Public Sub TestInsert2()
         Dim schemaV1 As New Worm.ObjectMappingEngine("1")
         Dim gen As New SQL2000Generator
-        Dim o As New Entity2(10, Nothing, schemaV1)
+        Dim o As New Entity2(10)
         Dim t As Type = GetType(Entity)
 
         Dim params As ICollection(Of Data.Common.DbParameter) = Nothing
         Dim sel As List(Of SelectExpression) = Nothing
 
-        Dim expected As String = "declare @pk_id Int" & vbCrLf & _
-            "declare @rcount int" & vbCrLf & _
-            "declare @err int" & vbCrLf & _
-            "insert into dbo.ent1 default values" & vbCrLf & _
-            "select @rcount = @@rowcount, @pk_id = scope_identity(), @err = @@error" & vbCrLf & _
-            "if @err = 0 insert into dbo.t1 (s,i)  values(@p1,@pk_id)" & vbCrLf & _
+        Dim expected As String = "declare @pk_id int" & vbCrLf &
+            "declare @rcount int" & vbCrLf &
+            "declare @err int" & vbCrLf &
+            "insert into dbo.ent1 default values" & vbCrLf &
+            "select @rcount = @@rowcount, @pk_id = scope_identity(), @err = @@error" & vbCrLf &
+            "if @err = 0 insert into dbo.t1 (s,i)  values(@p1,@pk_id)" & vbCrLf &
             "if @rcount > 0 select t1.id from dbo.ent1 t1 where t1.id = @pk_id"
 
         Assert.AreEqual(expected, gen.Insert(schemaV1, o, Nothing, params, sel))
@@ -191,7 +191,7 @@ Imports Worm.Expressions2
         Dim schemaV1 As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
-            Dim o As New Entity(1, mgr.Cache, schemaV1)
+            Dim o As New Entity(1)
             Dim t As Type = GetType(Entity)
 
             o.Load()
@@ -200,9 +200,9 @@ Imports Worm.Expressions2
 
             o.Delete()
 
-            Dim expected As String = "declare @id_ID Int" & vbCrLf & _
-                "set @id_ID = @p1" & vbCrLf & _
-                "delete from dbo.ent1 where id = @id_ID"
+            Dim expected As String = "declare @id_id Int" & vbCrLf &
+                "set @id_id = @p1" & vbCrLf &
+                "delete from dbo.ent1 where id = @id_id"
             Dim gen As New SQL2000Generator
             Assert.AreEqual(expected, gen.Delete(schemaV1, o, params, Nothing))
 
@@ -219,7 +219,7 @@ Imports Worm.Expressions2
         Dim schemaV1 As New Worm.ObjectMappingEngine("2")
         Dim gen As New SQL2000Generator
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
-            Dim o As New Entity(1, mgr.Cache, schemaV1)
+            Dim o As New Entity(1)
             Dim t As Type = GetType(Entity)
 
             o.Load()
@@ -249,7 +249,7 @@ Imports Worm.Expressions2
         Dim schemaV1 As New Worm.ObjectMappingEngine("2")
         Dim gen As New SQL2000Generator
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
-            Dim o As New Entity(2, mgr.Cache, schemaV1)
+            Dim o As New Entity(2)
             Dim t As Type = GetType(Entity)
 
             o.Load()
@@ -262,10 +262,10 @@ Imports Worm.Expressions2
 
             Assert.AreEqual(ObjectState.Deleted, o.InternalProperties.ObjectState)
 
-            Dim expected As String = "declare @id_ID Int" & vbCrLf & _
-                "set @id_ID = @p1" & vbCrLf & _
-                "delete from dbo.t1 where i = @id_ID" & vbCrLf & _
-                "delete from dbo.ent1 where id = @id_ID"
+            Dim expected As String = "declare @id_id Int" & vbCrLf &
+                "set @id_id = @p1" & vbCrLf &
+                "delete from dbo.t1 where i = @id_id" & vbCrLf &
+                "delete from dbo.ent1 where id = @id_id"
 
             Assert.AreEqual(expected, gen.Delete(schemaV1, o, params, Nothing))
 
@@ -282,7 +282,7 @@ Imports Worm.Expressions2
         Dim schemaV1 As New Worm.ObjectMappingEngine("1")
         Dim gen As New SQL2000Generator
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
-            Dim o As New Entity5(1, mgr.Cache, schemaV1)
+            Dim o As New Entity5(1)
             Dim t As Type = GetType(Entity5)
 
             o.Load()
@@ -295,9 +295,9 @@ Imports Worm.Expressions2
 
             Assert.AreEqual(ObjectState.Deleted, o.InternalProperties.ObjectState)
 
-            Dim expected As String = "declare @id_ID Int" & vbCrLf & _
-                "set @id_ID = @p1" & vbCrLf & _
-                "delete from dbo.ent3 where (id = @id_ID and version = @p2)"
+            Dim expected As String = "declare @id_id Int" & vbCrLf &
+                "set @id_id = @p1" & vbCrLf &
+                "delete from dbo.ent3 where (id = @id_id and version = @p2)"
 
             Assert.AreEqual(expected, gen.Delete(schemaV1, o, params, Nothing))
 
@@ -319,7 +319,7 @@ Imports Worm.Expressions2
         Dim schemaV1 As New Worm.ObjectMappingEngine("1")
         Dim gen As New SQL2000Generator
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
-            Dim o As New Entity(2, mgr.Cache, schemaV1)
+            Dim o As New Entity(2)
             Dim t As Type = GetType(Entity)
 
             o.Load()
@@ -329,7 +329,7 @@ Imports Worm.Expressions2
             Dim upd As IList(Of Worm.Criteria.Core.EntityFilter) = Nothing
             Assert.AreEqual(String.Empty, gen.Update(schemaV1, o, Nothing, o.InternalProperties.OriginalCopy, params, sel, upd))
 
-            Dim o2 As New Entity2(2, mgr.Cache, schemaV1)
+            Dim o2 As New Entity2(2)
 
             o2.Load()
 
@@ -340,10 +340,11 @@ Imports Worm.Expressions2
 
             Assert.AreEqual(ObjectState.Modified, o2.InternalProperties.ObjectState)
 
-            Dim expected As String = "update t1 set t1.s = @p1 from dbo.t1 t1 where t1.i = @p2" & vbCrLf & _
-"declare @dbot1_rownum int" & vbCrLf & _
-"select @dbot1_rownum = @@rowcount, @lastErr = @@error" & vbCrLf & _
-"if @dbot1_rownum = 0 and @lastErr = 0 insert into dbo.t1 (s,i)  values(@p1,@p2)"
+            Dim expected As String = "update t1 set t1.s = @p1 from dbo.t1 t1 where t1.i = @p2" & vbCrLf &
+"declare @dbot1_rownum int" & vbCrLf &
+"declare @lastErr0 int" & vbCrLf &
+"select @dbot1_rownum = @@rowcount, @lastErr0 = @@error" & vbCrLf &
+"if @dbot1_rownum = 0 and @lastErr0 = 0 insert into dbo.t1 (s,i)  values(@p1,@p2)"
 
             Assert.IsNotNull(o2.InternalProperties.OriginalCopy)
             Assert.AreEqual(expected, gen.Update(schemaV1, o2, Nothing, o2.InternalProperties.OriginalCopy, params, sel, upd))
@@ -367,7 +368,7 @@ Imports Worm.Expressions2
         Dim schemaV1 As New Worm.ObjectMappingEngine("1")
         Dim gen As New SQL2000Generator
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schemaV1)
-            Dim o As New Entity5(1, mgr.Cache, schemaV1)
+            Dim o As New Entity5(1)
             Dim t As Type = GetType(Entity5)
 
             o.Load()
@@ -379,9 +380,10 @@ Imports Worm.Expressions2
 
             Assert.AreEqual(ObjectState.Modified, o.InternalProperties.ObjectState)
 
-            Dim expected As String ="update t1 set t1.name = @p1 from dbo.ent3 t1 where (t1.id = @p2 and t1.version = @p3)" & vbCrLf & _
-"declare @dboent3_rownum int" & vbCrLf & _
-"select @dboent3_rownum = @@rowcount" & vbCrLf & _
+            Dim expected As String = "update t1 set t1.name = @p1 from dbo.ent3 t1 where (t1.id = @p2 and t1.version = @p3)" & vbCrLf &
+"declare @dboent3_rownum int" & vbCrLf &
+"declare @lastErr0 int" & vbCrLf &
+"select @dboent3_rownum = @@rowcount" & vbCrLf &
 "if @dboent3_rownum > 0 select t1.version from dbo.ent3 t1 where t1.id = @p4"
 
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
@@ -451,7 +453,7 @@ End Class
     Public Sub TestGetColumnValue2()
         Dim schema As New Worm.ObjectMappingEngine("1")
 
-        Dim o As New Entity(10, Nothing, schema)
+        Dim o As New Entity(10)
 
         schema.GetPropertyValue(o, Nothing)
     End Sub
@@ -460,7 +462,7 @@ End Class
     Public Sub TestGetColumnValue3()
         Dim schema As New Worm.ObjectMappingEngine("1")
 
-        Dim o As New Entity(10, Nothing, schema)
+        Dim o As New Entity(10)
 
         Assert.AreEqual(10, schema.GetPropertyValue(o, "ID"))
     End Sub
@@ -469,7 +471,7 @@ End Class
     Public Sub TestGetColumnValue4()
         Dim schema As New Worm.ObjectMappingEngine("1")
 
-        Dim o As New Entity(10, Nothing, schema)
+        Dim o As New Entity(10)
 
         Assert.AreEqual(10, schema.GetPropertyValue(o, "FASDCSDC"))
     End Sub
@@ -574,7 +576,7 @@ End Class
             Debug.Fail("Should be False")
         End If
 
-        Assert.IsNull(Left(s, 10))
+        Assert.IsTrue(Left(s, 10) = String.Empty)
     End Sub
 
     Class cls1

@@ -14,8 +14,8 @@ Public Class Table4
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        Init(id, cache, schema)
+    Public Sub New(ByVal id As Integer)
+        _id = id
     End Sub
 
     Private _id As Integer
@@ -47,8 +47,7 @@ Public Class Table4
         End With
     End Sub
 
-    Public Overridable Sub SetValue( _
-        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
+    Public Overridable Function SetValueOptimized(ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) As Boolean Implements IOptimizedValues.SetValueOptimized
         Select Case fieldName
             Case "Col"
                 Col = CType(value, Global.System.Nullable(Of Boolean))
@@ -57,22 +56,29 @@ Public Class Table4
             Case "ID"
                 Identifier = value
             Case Else
-                Throw New NotSupportedException(fieldName)
+                Return False
+                'Throw New NotSupportedException(fieldName)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
-    End Sub
 
-    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+        Return True
+    End Function
+
+    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema, ByRef found As Boolean) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+        found = True
         Select Case propertyAlias
             Case "Col"
                 Return _col
             Case "GUID"
                 Return _g
             Case Else
-                Return GetValueReflection(propertyAlias, schema)
+                found = False
+                'Return GetValueReflection(propertyAlias, schema)
                 'Throw New NotSupportedException(propertyAlias)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
+
+        Return Nothing
     End Function
 
     <EntityPropertyAttribute(PropertyAlias:="Col")> _
@@ -124,9 +130,9 @@ Public Class Table4Implementation
         Get
             If _idx Is Nothing Then
                 _idx = New OrmObjectIndex
-                _idx.Add(New MapField2Column("ID", "id", Table, Field2DbRelations.PK))
-                _idx.Add(New MapField2Column("Col", "col", Table))
-                _idx.Add(New MapField2Column("GUID", "uq", Table))
+                _idx.Add(New MapField2Column("ID", Table, Field2DbRelations.PK, New SourceField("id")))
+                _idx.Add(New MapField2Column("Col", Table, "col"))
+                _idx.Add(New MapField2Column("GUID", Table, "uq"))
             End If
             Return _idx
         End Get
@@ -163,9 +169,9 @@ Public Class Table4Implementation2
         Get
             If _idx Is Nothing Then
                 Dim idx As New OrmObjectIndex
-                idx.Add(New MapField2Column("ID", "id", Table, Field2DbRelations.PK))
-                idx.Add(New MapField2Column("Col", "col", Table))
-                idx.Add(New MapField2Column("GUID", "uq", Table, Field2DbRelations.InsertDefault))
+                idx.Add(New MapField2Column("ID", Table, Field2DbRelations.PK, New SourceField("id")))
+                idx.Add(New MapField2Column("Col", Table, "col"))
+                idx.Add(New MapField2Column("GUID", Table, Field2DbRelations.InsertDefault, New SourceField("uq")))
                 _idx = idx
             End If
             Return _idx

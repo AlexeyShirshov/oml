@@ -12,15 +12,22 @@ Namespace Database.Storedprocs
     '    InsertDelete = 2
     '    All = 3
     'End Enum
-
-    Public Class OutParam
+    Public Class ParamValue
         Public ReadOnly Name As String
-        Public ReadOnly DbType As System.Data.DbType
-        Public ReadOnly Size As Integer
         Public Value As Object
 
-        Public Sub New(ByVal name As String, ByVal type As System.Data.DbType, ByVal size As Integer)
+        Public Sub New(ByVal name As String)
             Me.Name = name
+        End Sub
+    End Class
+
+    Public Class OutParam
+        Inherits ParamValue
+        Public ReadOnly DbType As System.Data.DbType
+        Public ReadOnly Size As Integer
+
+        Public Sub New(ByVal name As String, ByVal type As System.Data.DbType, ByVal size As Integer)
+            MyBase.New(name)
             Me.DbType = type
             Me.Size = size
         End Sub
@@ -261,7 +268,7 @@ Namespace Database.Storedprocs
 
 #End Region
 
-        Protected MustOverride Function GetInParams() As IEnumerable(Of Pair(Of String, Object))
+        Protected MustOverride Function GetInParams() As IEnumerable(Of ParamValue)
         Protected MustOverride Function GetOutParams() As IEnumerable(Of OutParam)
         Protected MustOverride Function GetName() As String
         Protected MustOverride Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
@@ -345,11 +352,11 @@ Namespace Database.Storedprocs
                 Dim upd As String = Nothing, ins As String = Nothing
                 Dim p As IList(Of Object) = ProvideDynamicValidateInfo(upd, ins)
                 If p Is Nothing Then
-                    Dim par As IEnumerable(Of Pair(Of String, Object)) = GetInParams()
+                    Dim par = GetInParams()
                     If par IsNot Nothing Then
                         p = New List(Of Object)
-                        For Each pr As Pair(Of String, Object) In par
-                            p.Add(pr.Second)
+                        For Each pr In par
+                            p.Add(pr.Value)
                         Next
                     End If
                 End If
@@ -376,8 +383,8 @@ Namespace Database.Storedprocs
         End Function
 
         Protected Overridable Sub InitInParams(ByVal schema As DbGenerator, ByVal cmd As System.Data.Common.DbCommand)
-            For Each p As Pair(Of String, Object) In GetInParams()
-                cmd.Parameters.Add(schema.CreateDBParameter(p.First, p.Second))
+            For Each p In GetInParams()
+                cmd.Parameters.Add(schema.CreateDBParameter(p.Name, p.Value))
             Next
         End Sub
 
@@ -491,11 +498,11 @@ Namespace Database.Storedprocs
                 Dim upd As String = Nothing, ins As String = Nothing
                 Dim p As IList(Of Object) = ProvideDynamicValidateInfo(upd, ins)
                 If p Is Nothing Then
-                    Dim par As IEnumerable(Of Pair(Of String, Object)) = GetInParams()
+                    Dim par = GetInParams()
                     If par IsNot Nothing Then
                         p = New List(Of Object)
-                        For Each pr As Pair(Of String, Object) In par
-                            p.Add(pr.Second)
+                        For Each pr In par
+                            p.Add(pr.Value)
                         Next
                     End If
                 End If

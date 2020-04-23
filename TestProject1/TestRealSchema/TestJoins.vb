@@ -26,7 +26,7 @@ Public Class TestJoinsRS
             Dim cf As Worm.Criteria.Core.IFilter = New Condition.ConditionConstructor().AddFilter(f).AddFilter(f2, Worm.Criteria.Conditions.ConditionOperator.And).Condition
             Dim c As IEntityFilter = CType(cf, IEntityFilter)
 
-            Dim t1 As New Table1(1, mgr.Cache, mgr.MappingEngine)
+            Dim t1 As New Table1(1)
             t1.CreatedAt = CDate("2006-01-01")
             t1.Code = 2
             Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
@@ -51,7 +51,7 @@ Public Class TestJoinsRS
             Dim cf As Worm.Criteria.Core.IFilter = New Condition.ConditionConstructor().AddFilter(f).AddFilter(f2, Worm.Criteria.Conditions.ConditionOperator.Or).Condition
             Dim c As IEntityFilter = CType(cf, IEntityFilter)
 
-            Dim t1 As New Table1(1, mgr.Cache, mgr.MappingEngine)
+            Dim t1 As New Table1(1)
             t1.CreatedAt = CDate("2006-01-01")
             t1.Code = 2
             Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
@@ -77,7 +77,7 @@ Public Class TestJoinsRS
             Dim cf As Worm.Criteria.Core.IFilter = New Condition.ConditionConstructor().AddFilter(f).AddFilter(f2, Worm.Criteria.Conditions.ConditionOperator.And).Condition
             Dim c As IEntityFilter = CType(cf, IEntityFilter)
 
-            Dim t1 As New Table2(1, mgr.Cache, mgr.MappingEngine)
+            Dim t1 As New Table2(1)
             t1.Money = 4
             Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
 
@@ -104,7 +104,7 @@ Public Class TestJoinsRS
             Dim cf As Worm.Criteria.Core.IFilter = New Condition.ConditionConstructor().AddFilter(f).AddFilter(f2, Worm.Criteria.Conditions.ConditionOperator.And).Condition
             Dim c As IEntityFilter = CType(cf, IEntityFilter)
 
-            Dim t1 As New Table2(1, mgr.Cache, mgr.MappingEngine)
+            Dim t1 As New Table2(1)
             t1.Money = 4
             Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, c.EvalObj(mgr.MappingEngine, t1, Nothing, Nothing, Nothing))
 
@@ -126,7 +126,7 @@ Public Class TestJoinsRS
         Using mgr As Worm.OrmManager = tm.CreateManager(tm.GetSchema("1"))
             Dim t As Type = GetType(Table2)
             Dim c As IEntityFilter = CType(New Ctor(GetType(Table1)).prop("Title").eq("first").Filter(), IEntityFilter)
-            Dim t2 As New Table2(1, mgr.Cache, mgr.MappingEngine)
+            Dim t2 As New Table2(1)
             Assert.AreEqual(IEvaluableValue.EvalResult.Unknown, c.EvalObj(mgr.MappingEngine, t2, mgr.MappingEngine.GetEntitySchema(t), Nothing, Nothing))
 
             t2 = New QueryCmd().GetByID(Of Table2)(1, mgr)
@@ -140,7 +140,7 @@ Public Class TestJoinsRS
         Using mgr As Worm.OrmManager = tm.CreateManager(tm.GetSchema("1"))
             Dim t As Type = GetType(Table2)
             Dim c As EntityFilter = CType(New Ctor(GetType(Table1)).prop("Title").eq("first").Filter(), EntityFilter)
-            Dim t2 As New Table2(1, mgr.Cache, mgr.MappingEngine)
+            Dim t2 As New Table2(1)
             Assert.AreEqual(IEvaluableValue.EvalResult.Unknown, c.Eval(mgr.MappingEngine, t2, mgr.MappingEngine.GetEntitySchema(t), Nothing, Nothing))
 
             Dim joins() As QueryJoin = JCtor.join(GetType(Table1)).on(GetType(Table1), "ID").eq(GetType(Table2), "Table1").
@@ -167,7 +167,7 @@ Public Class TestJoinsRS
             c = q.Where(New Ctor(GetType(Table1)).prop("Title").eq("first").[and]("Code").eq(2)).ToList(Of Table2)(mgr)
             Assert.AreEqual(2, c.Count)
 
-            Dim t2 As New Table2(tm.GetIdentity(), mgr.Cache, mgr.MappingEngine)
+            Dim t2 As New Table2(tm.GetIdentity())
             t2.Tbl = New QueryCmd().GetByID(Of Table1)(1, mgr)
             Assert.IsNull(t2.InternalProperties.OriginalCopy)
             mgr.BeginTransaction()
@@ -193,8 +193,8 @@ Public Class TestJoinsRS
             Dim c As ICollection(Of Table2) = q.Where(New Ctor(GetType(Table1)).prop("Title").eq("first")).ToList(Of Table2)(mgr)
             Assert.AreEqual(2, c.Count)
 
-            Dim t2 As New Table2(1, mgr.Cache, mgr.MappingEngine)
-            Dim t1 As New Table1(110, mgr.Cache, mgr.MappingEngine)
+            Dim t2 As New Table2(1)
+            Dim t1 As New Table1(110)
             mgr.Cache.NewObjectManager.AddNew(t2)
             mgr.Cache.NewObjectManager.AddNew(t1)
             t1.Name = "bjkb"

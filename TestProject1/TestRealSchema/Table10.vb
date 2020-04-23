@@ -13,8 +13,8 @@ Public Class Table10
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCache, ByVal schema As Worm.ObjectMappingEngine)
-        Init(id, cache, schema)
+    Public Sub New(ByVal id As Integer, ByVal schema As Worm.ObjectMappingEngine)
+        _id = id
     End Sub
 
     Private _id As Integer
@@ -43,26 +43,33 @@ Public Class Table10
         CType([to], Table10)._id = _id
     End Sub
 
-    Public Overridable Sub SetValue( _
-        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
+    Public Overridable Function SetValueOptimized(
+        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) As Boolean Implements IOptimizedValues.SetValueOptimized
         Select Case fieldName
             Case "Table1"
                 Tbl = CType(value, Table1)
             Case Else
-                SetValueReflection(fieldName, value, oschema)
+                Return False
+                'SetValueReflection(fieldName, value, oschema)
                 'Throw New NotSupportedException(fieldName)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
-    End Sub
 
-    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+        Return True
+    End Function
+
+    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema, ByRef found As Boolean) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+        found = True
         Select Case propertyAlias
             Case "Table1"
                 Return _tbl1
             Case Else
-                Return GetValueReflection(propertyAlias, schema)
+                found = False
+                'Return GetValueReflection(propertyAlias, schema)
                 'Throw New NotSupportedException(propertyAlias)
         End Select
+
+        Return Nothing
     End Function
 
     <EntityPropertyAttribute(PropertyAlias:="Table1")> _
@@ -100,8 +107,8 @@ Public Class Table10Implementation
         Get
             If _idx Is Nothing Then
                 Dim idx As New OrmObjectIndex
-                idx.Add(New MapField2Column("ID", "id", Table))
-                idx.Add(New MapField2Column("Table1", "table1_id", Table))
+                idx.Add(New MapField2Column("ID", Table, "id"))
+                idx.Add(New MapField2Column("Table1", Table, "table1_id"))
                 _idx = idx
             End If
             Return _idx

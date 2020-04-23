@@ -155,7 +155,7 @@ Namespace Criteria.Values
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             ElseIf ObjectMappingEngine.IsEntityType(vt) Then
-                                If Equals(mpe.GetPropertyValue(evaluatedValue, mpe.GetSinglePK(vt)), filterValue) Then
+                                If Equals(mpe.GetPropertyValue(evaluatedValue, mpe.GetPrimaryKey(vt)), filterValue) Then
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             ElseIf GetType(ISinglePKEntity).IsAssignableFrom(valt) Then
@@ -171,7 +171,7 @@ Namespace Criteria.Values
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             ElseIf ObjectMappingEngine.IsEntityType(valt) Then
-                                If Equals(mpe.GetPropertyValue(filterValue, mpe.GetSinglePK(valt)), evaluatedValue) Then
+                                If Equals(mpe.GetPropertyValue(filterValue, mpe.GetPrimaryKey(valt)), evaluatedValue) Then
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             End If

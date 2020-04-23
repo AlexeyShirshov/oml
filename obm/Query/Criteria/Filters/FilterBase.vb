@@ -1,4 +1,5 @@
-﻿Imports Worm.Criteria.Values
+﻿Imports System.Collections.Generic
+Imports Worm.Criteria.Values
 Imports Worm.Entities.Meta
 Imports Worm.Query
 
@@ -84,7 +85,7 @@ Namespace Criteria.Core
 
         Public ReadOnly Property Value() As IFilterValue Implements IValuableFilter.Value
             Get
-                Return CType(_v, IFilterValue)
+                Return _v
             End Get
         End Property
 
@@ -180,7 +181,7 @@ Namespace Criteria.Core
 
         Public MustOverride Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator,
                                                          ByVal almgr As IPrepareTable, ByVal pname As ICreateParam,
-                                                         ByVal executor As Query.IExecutionContext) As Pair(Of String) Implements ITemplateFilter.MakeSingleQueryStmt
+                                                         ByVal executor As Query.IExecutionContext) As IEnumerable(Of ITemplateFilterBase.ColParam) Implements ITemplateFilter.MakeSingleQueryStmt
 
         Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String
             Return _templ.GetStaticString(mpe)

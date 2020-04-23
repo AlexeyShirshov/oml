@@ -115,7 +115,7 @@ Namespace Query.Database
                 If oschema IsNot Nothing Then
                     fields = oschema.GetAutoLoadMap
                 Else
-                    fields = _q.GetFieldsIdx()
+                    fields = _q.GetFieldsIdx(dbm.MappingEngine)
                 End If
 
                 Dim t As Type = _q.CreateType.GetRealType(dbm.MappingEngine)
@@ -223,7 +223,7 @@ Namespace Query.Database
                 If oschema IsNot Nothing Then
                     fields = oschema.GetAutoLoadMap
                 Else
-                    fields = _q.GetFieldsIdx()
+                    fields = _q.GetFieldsIdx(dbm.MappingEngine)
                     If fields.Count = 0 AndAlso _q._pocoType IsNot Nothing Then
                         oschema = _mgr.MappingEngine.GetEntitySchema(_q._pocoType)
                         If oschema IsNot Nothing Then
@@ -662,7 +662,7 @@ Namespace Query.Database
                         'Next
                         fields = oschema.GetAutoLoadMap
                     Else
-                        fields = _q.GetFieldsIdx()
+                        fields = _q.GetFieldsIdx(dbm.MappingEngine)
                     End If
                 End If
 

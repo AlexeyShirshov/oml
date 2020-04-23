@@ -456,8 +456,9 @@ Namespace Database
         End Function
 
         Protected Function SaveObj(ByVal savingObj As _ICachedEntity, ByVal need2save As HashSet(Of ICachedEntity),
-            ByVal saved As List(Of Pair(Of ObjectState, _ICachedEntity)),
-            Optional ByVal col2save As IList = Nothing) As Boolean
+                                   ByVal saved As List(Of Pair(Of ObjectState, _ICachedEntity)),
+                                   Optional ByVal col2save As IList = Nothing) As Boolean
+
             Dim owr As ObjectWrap(Of ICachedEntity) = Nothing
             Dim retry = False
             Do
@@ -609,15 +610,19 @@ Namespace Database
                                     RaiseEvent ObjectPostponed(Me, savingObj)
                                     need2save.Add(savingObj)
                                     Return False
+                                Case Else
+                                    Throw New NotImplementedException(args.FurtherAction.ToString)
                             End Select
                         End If
                     End If
+
                     If Not retry Then
                         Throw New OrmManagerException("Error during save " & savingObj.ObjName, ex)
                     End If
                 End Try
             Loop While retry
 
+            Return False
         End Function
 
         Protected Sub Commit()

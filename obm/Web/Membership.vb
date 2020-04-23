@@ -276,8 +276,10 @@ Namespace Web
                     UserMapper.DeleteUser(mt, u, deleteAllRelatedData)
                     mt.AcceptModifications()
                 End Using
+                Return True
             End If
-            'End Using
+
+            Return False
         End Function
 
         Public Overrides Function ResetPassword(ByVal username As String, ByVal answer As String) As String
@@ -501,7 +503,7 @@ Namespace Web
             'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, "ID", New TypeWrap(Of Object)(providerUserKey), FilterOperation.Equal))
             'Dim schema As ObjectMappingEngine = mgr.MappingEngine
             Dim ut As Type = UserMapper.GetUserType
-            Dim users As IList = UserMapper.FindUsers(New Ctor(ut).prop(Schema.GetSinglePK(ut)).eq(providerUserKey))
+            Dim users As IList = UserMapper.FindUsers(New Ctor(ut).prop(Schema.GetPrimaryKey(ut)).eq(providerUserKey))
             If users.Count <> 1 Then
                 Return Nothing
             End If

@@ -7,12 +7,13 @@ Imports Worm.Entities.Meta
 Imports Worm.Expressions2
 
 Namespace Query
+#Disable Warning IDE1006 ' Naming Styles
 
     Public Class Ctor
         'Implements ICtor
 
-        Private _os As EntityUnion
-        Private _tbl As Worm.Entities.Meta.SourceFragment
+        Private ReadOnly _os As EntityUnion
+        Private ReadOnly _tbl As Worm.Entities.Meta.SourceFragment
 
         'Public Sub New(ByVal t As Type)
         '    MyClass.new(Nothing, t)
@@ -62,7 +63,9 @@ Namespace Query
             'End If
             Return New PropertyPredicate(_os, propertyAlias)
         End Function
-
+        Public Function PK() As PropertyPredicate
+            Return CType(_Field(MapField2Column.PK), PropertyPredicate)
+        End Function
         Public Function prop(ByVal propertyAlias As String) As Criteria.PropertyPredicate
             Return CType(_Field(propertyAlias), PropertyPredicate)
         End Function
@@ -289,5 +292,6 @@ Namespace Query
             Return New UnaryPredicate(v)
         End Function
     End Class
+#Enable Warning IDE1006 ' Naming Styles
 
 End Namespace

@@ -152,8 +152,8 @@ Namespace Criteria
     Public Class ColumnPredicate
         Inherits PredicateBase
 
-        Private _tbl As Meta.SourceFragment
-        Private _col As String
+        Private ReadOnly _tbl As Meta.SourceFragment
+        Private ReadOnly _col As String
 
         Protected Friend Sub New(ByVal table As Meta.SourceFragment, ByVal column As String)
             'If t Is Nothing Then
@@ -217,8 +217,8 @@ Namespace Criteria
     Public Class CustomPredicate
         Inherits PredicateBase
 
-        Private _format As String
-        Private _exp() As IExpression
+        Private ReadOnly _format As String
+        Private ReadOnly _exp() As IExpression
 
         Protected Friend Sub New(ByVal format As String, ByVal exp() As IExpression)
             MyBase.New(Nothing, Nothing)
@@ -295,7 +295,7 @@ Namespace Criteria
     Public Class UnaryPredicate
         Inherits PredicateBase
 
-        Private _v As IFilterValue
+        Private ReadOnly _v As IFilterValue
 
         Protected Friend Sub New(ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
             MyBase.New(con, ct)
@@ -421,7 +421,7 @@ Namespace Criteria
     Public Class AggPredicate
         Inherits PredicateBase
 
-        Private _exp As AggregateExpression
+        Private ReadOnly _exp As AggregateExpression
 
         Public Sub New(ByVal exp As AggregateExpression)
             _exp = exp
@@ -455,7 +455,7 @@ Namespace Criteria
     Public Class QueryPredicate
         Inherits PredicateBase
 
-        Private _q As QueryCmd
+        Private ReadOnly _q As QueryCmd
 
         Public Sub New(ByVal q As QueryCmd)
             _q = q

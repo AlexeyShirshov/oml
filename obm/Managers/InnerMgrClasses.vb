@@ -127,8 +127,8 @@ Partial Public Class OrmManager
         Implements IDisposable
 
         Private _disposedValue As Boolean = False        ' To detect redundant calls
-        Private _oldSchema As ObjectMappingEngine
-        Private _mgr As OrmManager
+        Private ReadOnly _oldSchema As ObjectMappingEngine
+        Private ReadOnly _mgr As OrmManager
         'Private _r As Boolean
 
         Public Sub New(ByVal schema As ObjectMappingEngine)
@@ -171,10 +171,10 @@ Partial Public Class OrmManager
         Implements IDisposable
 
         Private _disposedValue As Boolean
-        Private _mgr As OrmManager
-        Private _oldvalue As Boolean
-        Private _oldExp As Date
-        Private _oldMark As String
+        Private ReadOnly _mgr As OrmManager
+        Private ReadOnly _oldvalue As Boolean
+        Private ReadOnly _oldExp As Date
+        Private ReadOnly _oldMark As String
 
         Public Sub New(ByVal mgr As OrmManager, ByVal cache_lists As Boolean)
             _mgr = mgr
@@ -343,9 +343,9 @@ Partial Public Class OrmManager
     Public Class ApplyFilterHelper
         Implements IApplyFilter
 
-        Private _f As IGetFilter
-        Private _j As Criteria.Joins.QueryJoin()
-        Private _eu As EntityUnion
+        Private ReadOnly _f As IGetFilter
+        Private ReadOnly _j As Criteria.Joins.QueryJoin()
+        Private ReadOnly _eu As EntityUnion
 
         Public Sub New(f As IFilter)
             _f = f
@@ -380,8 +380,8 @@ Partial Public Class OrmManager
         Implements IDisposable
 
         Private _disposedValue As Boolean = False        ' To detect redundant calls
-        Private _f As IApplyFilter
-        Private _mgr As OrmManager
+        Private ReadOnly _f As IApplyFilter
+        Private ReadOnly _mgr As OrmManager
 
         Public Sub New(ByVal f As IApplyFilter)
             Throw New NotSupportedException
@@ -516,7 +516,7 @@ Partial Public Class OrmManager
         Public EntitySchema As IEntitySchema
         'Public PI As Reflection.PropertyInfo
 
-        Private _props As New List(Of Pair(Of String, Reflection.PropertyInfo))
+        Private ReadOnly _props As New List(Of Pair(Of String, Reflection.PropertyInfo))
         Public ReadOnly Property ParentProperties() As IList(Of Pair(Of String, Reflection.PropertyInfo))
             Get
                 Return _props

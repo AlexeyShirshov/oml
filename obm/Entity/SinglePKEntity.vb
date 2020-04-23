@@ -320,8 +320,8 @@ Namespace Entities
         <NonSerialized()> _
         Protected Friend _relations As New List(Of Relation)
 
-        <NonSerialized()> _
-        Private Shared _relationLock As New SpinLockRef
+        <NonSerialized()>
+        Private Shared ReadOnly _relationLock As New SpinLockRef
 #Region " Protected functions "
 
         Protected Overridable ReadOnly Property _HasChanges() As Boolean Implements IRelations.HasChanges
@@ -343,19 +343,19 @@ Namespace Entities
             End Get
         End Property
 
-        Protected Overrides Sub Init(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As Cache.CacheBase, ByVal mpe As ObjectMappingEngine)
-            Init(pk.First.Value, cache, mpe)
-        End Sub
+        'Protected Overrides Sub Init(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As Cache.CacheBase, ByVal mpe As ObjectMappingEngine)
+        '    Init(pk.First.Value, cache, mpe)
+        'End Sub
 
         Protected Overrides Sub Init()
             MyBase.Init()
         End Sub
 
-        Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) Implements _ISinglePKEntity.Init
-            MyBase._Init(cache, mpe)
-            Identifier = id
-            PKLoaded(1, GetEntitySchema(mpe))
-        End Sub
+        'Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) Implements _ISinglePKEntity.Init
+        '    MyBase._Init(cache, mpe)
+        '    Identifier = id
+        '    PKLoaded(1, GetEntitySchema(mpe))
+        'End Sub
 
         <Runtime.Serialization.OnDeserialized()> _
         Private Overloads Sub Init(ByVal context As Runtime.Serialization.StreamingContext)
@@ -687,13 +687,13 @@ Namespace Entities
             Return Identifier.GetHashCode
         End Function
 
-        Protected Overrides Sub InitNewEntity(ByVal mgr As OrmManager, ByVal en As Entity)
-            If mgr Is Nothing Then
-                CType(en, SinglePKEntityBase).Init(Identifier, Nothing, Nothing)
-            Else
-                CType(en, SinglePKEntityBase).Init(Identifier, mgr.Cache, mgr.MappingEngine)
-            End If
-        End Sub
+        'Protected Overrides Sub InitNewEntity(ByVal mgr As OrmManager, ByVal en As Entity)
+        '    If mgr Is Nothing Then
+        '        CType(en, SinglePKEntityBase).Init(Identifier, Nothing, Nothing)
+        '    Else
+        '        CType(en, SinglePKEntityBase).Init(Identifier, mgr.Cache, mgr.MappingEngine)
+        '    End If
+        'End Sub
 
         Protected Overrides Sub PKLoaded(ByVal pkCount As Integer, props As IPropertyMap)
             If pkCount <> 1 Then
@@ -1214,8 +1214,8 @@ Namespace Entities
 
         Private _loaded As Boolean
         Private _loaded_members As IDictionary(Of String, Boolean)
-        <NonSerialized()> _
-        Private _sl As New SpinLockRef
+        <NonSerialized()>
+        Private ReadOnly _sl As New SpinLockRef
 
         <NonSerialized()> _
         Private _readRaw As Boolean
@@ -1262,9 +1262,9 @@ Namespace Entities
             Return obj1.Equals(obj2)
         End Operator
 
-        Protected Overrides Sub Init(ByVal id As Object, ByVal cache As Cache.CacheBase, ByVal mpe As ObjectMappingEngine)
-            MyBase.Init(id, cache, mpe)
-        End Sub
+        'Protected Overrides Sub Init(ByVal id As Object, ByVal cache As Cache.CacheBase, ByVal mpe As ObjectMappingEngine)
+        '    MyBase.Init(id, cache, mpe)
+        'End Sub
 
         Protected Overrides Property IsLoaded As Boolean Implements IPropertyLazyLoad.IsLoaded
             Get

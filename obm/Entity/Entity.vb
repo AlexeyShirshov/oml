@@ -15,10 +15,10 @@ Namespace Entities
         Friend Class ChangedEventHelper
             Implements IDisposable
 
-            Private _value As Object
-            Private _fieldName As String
-            Private _obj As _IEntity
-            Private _d As IDisposable
+            Private ReadOnly _value As Object
+            Private ReadOnly _fieldName As String
+            Private ReadOnly _obj As _IEntity
+            Private ReadOnly _d As IDisposable
 
             Public Sub New(ByVal obj As _IEntity, ByVal propertyAlias As String, ByVal d As IDisposable)
                 _fieldName = propertyAlias
@@ -408,13 +408,13 @@ Namespace Entities
         '    Return CType(Activator.CreateInstance(Me.GetType), Entity)
         'End Function
 
-        Protected Overridable Sub InitNewEntity(ByVal mgr As OrmManager, ByVal en As Entity)
-            If mgr Is Nothing Then
-                en.Init(Nothing, Nothing)
-            Else
-                en.Init(mgr.Cache, mgr.MappingEngine)
-            End If
-        End Sub
+        'Protected Overridable Sub InitNewEntity(ByVal mgr As OrmManager, ByVal en As Entity)
+        '    If mgr Is Nothing Then
+        '        en.Init(Nothing)
+        '    Else
+        '        en.Init(mgr.MappingEngine)
+        '    End If
+        'End Sub
 
         'Protected Function CreateSelfInitPK() As Entity
         '    Dim e As Entity = CreateSelf()
@@ -464,8 +464,9 @@ Namespace Entities
 #Region " CreateCmd "
         Public Function CreateCmd() As QueryCmd 'Implements IDataContext.CreateQuery
             If _cm IsNot Nothing Then
-                Dim q As QueryCmd = New QueryCmd(_cm)
-                q.SpecificMappingEngine = _mpe
+                Dim q As QueryCmd = New QueryCmd(_cm) With {
+                    .SpecificMappingEngine = _mpe
+                }
                 Return q
             Else
                 Dim q As QueryCmd = QueryCmd.Create()
@@ -476,9 +477,10 @@ Namespace Entities
 
         Public Function CreateCmd(ByVal name As String) As QueryCmd
             If _cm IsNot Nothing Then
-                Dim q As New QueryCmd(_cm)
-                q.Name = name
-                q.SpecificMappingEngine = _mpe
+                Dim q As New QueryCmd(_cm) With {
+                    .Name = name,
+                    .SpecificMappingEngine = _mpe
+                }
                 Return q
             Else
                 Dim q As QueryCmd = QueryCmd.Create(name)
@@ -490,83 +492,198 @@ Namespace Entities
 #End Region
 
 #Region " Create methods "
-        Public Shared Function CreateKeyEntity(ByVal id As Object, ByVal t As Type, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As ISinglePKEntity
+        Public Shared Function CreateKeyEntity(ByVal id As Object, ByVal t As Type, ByVal schema As ObjectMappingEngine) As ISinglePKEntity
             If id Is Nothing Then
                 Throw New ArgumentNullException("id")
             End If
             Dim o As ISinglePKEntity = CType(Activator.CreateInstance(t), ISinglePKEntity)
-            o.Init(id, cache, schema)
+            o.Init(schema)
+            o.Identifier = id
+            o.PKLoaded(1, MapField2Column.PK)
+            'Dim ll = TryCast(o, IPropertyLazyLoad)
+            'If ll IsNot Nothing Then OrmManager.SetLoaded(ll, MapField2Column.PK, True)
+
             Return o
         End Function
 
-        Public Shared Function CreateKeyEntity(Of T As {ISinglePKEntity, New})(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
+        Public Shared Function CreateKeyEntity(Of T As {ISinglePKEntity, New})(ByVal id As Object, ByVal schema As ObjectMappingEngine) As T
             If id Is Nothing Then
                 Throw New ArgumentNullException("id")
             End If
             Dim o As New T
-            o.Init(id, cache, schema)
+
+            o.Init(schema)
+            o.Identifier = id
+            o.PKLoaded(1, MapField2Column.PK)
+            'Dim ll = TryCast(o, IPropertyLazyLoad)
+            'If ll IsNot Nothing Then OrmManager.SetLoaded(ll, MapField2Column.PK, True)
+
             Return o
         End Function
 
-        Public Shared Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine) As T
+        Public Shared Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk As IEnumerable(Of PKDesc), ByVal schema As ObjectMappingEngine) As T
             If pk Is Nothing Then
                 Throw New ArgumentNullException("id")
             End If
             If GetType(ISinglePKEntity).IsAssignableFrom(GetType(T)) Then
-                Return CType(CreateKeyEntity(pk(0).Value, GetType(T), cache, schema), T)
+                Return CType(CreateKeyEntity(pk(0).Value, GetType(T), schema), T)
             Else
-                Return CreateEntity(Of T)(pk, cache, schema)
+                Return CreateEntity(Of T)(pk, schema)
             End If
         End Function
 
-        Public Shared Function CreateObject(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As Object
+        Public Shared Function CreateObject(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type, ByVal mpe As ObjectMappingEngine) As Object
             If pk Is Nothing Then
                 Throw New ArgumentNullException("id")
             End If
             If GetType(ISinglePKEntity).IsAssignableFrom(type) Then
-                Return CreateKeyEntity(pk(0).Value, type, cache, mpe)
+                Return CreateKeyEntity(pk(0).Value, type, mpe)
             ElseIf GetType(ICachedEntity).IsAssignableFrom(type) Then
-                Return CreateEntity(pk, type, cache, mpe)
+                Return CreateEntity(pk, type, mpe)
             ElseIf GetType(IEntity).IsAssignableFrom(type) Then
-                Return CreateEntity(type, cache, mpe)
+                Return CreateEntity(type, mpe)
             Else
                 Dim e As Object = Activator.CreateInstance(type)
-                Dim oschema As IEntitySchema = mpe.GetEntitySchema(type)
-                For Each p As PKDesc In pk
-                    ObjectMappingEngine.SetPropertyValue(e, p.PropertyAlias, p.Value, oschema)
-                Next
+                InitPK(pk, type, mpe, e)
+
                 Return e
             End If
         End Function
 
-        Public Shared Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As T
+        Private Shared Sub InitPK(pk As IEnumerable(Of PKDesc), type As Type, mpe As ObjectMappingEngine, e As Object)
+            Dim oschema As IEntitySchema = mpe.GetEntitySchema(type)
+            Dim fv = TryCast(e, IStorageValueConverter)
+            Dim m = oschema.GetPK
+            Dim propertyAlias = m.PropertyAlias
+            Dim svo = TryCast(oschema, IOptimizeSetValue)
+
+            If pk.Count = 1 Then
+                Dim col = pk(0).Column
+                Dim value As Object = pk(0).Value
+
+                If fv IsNot Nothing Then
+                    value = fv.CreateValue(oschema, m, propertyAlias, col, value)
+                End If
+
+                Dim pi = m.PropertyInfo
+
+                If pi Is Nothing Then
+                Else
+                    If m.Converter Is Nothing Then
+                        If pi.PropertyType Is value.GetType Then
+                            m.Converter = MapField2Column.EmptyConverter
+                        Else
+                            m.Converter = Converters.GetConverter(pi.PropertyType, value.GetType)
+                        End If
+                    End If
+
+                    If m.Converter IsNot MapField2Column.EmptyConverter Then
+                        value = m.Converter(pi.PropertyType, value.GetType, value)
+                    End If
+                End If
+
+                If m.OptimizedSetValue Is Nothing Then
+                    If svo IsNot Nothing Then
+                        m.OptimizedSetValue = svo.GetOptimizedDelegate(col)
+                    Else
+                        m.OptimizedSetValue = MapField2Column.EmptyOptimizedSetValue
+                    End If
+                End If
+
+                If m.OptimizedSetValue Is Nothing OrElse m.OptimizedSetValue Is MapField2Column.EmptyOptimizedSetValue Then
+                    ObjectMappingEngine.SetPK(e, {New PKDesc2(col, value, pi)}, oschema)
+                Else
+                    m.OptimizedSetValue(e, value)
+                End If
+
+            Else
+                Dim pks As New List(Of PKDesc2)
+
+                For j = 0 To m.SourceFields.Count - 1
+                    Dim sf = m.SourceFields(j)
+
+                    Dim value As Object = pk(j).Value
+
+                    If fv IsNot Nothing Then
+                        value = fv.CreateValue(oschema, m, propertyAlias, sf.SourceFieldAlias, value)
+                    End If
+
+                    Dim pi = sf.PropertyInfo
+
+                    If pi Is Nothing Then
+                    Else
+                        If sf.Converter Is Nothing Then
+                            If pi.PropertyType Is value.GetType Then
+                                sf.Converter = MapField2Column.EmptyConverter
+                            Else
+                                sf.Converter = Converters.GetConverter(pi.PropertyType, value.GetType)
+                            End If
+                        End If
+
+                        If sf.Converter IsNot MapField2Column.EmptyConverter Then
+                            value = sf.Converter(pi.PropertyType, value.GetType, value)
+                        End If
+                    End If
+
+                    If sf.OptimizedSetValue Is Nothing Then
+                        If svo IsNot Nothing Then
+                            sf.OptimizedSetValue = svo.GetOptimizedDelegate(sf.SourceFieldExpression)
+                        Else
+                            sf.OptimizedSetValue = MapField2Column.EmptyOptimizedSetValue
+                        End If
+                    End If
+
+                    pks.Add(New PKDesc2(sf.SourceFieldExpression, value, sf.PropertyInfo, sf.OptimizedSetValue))
+
+                Next
+
+                If pks.All(Function(it) it.svo IsNot Nothing AndAlso it.svo IsNot MapField2Column.EmptyOptimizedSetValue) Then
+                    For Each pkasd In pks
+                        pkasd.svo(e, pkasd.Value)
+                    Next
+                Else
+                    ObjectMappingEngine.SetPK(e, pks, oschema)
+                End If
+            End If
+
+            Dim ie = TryCast(e, _ICachedEntity)
+            If ie IsNot Nothing Then
+                ie.PKLoaded(pk.Count, oschema)
+            Else
+                Dim ll = TryCast(e, IPropertyLazyLoad)
+                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+            End If
+
+        End Sub
+
+        Public Shared Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk As IEnumerable(Of PKDesc), ByVal mpe As ObjectMappingEngine) As T
             If pk Is Nothing Then
                 Throw New ArgumentNullException("id")
             End If
             Dim o As New T
-            o.Init(pk, cache, mpe)
+            InitPK(pk, GetType(T), mpe, o)
             Return o
         End Function
 
-        Public Shared Function CreateEntity(ByVal pk As IEnumerable(Of PKDesc), ByVal t As Type, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As _ICachedEntity
+        Public Shared Function CreateEntity(ByVal pk As IEnumerable(Of PKDesc), ByVal t As Type, ByVal mpe As ObjectMappingEngine) As _ICachedEntity
             If pk Is Nothing Then
                 Throw New ArgumentNullException("id")
             End If
             Dim e As Object = Activator.CreateInstance(t)
             Dim o As _ICachedEntity = CType(e, _ICachedEntity)
-            o.Init(pk, cache, mpe)
+            InitPK(pk, t, mpe, o)
             Return o
         End Function
 
-        Public Shared Function CreateEntity(ByVal t As Type, ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As _IEntity
+        Public Shared Function CreateEntity(ByVal t As Type, ByVal mpe As ObjectMappingEngine) As _IEntity
             Dim o As _IEntity = CType(Activator.CreateInstance(t), _IEntity)
-            o.Init(cache, mpe)
+            o.Init(mpe)
             Return o
         End Function
 
-        Public Shared Function CreateEntity(Of T As {_IEntity, New})(ByVal cache As CacheBase, ByVal mpe As ObjectMappingEngine) As T
+        Public Shared Function CreateEntity(Of T As {_IEntity, New})(ByVal mpe As ObjectMappingEngine) As T
             Dim o As New T
-            o.Init(cache, mpe)
+            o.Init(mpe)
             Return o
         End Function
 #End Region
@@ -581,10 +698,10 @@ Namespace Entities
         '    Return ObjectMappingEngine.GetPropertyValue(Me, propertyAlias, GetEntitySchema(GetMappingEngine))
         'End Function
 
-        Public Function GetValueReflection(ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object
-            If oschema Is Nothing Then
-                Throw New ArgumentNullException("oschema")
-            End If
+        Public Function GetValue(ByVal propertyAlias As String, ByVal oschema As IEntitySchema) As Object
+            'If oschema Is Nothing Then
+            '    Throw New ArgumentNullException("oschema")
+            'End If
             'Dim schema As Worm.ObjectMappingEngine = GetMappingEngine()
             'Dim pi As Reflection.PropertyInfo
             'If schema Is Nothing Then
@@ -594,10 +711,11 @@ Namespace Entities
             'End If
             'Return pi.GetValue(Me, Nothing)
             'Return oschema.GetFieldColumnMap(propertyAlias).GetValue(Me)
-            Return oschema.FieldColumnMap(propertyAlias).PropertyInfo.GetValue(Me, Nothing)
+            'Return oschema.FieldColumnMap(propertyAlias).PropertyInfo.GetValue(Me, Nothing)
+            Return ObjectMappingEngine.GetPropertyValue(Me, propertyAlias, oschema)
         End Function
 
-        Public Sub SetValueReflection(ByVal propertyAlias As String, ByVal value As Object, ByVal oschema As IEntitySchema)
+        Public Sub SetValue(ByVal propertyAlias As String, ByVal value As Object, ByVal oschema As IEntitySchema)
             'Dim schema As Worm.ObjectMappingEngine = GetMappingEngine()
             'Dim pi As Reflection.PropertyInfo
             'If schema Is Nothing Then
@@ -607,7 +725,8 @@ Namespace Entities
             'End If
             'pi.SetValue(Me, value, Nothing)
             'oschema.GetFieldColumnMap(propertyAlias).SetValue(Me, value)
-            oschema.FieldColumnMap(propertyAlias).PropertyInfo.SetValue(Me, value, Nothing)
+            'oschema.FieldColumnMap(propertyAlias).PropertyInfo.SetValue(Me, value, Nothing)
+            ObjectMappingEngine.SetPropertyValue(Me, propertyAlias, value, oschema)
         End Sub
 
         Protected Overridable Overloads Sub Init()
@@ -617,8 +736,8 @@ Namespace Entities
             Init()
         End Sub
 
-        Protected Overridable Overloads Sub Init(ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine) Implements _IEntity.Init
-            If cache IsNot Nothing Then cache.RegisterCreation(Me)
+        Protected Overridable Overloads Sub Init(ByVal schema As ObjectMappingEngine) Implements _IEntity.Init
+            'If Cache IsNot Nothing Then Cache.RegisterCreation(Me)
 
             _state = Entities.ObjectState.Created
             _mpe = schema

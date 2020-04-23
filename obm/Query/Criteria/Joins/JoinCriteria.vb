@@ -249,6 +249,11 @@ Namespace Criteria.Joins
             _jf._oper = FilterOperation.Equal
             Return GetLink()
         End Function
+        Public Function eq(v As Values.IFilterValue) As JoinLink
+            _jf.Right = New FieldReference(v)
+            _jf._oper = FilterOperation.Equal
+            Return GetLink()
+        End Function
 
 #End Region
 
@@ -285,6 +290,11 @@ Namespace Criteria.Joins
 
         Public Function not_eq(ByVal table As SourceFragment, ByVal column As String) As JoinLink
             _jf.Right = New FieldReference(table, column)
+            _jf._oper = FilterOperation.NotEqual
+            Return GetLink()
+        End Function
+        Public Function not_eq(v As Values.IFilterValue) As JoinLink
+            _jf.Right = New FieldReference(v)
             _jf._oper = FilterOperation.NotEqual
             Return GetLink()
         End Function

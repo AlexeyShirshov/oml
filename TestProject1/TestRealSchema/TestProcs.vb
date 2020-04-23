@@ -9,7 +9,7 @@ Imports Worm.Database.Storedprocs
 Imports Worm.Entities.Meta
 Imports Worm.Query
 Imports Worm.Expressions2
-Imports CoreFramework.Structures
+Imports CoreFramework.cfStructures
 
 <TestClass()> _
 Public Class TestProcs
@@ -26,7 +26,7 @@ Public Class TestProcs
 
             l = p.GetResult(mgr)
 
-            Dim r1 As New Tables1to3(-100, mgr.Cache, mgr.MappingEngine)
+            Dim r1 As New Tables1to3(-100)
             r1.Title = "913nv"
             r1.Table1 = t1
             r1.Table3 = New QueryCmd().GetByID(Of Table33)(2, mgr)
@@ -100,11 +100,11 @@ Public Class TestProcs
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim p As New P3Proc(1)
 
-            Dim l As List(Of Pair(Of Date, Decimal)) = p.GetResult(mgr)
+            Dim l = p.GetResult(mgr)
 
             Assert.AreEqual(1, l.Count)
-            Assert.AreEqual(Date.Parse("2007-01-30 15:28:18.477"), l(0).First)
-            Assert.AreEqual(Of Decimal)(2, l(0).Second)
+            Assert.AreEqual(Date.Parse("2007-01-30 15:28:18.477"), l(0).name)
+            Assert.AreEqual(Of Decimal)(2, CDec(l(0).Value))
         End Using
     End Sub
 
@@ -283,8 +283,8 @@ Public Class P1Proc
         Return New Type() {GetType(Tables1to3)}
     End Function
 
-    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
-        Return New List(Of Pair(Of String, Object))
+    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of ParamValue)
+        Return New List(Of ParamValue)
     End Function
 
     Protected Overrides Function GetName() As String
@@ -314,11 +314,11 @@ End Class
 Public Class P2Proc
     Inherits QueryStoredProcBase
 
-    Private _params As List(Of Pair(Of String, Object))
+    Private _params As List(Of ParamValue)
 
     Public Sub New(ByVal i As Integer)
-        _params = New List(Of Pair(Of String, Object))
-        _params.Add(New Pair(Of String, Object)("i", i))
+        _params = New List(Of ParamValue)
+        _params.Add(New ParamValue("i") With {.Value = i})
     End Sub
 
     'Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
@@ -326,7 +326,7 @@ Public Class P2Proc
     '    Return l
     'End Function
 
-    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
+    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of ParamValue)
         Return _params
     End Function
 
@@ -356,11 +356,11 @@ End Class
 Public Class P2OrmProc
     Inherits QueryEntityStoredProcBase(Of Table1)
 
-    Private _params As List(Of Pair(Of String, Object))
+    Private _params As List(Of ParamValue)
 
     Public Sub New(ByVal i As Integer)
-        _params = New List(Of Pair(Of String, Object))
-        _params.Add(New Pair(Of String, Object)("i", i))
+        _params = New List(Of ParamValue)
+        _params.Add(New ParamValue("i") With {.Value = i})
     End Sub
 
     Protected Overrides Function GetColumns() As List(Of SelectExpression)
@@ -375,7 +375,7 @@ Public Class P2OrmProc
         Return l
     End Function
 
-    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
+    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of ParamValue)
         Return _params
     End Function
 
@@ -391,11 +391,11 @@ End Class
 Public Class P3Proc
     Inherits QueryStoredProcBase
 
-    Private _params As List(Of Pair(Of String, Object))
+    Private _params As List(Of ParamValue)
 
     Public Sub New(ByVal i As Integer)
-        _params = New List(Of Pair(Of String, Object))
-        _params.Add(New Pair(Of String, Object)("i", i))
+        _params = New List(Of ParamValue)
+        _params.Add(New ParamValue("i") With {.Value = i})
     End Sub
 
     'Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
@@ -409,7 +409,7 @@ Public Class P3Proc
         Return New Type() {GetType(Table1), GetType(Table2)}
     End Function
 
-    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
+    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of ParamValue)
         Return _params
     End Function
 
@@ -422,7 +422,7 @@ Public Class P3Proc
     End Function
 
     Protected Overrides Function InitResult() As Object
-        Return New List(Of Pair(Of Date, Decimal))
+        Return New List(Of ParamValue)
     End Function
 
     Protected Overrides Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
@@ -432,19 +432,19 @@ Public Class P3Proc
         l.Add(New Pair(Of Date, Decimal)(dt, m))
     End Sub
 
-    Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As List(Of Pair(Of Date, Decimal))
-        Return CType(MyBase.GetResult(mgr), Global.System.Collections.Generic.List(Of Pair(Of Date, Decimal)))
+    Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As List(Of ParamValue)
+        Return CType(MyBase.GetResult(mgr), Global.System.Collections.Generic.List(Of ParamValue))
     End Function
 End Class
 
 Public Class P4Proc
     Inherits NonQueryStoredProcBase
 
-    Private _params As List(Of Pair(Of String, Object))
+    Private _params As List(Of ParamValue)
 
     Public Sub New(ByVal i As Integer)
-        _params = New List(Of Pair(Of String, Object))
-        _params.Add(New Pair(Of String, Object)("i", i))
+        _params = New List(Of ParamValue)
+        _params.Add(New ParamValue("i") With {.Value = i})
     End Sub
 
     Public Shared Function ValidateOnUpdate(ByVal params As IList(Of Object), ByVal obj As _ICachedEntity, ByVal fields As ICollection(Of String)) As Boolean
@@ -467,10 +467,10 @@ Public Class P4Proc
 
     Protected Overrides Function ProvideDynamicValidateInfo(ByRef OnUpdateStaticMethodName As String, ByRef OnInsertDeleteStaticMethodName As String) As System.Collections.Generic.IList(Of Object)
         OnUpdateStaticMethodName = "ValidateOnUpdate"
-        Return New Object() {_params(0).Second}
+        Return New Object() {_params(0).Value}
     End Function
 
-    Protected Overrides Function GetInParams() As IEnumerable(Of Pair(Of String, Object))
+    Protected Overrides Function GetInParams() As IEnumerable(Of ParamValue)
         Return _params
     End Function
 
@@ -549,8 +549,8 @@ Public Class MultiR
         End Select
     End Function
 
-    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
-        Return New List(Of Pair(Of String, Object))
+    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of ParamValue)
+        Return New List(Of ParamValue)
     End Function
 
     Protected Overrides Function GetName() As String
@@ -567,9 +567,9 @@ Public Class ScalarProc
         _i = i
     End Sub
 
-    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
-        Dim l As New List(Of Pair(Of String, Object))
-        l.Add(New Pair(Of String, Object)("i", _i))
+    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of ParamValue)
+        Dim l As New List(Of ParamValue)
+        l.Add(New ParamValue("i") With {.Value = _i})
         Return l
     End Function
 
@@ -586,11 +586,11 @@ End Class
 Public Class PartialLoadProc
     Inherits QueryEntityStoredProcBase(Of Table1)
 
-    Private _params As List(Of Pair(Of String, Object))
+    Private _params As List(Of ParamValue)
 
     Public Sub New(ByVal i As Integer)
-        _params = New List(Of Pair(Of String, Object))
-        _params.Add(New Pair(Of String, Object)("id", i))
+        _params = New List(Of ParamValue)
+        _params.Add(New ParamValue("id") With {.Value = i})
     End Sub
 
     Protected Overrides Function GetColumns() As List(Of SelectExpression)
@@ -601,7 +601,7 @@ Public Class PartialLoadProc
         Return l
     End Function
 
-    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
+    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of ParamValue)
         Return _params
     End Function
 

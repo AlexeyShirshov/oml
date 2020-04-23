@@ -8,6 +8,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Expressions2
 Imports Worm.Query
 Imports System.Collections
+Imports System.Linq
 
 <TestClass()> Public Class SelectTest
 
@@ -69,7 +70,7 @@ Imports System.Collections
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
         Dim al2 As String = almgr.AddTable(CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables()(0), New EntityUnion(GetType(Entity2)))
 
-        Assert.AreEqual("group by " & al & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("Str").SourceFieldExpression & "," & al2 & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("ID").SourceFieldExpression, ge.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
+        Assert.AreEqual("group by " & al & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("Str").SourceFields.First.SourceFieldExpression & "," & al2 & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("ID").SourceFields.First.SourceFieldExpression, ge.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
     End Sub
 
     <TestMethod()> Public Sub TestGroupExpressionComplex()
@@ -93,7 +94,7 @@ Imports System.Collections
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
         Dim al2 As String = almgr.AddTable(CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables()(0), New EntityUnion(GetType(Entity2)))
 
-        Assert.AreEqual("group by " & al & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("Str").SourceFieldExpression & ",(" & al2 & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("ID").SourceFieldExpression & "+@p1)", ge.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
+        Assert.AreEqual("group by " & al & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("Str").SourceFields.First.SourceFieldExpression & ",(" & al2 & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("ID").SourceFields.First.SourceFieldExpression & "+@p1)", ge.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
     End Sub
 
     <TestMethod()> Public Sub TestGroupipingSet()
@@ -122,7 +123,7 @@ Imports System.Collections
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
         Dim al2 As String = almgr.AddTable(CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables()(0), New EntityUnion(GetType(Entity2)))
 
-        Assert.AreEqual("group by grouping sets((" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("Str").SourceFieldExpression & "," & al2 & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("ID").SourceFieldExpression & "),(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("Str").SourceFieldExpression & "))", ge.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
+        Assert.AreEqual("group by grouping sets((" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("Str").SourceFields.First.SourceFieldExpression & "," & al2 & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("ID").SourceFields.First.SourceFieldExpression & "),(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("Str").SourceFields.First.SourceFieldExpression & "))", ge.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
     End Sub
 
     <TestMethod()> Public Sub TestSortExpression()
@@ -145,7 +146,7 @@ Imports System.Collections
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
         Dim al2 As String = almgr.AddTable(CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables()(0), New EntityUnion(GetType(Entity2)))
 
-        Assert.AreEqual(al & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("Str").SourceFieldExpression & "," & al2 & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("ID").SourceFieldExpression & " desc", b.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
+        Assert.AreEqual(al & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("Str").SourceFields.First.SourceFieldExpression & "," & al2 & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("ID").SourceFields.First.SourceFieldExpression & " desc", b.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
     End Sub
 
     <TestMethod()> Public Sub TestAggregateExpression()
@@ -169,6 +170,6 @@ Imports System.Collections
         Dim al As String = almgr.AddTable(tbl, New EntityUnion(GetType(Entity2)))
         Dim al2 As String = almgr.AddTable(CType(mpe.GetEntitySchema(GetType(Entity2)), IMultiTableObjectSchema).GetTables()(0), New EntityUnion(GetType(Entity2)))
 
-        Assert.AreEqual("avg(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("Str").SourceFieldExpression & "),max(" & al2 & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("ID").SourceFieldExpression & "),min(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("Str").SourceFieldExpression & ")", b.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
+        Assert.AreEqual("avg(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("Str").SourceFields.First.SourceFieldExpression & "),max(" & al2 & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("ID").SourceFields.First.SourceFieldExpression & "),min(" & al & "." & mpe.GetEntitySchema(GetType(Entity2)).FieldColumnMap("Str").SourceFields.First.SourceFieldExpression & ")", b.MakeStatement(mpe, Nothing, stmt, pmgr, almgr, contextFilter, MakeStatementMode.None, Nothing))
     End Sub
 End Class

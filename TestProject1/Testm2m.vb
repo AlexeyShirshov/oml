@@ -14,7 +14,7 @@ Imports Worm.Query
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schema)
-            Dim o As New Entity(1, mgr.Cache, mgr.MappingEngine)
+            Dim o As New Entity(1)
 
             'Dim rel As M2MRelationDesc = CType(schema.GetEntitySchema(GetType(Entity)), ISchemaWithM2M).GetM2MRelations()(0)
 
@@ -37,7 +37,7 @@ Imports Worm.Query
         Dim schema As New Worm.ObjectMappingEngine("1")
 
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(schema)
-            Dim o As New Entity(1, mgr.Cache, mgr.MappingEngine)
+            Dim o As New Entity(1)
 
             Dim cmd As QueryCmd = o.GetCmd(GetType(Entity4)).
                 Select(FCtor.prop(GetType(Entity4), "Title"))

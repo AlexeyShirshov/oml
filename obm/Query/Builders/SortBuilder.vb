@@ -5,6 +5,7 @@ Imports Worm.Criteria.Values
 Imports Worm.Expressions2
 
 Namespace Query
+#Disable Warning IDE1006 ' Naming Styles
     'Public Class SCtorOld
     '    'Private _os As EntityUnion
     '    'Private _prev As SortLink
@@ -276,6 +277,9 @@ Namespace Query
     Public Class SCtor
 
 #Region " Shared "
+        Public Shared Function PK() As Int
+            Return Exp(New PropertyAliasExpression(MapField2Column.PK))
+        End Function
         Public Shared Function prop(ByVal propertyAlias As String) As Int
             Return prop(New PropertyAliasExpression(propertyAlias))
         End Function
@@ -503,5 +507,6 @@ Namespace Query
             End Operator
         End Class
     End Class
+#Enable Warning IDE1006 ' Naming Styles
 
 End Namespace

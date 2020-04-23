@@ -35,9 +35,9 @@ Namespace Collections
         Private _dic As IDictionary(Of TItemKey, TItem)
         Private _coll As IList(Of TItem)
         'Private _keyCount As Integer
-        Private _threshold As Integer = 500
+        Private ReadOnly _threshold As Integer = 500
         'Private _rw As System.Threading.ReaderWriterLockSlim
-        Private _sl As SpinLockRef
+        Private ReadOnly _sl As SpinLockRef
         Public Sub New()
             _coll = GetCollection()
             '_rw = New System.Threading.ReaderWriterLockSlim(Threading.LockRecursionPolicy.SupportsRecursion)
@@ -634,9 +634,11 @@ Namespace Collections
 
 #Region " IList implementation "
 
+#Disable Warning BC42353 ' Function doesn't return a value on all code paths
         Protected Function Add4(ByVal value As Object) As Integer Implements System.Collections.IList.Add
             Add(CType(value, TItem))
         End Function
+#Enable Warning BC42353 ' Function doesn't return a value on all code paths
 
         Protected Sub Clear3() Implements System.Collections.IList.Clear
             Clear()

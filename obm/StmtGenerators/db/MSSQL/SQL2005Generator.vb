@@ -95,14 +95,13 @@ Namespace Database
             sb.Append(query.RowNumberFilter.MakeQueryStmt(mpe, query.FromClause, Me, query, contextInfo, almgr, params))
         End Sub
 
-        Protected Overrides Function DeclareOutput(ByVal sb As System.Text.StringBuilder, _
-            ByVal pks As IEnumerable(Of Pair(Of String, Pair(Of String)))) As String
+        Protected Overrides Function DeclareOutput(ByVal sb As System.Text.StringBuilder,
+                                                   ByVal pks As IEnumerable(Of ColType)) As String
             Dim tblName As String = "@tmp_tbl"
             Dim clm As New StringBuilder
             clm.Append("table(")
-            For Each p As Pair(Of String, Pair(Of String)) In pks
-                Dim s As Pair(Of String) = p.Second
-                clm.Append(s.First).Append(" ").Append(s.Second).Append(",")
+            For Each p In pks
+                clm.Append(p.Column).Append(" ").Append(p.Type).Append(",")
             Next
             clm.Length -= 1
             If clm.Length > 5 Then
@@ -114,31 +113,30 @@ Namespace Database
             End If
         End Function
 
-        Protected Overrides Function InsertOutput(ByVal table As String, _
-            ByVal syncInsertPK As IEnumerable(Of Pair(Of String, Pair(Of String))), _
-            ByVal notSyncInsertPK As List(Of Pair(Of String)), ByVal co As Entities.Meta.IChangeOutputOnInsert) As String
+        Protected Overrides Function InsertOutput(ByVal table As String,
+                                                  ByVal syncInsertPK As IEnumerable(Of ColType),
+                                                  ByVal notSyncInsertPK As List(Of Criteria.Core.ITemplateFilterBase.ColParam),
+                                                  ByVal co As Entities.Meta.IChangeOutputOnInsert) As String
             Dim sb As New StringBuilder
             sb.Append("output ")
-            For Each pp As Pair(Of String, Pair(Of String)) In syncInsertPK
-                Dim p As Pair(Of String) = pp.Second
-                Dim clm As String = p.First
+            For Each pp In syncInsertPK
+                Dim clm As String = pp.Column
                 If co IsNot Nothing Then
-                    clm = co.GetColumn(pp.First, clm)
+                    clm = co.GetColumn(table, clm)
                 End If
                 sb.Append("inserted.").Append(clm).Append(",")
             Next
             sb.Length -= 1
             If sb.Length > 7 Then
                 sb.Append(" into ").Append(table).Append("(")
-                For Each pp As Pair(Of String, Pair(Of String)) In syncInsertPK
-                    sb.Append(pp.Second.First).Append(",")
+                For Each pp In syncInsertPK
+                    sb.Append(pp.Column).Append(",")
 
-                    Dim propertyAlias As String = pp.First
-                    Dim idx As Integer = notSyncInsertPK.FindIndex(Function(p As Pair(Of String)) p.First = propertyAlias)
+                    Dim idx As Integer = notSyncInsertPK.FindIndex(Function(it) it.Column = pp.Column)
                     If idx >= 0 Then
-                        notSyncInsertPK(idx) = New Pair(Of String)(propertyAlias, pp.Second.First)
+                        notSyncInsertPK(idx) = New Criteria.Core.ITemplateFilterBase.ColParam With {.Column = pp.Column, .Param = pp.Column}
                     Else
-                        notSyncInsertPK.Add(New Pair(Of String)(propertyAlias, pp.Second.First))
+                        notSyncInsertPK.Add(New Criteria.Core.ITemplateFilterBase.ColParam With {.Column = pp.Column, .Param = pp.Column})
                     End If
                 Next
                 sb.Length -= 1

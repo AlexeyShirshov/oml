@@ -65,7 +65,7 @@ Namespace Entities
                     Dim mpe As ObjectMappingEngine = e.GetMappingEngine
                     oschema = e.GetEntitySchema(mpe)
                 End If
-                Return OrmManager.GetPKValues(CType(e, Object), oschema)
+                Return oschema.GetPKs(CType(e, Object))
             End If
         End Function
         <Extension>

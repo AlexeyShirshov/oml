@@ -67,19 +67,19 @@ Namespace Criteria.Core
                     '    tableAliases = almgr.Aliases
                     'End If
 
-                    Dim map As New MapField2Column(String.Empty, Template.Column, Template.Table)
+                    'Dim map As New MapField2Column(String.Empty, Template.Table, Template.Column)
                     Dim [alias] As String = String.Empty
 
                     If almgr IsNot Nothing Then
                         'Debug.Assert(almgr.ContainsKey(map.Table, _eu), "There is not alias for table " & map.Table.RawName)
                         Try
-                            [alias] = almgr.GetAlias(map.Table, _eu) & stmt.Selector
+                            [alias] = almgr.GetAlias(Template.Table, _eu) & stmt.Selector
                         Catch ex As KeyNotFoundException
-                            Throw New ObjectMappingException("There is not alias for table " & map.Table.RawName, ex)
+                            Throw New ObjectMappingException("There is not alias for table " & Template.Table.RawName, ex)
                         End Try
                     End If
 
-                    Return [alias] & map.SourceFieldExpression & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, pname, False, almgr, contextInfo, executor)
+                    Return [alias] & Template.Column & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, pname, False, almgr, contextInfo, executor)
                 End If
             Else
                 Return String.Empty
@@ -90,8 +90,8 @@ Namespace Criteria.Core
             Return New TableFilter() {Me}
         End Function
 
-        Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
-            ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal executor As Query.IExecutionContext) As Pair(Of String)
+        Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator,
+                                                      ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal executor As Query.IExecutionContext) As IEnumerable(Of ITemplateFilterBase.ColParam)
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -102,7 +102,7 @@ Namespace Criteria.Core
 
             Dim prname As String = Value.GetParam(schema, Nothing, stmt, pname, Nothing, Nothing, Nothing, False, Nothing)
 
-            Return New Pair(Of String)(Template.Column, prname)
+            Return {New ITemplateFilterBase.ColParam With {.Column = Template.Column, .Param = prname}}
         End Function
 
         'Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String Implements IFilter.MakeSQLStmt

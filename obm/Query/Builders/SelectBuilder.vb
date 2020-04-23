@@ -4,9 +4,13 @@ Imports Worm.Entities.Meta
 Imports System.Collections.Generic
 
 Namespace Query
+#Disable Warning IDE1006 ' Naming Styles
     Public Class FCtor
 
 #Region " Shared "
+        Public Shared Function PK() As Int
+            Return Exp(New PropertyAliasExpression(MapField2Column.PK))
+        End Function
         Public Shared Function prop(ByVal propertyAlias As String) As Int
             Return Exp(New PropertyAliasExpression(propertyAlias))
         End Function
@@ -208,7 +212,7 @@ Namespace Query
         'End Function
 #End Region
 
-        <EditorBrowsable(EditorBrowsableState.Never)> _
+        <EditorBrowsable(EditorBrowsableState.Never)>
         Class Int
             Inherits ExpCtor(Of Int).Int
 
@@ -277,4 +281,6 @@ Namespace Query
         End Class
 
     End Class
+#Enable Warning IDE1006 ' Naming Styles
+
 End Namespace

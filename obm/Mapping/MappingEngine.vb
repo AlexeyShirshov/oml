@@ -13,6 +13,7 @@ Imports Worm.Cache
 Imports System.Linq
 Imports System.Text.RegularExpressions
 Imports System.Reflection
+Imports Worm.Collections
 
 'Namespace Schema
 
@@ -20,7 +21,7 @@ Imports System.Reflection
 ''' Данное исключение выбрасывается при определеных ошибках в <see cref="ObjectMappingEngine" />
 ''' </summary>
 ''' <remarks></remarks>
-<Serializable()> _
+<Serializable()>
 Public NotInheritable Class ObjectMappingException
     Inherits Exception
 
@@ -63,34 +64,37 @@ End Class
 Public Class ObjectMappingEngine
 
     Public Delegate Function ResolveSchemaForSingleType(ByVal currentVersion As String, ByVal entities() As EntityAttribute, ByVal objType As Type) As EntityAttribute
-    Public Delegate Function ResolveEntityNameForHierarchy(ByVal currentVersion As String, ByVal existingType As Type, ByVal existingTypeEntityAttribute As EntityAttribute, _
+    Public Delegate Function ResolveEntityNameForHierarchy(ByVal currentVersion As String, ByVal existingType As Type, ByVal existingTypeEntityAttribute As EntityAttribute,
                                                ByVal type2add As Type, ByVal type2addEntityAttribute As EntityAttribute) As EntityAttribute
     Public Delegate Function CreateEntityDelegate(ByVal t As Type) As Object
     Public Delegate Function ConvertVersionToIntDelegate(version As String) As Integer
     Delegate Function FallBackDelegate(prop As String, s As String) As Object
-    Private _sharedTables As Hashtable = Hashtable.Synchronized(New Hashtable)
+    Private ReadOnly _sharedTables As Hashtable = Hashtable.Synchronized(New Hashtable)
     Protected map As IDictionary = Hashtable.Synchronized(New Hashtable)
     Protected sel As IDictionary = Hashtable.Synchronized(New Hashtable)
     Protected _joins As IDictionary = Hashtable.Synchronized(New Hashtable)
-    Private _typeMap As IDictionary = Hashtable.Synchronized(New Hashtable)
-    Private _version As String
-    Private _mapv As ResolveSchemaForSingleType
-    Private _mapn As ResolveEntityNameForHierarchy
+    Private ReadOnly _typeMap As IDictionary = Hashtable.Synchronized(New Hashtable)
+    Private ReadOnly _version As String
+    Private ReadOnly _mapv As ResolveSchemaForSingleType
+    Private ReadOnly _mapn As ResolveEntityNameForHierarchy
     Private _idic As IDictionary
     Private _names As IDictionary
-    Private _idicSpin As New SpinLockRef
+    Private ReadOnly _idicSpin As New SpinLockRef
     Private _ce As CreateEntityDelegate
     Private _c2int As ConvertVersionToIntDelegate
-    Private _features As IList(Of String) = New CoreFramework.CFCollections.ConcurrentList(Of String)
+    Private ReadOnly _features As IList(Of String) = New CoreFramework.CFCollections.ConcurrentList(Of String)
     Public ReadOnly Mark As Guid = Guid.NewGuid
     Private Shared _entityTypes As IEnumerable(Of Type)
-    Private Shared _entityTypesSpin As New SpinLockRef
+    Private Shared ReadOnly _entityTypesSpin As New SpinLockRef
     Public Const DefaultVersion As String = "1"
     Public Const NeedEntitySchemaMapping As String = "Worm:NeedEntitySchemaMapping"
     Public Shared SkipValue As Object = New Object
-    Private _normTypesSpin As New SpinLockRef
+    Private ReadOnly _normTypesSpin As New SpinLockRef
+
     Public Event EndInitSchema(idic As IDictionary)
     Public Event StartInitSchema()
+
+    'Private _convertTypeMap As New Concurrent.ConcurrentDictionary(Of IEntitySchema, Concurrent.BlockingCollection(Of ColumnTypeMap))
 
     Public Sub New()
         MyClass.New(DefaultVersion)
@@ -138,11 +142,15 @@ Public Class ObjectMappingEngine
     'End Function
 
     Public Shared Function ApplyAttributes2Schema(ByVal schema As IEntitySchema, ByVal attrs As List(Of EntityPropertyAttribute),
-        ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, _
-        ByVal names As IDictionary) As Collections.IndexedCollection(Of String, MapField2Column)
+                                                  ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary,
+                                                  ByVal names As IDictionary) As Collections.IndexedCollection(Of String, MapField2Column)
+
         Dim map As Collections.IndexedCollection(Of String, MapField2Column) = schema.FieldColumnMap
 
+        Dim pks As New List(Of EntityPropertyAttribute)
+
         For Each ep As EntityPropertyAttribute In attrs
+
             Dim m As MapField2Column = Nothing
             If map.TryGetValue(ep.PropertyAlias, m) Then
                 m.PropertyInfo = ep._pi
@@ -150,35 +158,79 @@ Public Class ObjectMappingEngine
                 If m.Attributes = Field2DbRelations.None Then
                     m.Attributes = ep.Behavior
                 End If
+
                 If m.SourceFields Is Nothing OrElse m.SourceFields.Count = 0 Then
-                    For Each sf As SourceFieldAttribute In ep.SourceFields
-                        m.SourceFields.Add(New SourceField() With { _
-                            .DBType = New DBType(sf.SourceFieldType, sf.SourceFieldSize, sf.IsNullable), _
-                            .PrimaryKey = sf.PrimaryKey, .SourceFieldAlias = sf.ColumnName, _
-                            .SourceFieldExpression = sf.ColumnExpression _
-                        })
-                    Next
+                    If ep.SourceFields Is Nothing Then
+                        m.SourceFields = {New SourceField(ep.PropertyAlias)}
+                    Else
+                        m.SourceFields = (From k In ep.SourceFields
+                                          Select New SourceField(k.ColumnExpression) With {
+                                             .DBType = New DBType(k.SourceFieldType, k.SourceFieldSize, k.IsNullable),
+                                             .SourceFieldAlias = k.ColumnAlias
+                                             }).ToArray
+                    End If
                 End If
+
+                'mapPk = (m.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK
                 m.ApplyForeignKey(mpe, idic, names)
-            ElseIf ep.SchemaVersion <> NeedEntitySchemaMapping Then
-                m = New MapField2Column(ep.PropertyAlias, schema.Table, ep.Behavior) With { _
-                                        .PropertyInfo = ep._pi, .Schema = schema}
-                map.Add(m)
-                For Each sf As SourceFieldAttribute In ep.SourceFields
-                    m.SourceFields.Add(New SourceField() With { _
-                        .DBType = New DBType(sf.SourceFieldType, sf.SourceFieldSize, sf.IsNullable), _
-                        .PrimaryKey = sf.PrimaryKey, .SourceFieldAlias = sf.ColumnName, _
-                        .SourceFieldExpression = sf.ColumnExpression _
-                    })
-                Next
-                m.ApplyForeignKey(mpe, idic, names)
+            Else
+
+                If (ep.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
+
+                    pks.Add(ep)
+                Else
+
+                    m = New MapField2Column(ep.PropertyAlias, schema.Table, ep.Behavior) With {
+                        .PropertyInfo = ep._pi, .Schema = schema
+                    }
+                    map.Add(m)
+
+                    If ep.SourceFields Is Nothing Then
+                        m.SourceFields = {New SourceField(ep.PropertyAlias)}
+                    Else
+                        m.SourceFields = (From k In ep.SourceFields
+                                          Select New SourceField(k.ColumnExpression) With {
+                                             .DBType = New DBType(k.SourceFieldType, k.SourceFieldSize, k.IsNullable),
+                                             .SourceFieldAlias = k.ColumnAlias
+                                             }).ToArray
+                    End If
+
+                    m.ApplyForeignKey(mpe, idic, names)
+                End If
             End If
         Next
+
+        If pks.Any Then
+            Dim m As New MapField2Column(schema.Table, Field2DbRelations.PK) With {.Schema = schema,
+                .SourceFields = (From pk In pks
+                                 From k In pk.SourceFields
+                                 Select New SourceField(k.ColumnExpression) With {
+                                             .DBType = New DBType(k.SourceFieldType, k.SourceFieldSize, k.IsNullable),
+                                             .SourceFieldAlias = k.ColumnAlias
+                                             }).ToArray}
+            map.Add(m)
+
+        End If
+
+        Invalidate(map)
+
         Return map
     End Function
 
+    Private Shared Sub Invalidate(map As IndexedCollection(Of String, MapField2Column))
+        If map.Values.Where(Function(it) it.IsPK).Count > 1 Then
+            Throw New ObjectMappingException("Number of pks should not be greater than 1. Use SourceFields to specify multiple columns for pk")
+        End If
+
+        If map.Values.GroupBy(Function(it) it.PropertyAlias).ToDictionary(Function(it) it.Key).Any(Function(it) it.Value.Count > 1) Then
+            Throw New ObjectMappingException("Duplicate property aliases")
+        End If
+    End Sub
+
     Public Shared Function ApplyAttributes2Schema(map As Collections.IndexedCollection(Of String, MapField2Column), ByVal attrs As List(Of EntityPropertyAttribute),
-        ByVal mpe As ObjectMappingEngine, tbl As SourceFragment) As Collections.IndexedCollection(Of String, MapField2Column)
+                                                  ByVal mpe As ObjectMappingEngine, tbl As SourceFragment) As Collections.IndexedCollection(Of String, MapField2Column)
+
+        Dim pks As New List(Of EntityPropertyAttribute)
 
         For Each ep As EntityPropertyAttribute In attrs
             Dim m As MapField2Column = Nothing
@@ -187,30 +239,59 @@ Public Class ObjectMappingEngine
                 If m.Attributes = Field2DbRelations.None Then
                     m.Attributes = ep.Behavior
                 End If
+
                 If m.SourceFields Is Nothing OrElse m.SourceFields.Count = 0 Then
-                    For Each sf As SourceFieldAttribute In ep.SourceFields
-                        m.SourceFields.Add(New SourceField() With { _
-                            .DBType = New DBType(sf.SourceFieldType, sf.SourceFieldSize, sf.IsNullable), _
-                            .PrimaryKey = sf.PrimaryKey, .SourceFieldAlias = sf.ColumnName, _
-                            .SourceFieldExpression = sf.ColumnExpression _
-                        })
-                    Next
+                    If ep.SourceFields Is Nothing Then
+                        m.SourceFields = {New SourceField(ep.PropertyAlias)}
+                    Else
+                        m.SourceFields = (From k In ep.SourceFields
+                                          Select New SourceField(k.ColumnExpression) With {
+                                             .DBType = New DBType(k.SourceFieldType, k.SourceFieldSize, k.IsNullable),
+                                             .SourceFieldAlias = k.ColumnAlias
+                                             }).ToArray
+                    End If
                 End If
+
                 m.ApplyForeignKey(mpe, mpe.GetIdic, mpe.GetNames)
-            ElseIf ep.SchemaVersion <> NeedEntitySchemaMapping Then
-                m = New MapField2Column(ep.PropertyAlias, tbl, ep.Behavior) With { _
+            Else
+
+                If (ep.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                    pks.Add(ep)
+                Else
+
+                    m = New MapField2Column(ep.PropertyAlias, tbl, ep.Behavior) With {
                                         .PropertyInfo = ep._pi, .Schema = Nothing}
-                map.Add(m)
-                For Each sf As SourceFieldAttribute In ep.SourceFields
-                    m.SourceFields.Add(New SourceField() With { _
-                        .DBType = New DBType(sf.SourceFieldType, sf.SourceFieldSize, sf.IsNullable), _
-                        .PrimaryKey = sf.PrimaryKey, .SourceFieldAlias = sf.ColumnName, _
-                        .SourceFieldExpression = sf.ColumnExpression _
-                    })
-                Next
-                m.ApplyForeignKey(mpe, mpe.GetIdic, mpe.GetNames)
+                    map.Add(m)
+
+                    If ep.SourceFields Is Nothing Then
+                        m.SourceFields = {New SourceField(ep.PropertyAlias)}
+                    Else
+                        m.SourceFields = (From k In ep.SourceFields
+                                          Select New SourceField(k.ColumnExpression) With {
+                                             .DBType = New DBType(k.SourceFieldType, k.SourceFieldSize, k.IsNullable),
+                                             .SourceFieldAlias = k.ColumnAlias
+                                             }).ToArray
+                    End If
+
+                    m.ApplyForeignKey(mpe, mpe.GetIdic, mpe.GetNames)
+                End If
             End If
         Next
+
+        If pks.Any Then
+            Dim m As New MapField2Column(tbl, Field2DbRelations.PK) With {
+                .SourceFields = (From pk In pks
+                                 From k In pk.SourceFields
+                                 Select New SourceField(k.ColumnExpression) With {
+                                             .DBType = New DBType(k.SourceFieldType, k.SourceFieldSize, k.IsNullable),
+                                             .SourceFieldAlias = k.ColumnAlias
+                                             }).ToArray}
+            map.Add(m)
+
+        End If
+
+        Invalidate(map)
+
         Return map
     End Function
 
@@ -336,19 +417,27 @@ Public Class ObjectMappingEngine
                                 Optional errors As IList(Of Exception) = Nothing)
         LoadEntityValues(entity, values?.AllKeys.ToDictionary(Function(it) it, Function(it2) values?(it2)), fallBack, errors)
     End Sub
+    Public Shared Function ChooseOneVersionable(Of T As {Class, IVersionable})(objects As IEnumerable(Of T),
+                                                                               mpeVersion As String, convertVersion As ConvertVersionToIntDelegate,
+                                                                               features As IEnumerable(Of String)) As T
+        Dim r = ChooseVersionable(mpeVersion, convertVersion, objects, features)
 
-    Private Shared Function MapColumn(pi As Reflection.PropertyInfo, mpeVersion As String, convertVersion As ConvertVersionToIntDelegate,
-                                      columns() As EntityPropertyAttribute, features As IEnumerable(Of String)) As EntityPropertyAttribute
-        If columns.Length = 1 Then
-            If Not String.IsNullOrEmpty(columns(0).Feature) AndAlso Not features.Contains(columns(0).Feature) Then
+        Return r?.FirstOrDefault
+    End Function
+    Public Shared Function ChooseVersionable(Of T As IVersionable)(mpeVersion As String, convertVersion As ConvertVersionToIntDelegate,
+                                                                   objects As IEnumerable(Of T), features As IEnumerable(Of String)) As IEnumerable(Of T)
+        If objects.Count = 1 Then
+            Dim obj = objects(0)
+
+            If Not String.IsNullOrEmpty(obj.Feature) AndAlso Not features.Contains(obj.Feature) Then
                 Return Nothing
             End If
 
-            If Not String.IsNullOrEmpty(columns(0).SchemaVersion) AndAlso columns(0).SchemaVersion <> ObjectMappingEngine.NeedEntitySchemaMapping Then
-                Select Case columns(0).SchemaVersionOperator
+            If Not String.IsNullOrEmpty(obj.SchemaVersion) AndAlso obj.SchemaVersion <> ObjectMappingEngine.NeedEntitySchemaMapping Then
+                Select Case obj.SchemaVersionOperator
                     Case SchemaVersionOperatorEnum.Equal
-                        If columns(0).SchemaVersion = mpeVersion Then
-                            Return CType(columns(0), EntityPropertyAttribute)
+                        If obj.SchemaVersion = mpeVersion Then
+                            Return objects
                         End If
                     Case SchemaVersionOperatorEnum.GreaterEqual
                         Dim schemaVer As Integer = 0
@@ -356,11 +445,11 @@ Public Class ObjectMappingEngine
                             schemaVer = convertVersion(mpeVersion)
                         End If
                         Dim colVer As Integer = Integer.MinValue
-                        If Not Integer.TryParse(columns(0).SchemaVersion, colVer) AndAlso convertVersion IsNot Nothing Then
-                            colVer = convertVersion(columns(0).SchemaVersion)
+                        If Not Integer.TryParse(obj.SchemaVersion, colVer) AndAlso convertVersion IsNot Nothing Then
+                            colVer = convertVersion(obj.SchemaVersion)
                         End If
                         If schemaVer >= colVer Then
-                            Return CType(columns(0), EntityPropertyAttribute)
+                            Return objects
                         End If
                     Case SchemaVersionOperatorEnum.LessThan
                         Dim schemaVer As Integer = 0
@@ -368,74 +457,70 @@ Public Class ObjectMappingEngine
                             schemaVer = convertVersion(mpeVersion)
                         End If
                         Dim colVer As Integer = Integer.MaxValue
-                        If Not Integer.TryParse(columns(0).SchemaVersion, colVer) AndAlso convertVersion IsNot Nothing Then
-                            colVer = convertVersion(columns(0).SchemaVersion)
+                        If Not Integer.TryParse(obj.SchemaVersion, colVer) AndAlso convertVersion IsNot Nothing Then
+                            colVer = convertVersion(obj.SchemaVersion)
                         End If
                         If schemaVer < colVer Then
-                            Return CType(columns(0), EntityPropertyAttribute)
+                            Return objects
                         End If
                 End Select
             Else
-                Return CType(columns(0), EntityPropertyAttribute)
+                Return objects
             End If
-        ElseIf columns.Length > 1 Then
-            For Each c As EntityPropertyAttribute In From k In columns
-                                                     Where Not String.IsNullOrEmpty(k.SchemaVersion) AndAlso
-                                                     k.SchemaVersion <> NeedEntitySchemaMapping AndAlso
-                                                     (String.IsNullOrEmpty(k.Feature) OrElse features.Contains(k.Feature))
-                Select Case c.SchemaVersionOperator
-                    Case SchemaVersionOperatorEnum.Equal
-                        If c.SchemaVersion = mpeVersion Then
-                            Return c
-                        End If
-                    Case SchemaVersionOperatorEnum.GreaterEqual
-                        Dim schemaVer As Integer = 0
-                        If Not Integer.TryParse(mpeVersion, schemaVer) AndAlso convertVersion IsNot Nothing Then
-                            schemaVer = convertVersion(mpeVersion)
-                        End If
-                        Dim colVer As Integer = Integer.MinValue
-                        If Not Integer.TryParse(c.SchemaVersion, colVer) AndAlso convertVersion IsNot Nothing Then
-                            colVer = convertVersion(c.SchemaVersion)
-                        End If
-                        If schemaVer >= colVer Then
-                            Return CType(c, EntityPropertyAttribute)
-                        End If
-                    Case SchemaVersionOperatorEnum.LessThan
-                        Dim schemaVer As Integer = 0
-                        If Not Integer.TryParse(mpeVersion, schemaVer) AndAlso convertVersion IsNot Nothing Then
-                            schemaVer = convertVersion(mpeVersion)
-                        End If
-                        Dim colVer As Integer = Integer.MaxValue
-                        If Not Integer.TryParse(c.SchemaVersion, colVer) AndAlso convertVersion IsNot Nothing Then
-                            colVer = convertVersion(c.SchemaVersion)
-                        End If
-                        If schemaVer < colVer Then
-                            Return CType(c, EntityPropertyAttribute)
-                        End If
-                End Select
-            Next
+        ElseIf objects.Count > 1 Then
 
-            Return columns.FirstOrDefault(Function(it) String.IsNullOrEmpty(it.SchemaVersion) AndAlso
-                                              (String.IsNullOrEmpty(it.Feature) OrElse features.Contains(it.Feature)))
+            Dim schemaMatchPredicate = Function(schemaVersionOperator As SchemaVersionOperatorEnum, schemaVersion As String) As Boolean
+                                           Select Case schemaVersionOperator
+                                               Case SchemaVersionOperatorEnum.Equal
+                                                   If schemaVersion = mpeVersion Then
+                                                       Return True
+                                                   End If
+                                               Case SchemaVersionOperatorEnum.GreaterEqual
+                                                   Dim schemaVer As Integer = 0
+                                                   If Not Integer.TryParse(mpeVersion, schemaVer) AndAlso convertVersion IsNot Nothing Then
+                                                       schemaVer = convertVersion(mpeVersion)
+                                                   End If
+                                                   Dim colVer As Integer = Integer.MinValue
+                                                   If Not Integer.TryParse(schemaVersion, colVer) AndAlso convertVersion IsNot Nothing Then
+                                                       colVer = convertVersion(schemaVersion)
+                                                   End If
+                                                   If schemaVer >= colVer Then
+                                                       Return True
+                                                   End If
+                                               Case SchemaVersionOperatorEnum.LessThan
+                                                   Dim schemaVer As Integer = 0
+                                                   If Not Integer.TryParse(mpeVersion, schemaVer) AndAlso convertVersion IsNot Nothing Then
+                                                       schemaVer = convertVersion(mpeVersion)
+                                                   End If
+                                                   Dim colVer As Integer = Integer.MaxValue
+                                                   If Not Integer.TryParse(schemaVersion, colVer) AndAlso convertVersion IsNot Nothing Then
+                                                       colVer = convertVersion(schemaVersion)
+                                                   End If
+                                                   If schemaVer < colVer Then
+                                                       Return True
+                                                   End If
+                                           End Select
+
+                                           Return False
+                                       End Function
+
+            Return From k In objects
+                   Where ((Not String.IsNullOrEmpty(k.SchemaVersion) AndAlso k.SchemaVersion <> NeedEntitySchemaMapping AndAlso schemaMatchPredicate(k.SchemaVersionOperator, k.SchemaVersion)) OrElse String.IsNullOrEmpty(k.SchemaVersion)) AndAlso
+                              (String.IsNullOrEmpty(k.Feature) OrElse features.Contains(k.Feature))
+
         End If
 
         Return Nothing
     End Function
-    Friend Shared Function GetMappedProperties(ByVal t As Type, ByVal mpeVersion As String, _
-        ByVal raw As Boolean, ByVal includeBase As Boolean, convertVersion As ConvertVersionToIntDelegate, features As IEnumerable(Of String)) As List(Of EntityPropertyAttribute)
-        Dim l As New List(Of EntityPropertyAttribute)
+    Private Shared Function CreateProp(ByVal t As Type, props() As EntityPropertyAttribute, pi As Reflection.PropertyInfo, raw As Boolean, mpeVersion As String, convertVersion As ConvertVersionToIntDelegate, features As IEnumerable(Of String)) As EntityPropertyAttribute
+        If props.Length = 0 AndAlso pi.CanRead AndAlso (pi.CanWrite OrElse GetType(IOptimizedValues).IsAssignableFrom(t)) Then
+            If raw Then
 
-        For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
-
-            Dim columns() As EntityPropertyAttribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), EntityPropertyAttribute())
-            Dim column As EntityPropertyAttribute = Nothing
-
-            If columns.Length = 0 AndAlso raw AndAlso pi.CanRead AndAlso (pi.CanWrite OrElse GetType(IOptimizedValues).IsAssignableFrom(t)) Then
                 Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
                 Do While bd IsNot Nothing AndAlso bd.IsVirtual
                     If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(SinglePKEntityBase),
-                                     GetType(SinglePKEntity), GetType(QueryCmd), GetType(RelationCmd)}, bd.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
-                        Continue For
+                                 GetType(SinglePKEntity), GetType(QueryCmd), GetType(RelationCmd)}, bd.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
+                        Return Nothing
                     ElseIf pi.DeclaringType Is bd.DeclaringType Then
                         Exit Do
                     End If
@@ -443,35 +528,43 @@ Public Class ObjectMappingEngine
                 Loop
 
                 If Array.IndexOf(New Type() {GetType(QueryCmd), GetType(RelationCmd)}, bd.ReturnType) >= 0 Then ', GetType(EntityLazyLoad)
-                    Continue For
+                    Return Nothing
                 End If
 
-                column = New EntityPropertyAttribute() With {.PropertyAlias = pi.Name, ._raw = True}
+                Return New EntityPropertyAttribute() With {.PropertyAlias = pi.Name, ._raw = True}
             Else
-                column = MapColumn(pi, mpeVersion, convertVersion, columns, features)
+                Dim fields() As SourceFieldAttribute = CType(Attribute.GetCustomAttributes(pi, GetType(SourceFieldAttribute)), SourceFieldAttribute())
+                If fields.Length = 0 Then
+                    Return Nothing
+                Else
+                    Return New EntityPropertyAttribute() With {.PropertyAlias = pi.Name, .SourceFields = ChooseVersionable(mpeVersion, convertVersion, fields, features).ToArray}
+                End If
             End If
+        Else
+            Return ChooseOneVersionable(props, mpeVersion, convertVersion, features)
+        End If
+    End Function
+    Friend Shared Function GetMappedProperties(ByVal t As Type, ByVal mpeVersion As String,
+                                               ByVal raw As Boolean, ByVal includeBase As Boolean, convertVersion As ConvertVersionToIntDelegate, features As IEnumerable(Of String)) As List(Of EntityPropertyAttribute)
 
-            If column IsNot Nothing Then
-                If String.IsNullOrEmpty(column.PropertyAlias) Then
-                    column.PropertyAlias = pi.Name
+        Dim l As New List(Of EntityPropertyAttribute)
+
+        For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
+
+            Dim prop = CreateProp(t, CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), EntityPropertyAttribute()), pi, raw, mpeVersion, convertVersion, features)
+
+            If prop IsNot Nothing Then
+                If String.IsNullOrEmpty(prop.PropertyAlias) Then
+                    prop.PropertyAlias = pi.Name
                 End If
 
-                If String.IsNullOrEmpty(column.Column) Then
-                    Dim fields() As SourceFieldAttribute = CType(Attribute.GetCustomAttributes(pi, GetType(SourceFieldAttribute)), SourceFieldAttribute())
-                    If fields.Length = 0 Then
-                        column.Column = pi.Name
-                    Else
-                        Dim v As String = If(String.IsNullOrEmpty(column.SchemaVersion), mpeVersion, column.SchemaVersion)
-                        If String.IsNullOrEmpty(v) Then
-                            column.SourceFields = fields
-                        Else
-                            column.SourceFields = Array.FindAll(fields, Function(f) String.IsNullOrEmpty(f.SchemaVersion) OrElse f.SchemaVersion = v)
-                        End If
-                    End If
+                prop._pi = pi
+
+                If l.Exists(Function(ep) ep.PropertyAlias = prop.PropertyAlias) Then
+                    Throw New ObjectMappingException($"Duplicate property {prop.PropertyAlias}")
                 End If
 
-                column._pi = pi
-                l.Add(column)
+                l.Add(prop)
             End If
         Next
 
@@ -481,48 +574,17 @@ Public Class ObjectMappingEngine
                     Continue For
                 End If
 
-                Dim columns() As EntityPropertyAttribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), EntityPropertyAttribute())
-                Dim column As EntityPropertyAttribute = Nothing
+                Dim props() As EntityPropertyAttribute = CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), EntityPropertyAttribute())
+                Dim prop = CreateProp(t, props, pi, raw, mpeVersion, convertVersion, features)
 
-                If columns.Length = 0 AndAlso raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
-                    Dim bd As Reflection.MethodInfo = pi.GetGetMethod.GetBaseDefinition
-                    Do While bd IsNot Nothing AndAlso bd.IsVirtual
-                        If Array.IndexOf(New Type() {GetType(Entity), GetType(CachedEntity), GetType(CachedLazyLoad), GetType(SinglePKEntityBase), GetType(SinglePKEntity)}, bd.DeclaringType) >= 0 Then ', GetType(EntityLazyLoad)
-                            Continue For
-                        ElseIf pi.DeclaringType Is bd.DeclaringType Then
-                            Exit Do
-                        End If
-                        bd = bd.GetBaseDefinition
-                    Loop
-
-                    column = New EntityPropertyAttribute() With {.PropertyAlias = pi.Name, ._raw = True}
-                Else
-                    column = MapColumn(pi, mpeVersion, convertVersion, columns, features)
-                End If
-
-
-                If column IsNot Nothing Then
-                    If String.IsNullOrEmpty(column.PropertyAlias) Then
-                        column.PropertyAlias = pi.Name
+                If prop IsNot Nothing Then
+                    If String.IsNullOrEmpty(prop.PropertyAlias) Then
+                        prop.PropertyAlias = pi.Name
                     End If
 
-                    If Not l.Exists(Function(ep) ep.PropertyAlias = column.PropertyAlias) Then
-                        If String.IsNullOrEmpty(column.Column) Then
-                            Dim fields() As SourceFieldAttribute = CType(Attribute.GetCustomAttributes(pi, GetType(SourceFieldAttribute)), SourceFieldAttribute())
-                            If fields.Length = 0 Then
-                                column.Column = pi.Name
-                            Else
-                                Dim v As String = If(String.IsNullOrEmpty(column.SchemaVersion), mpeVersion, column.SchemaVersion)
-                                If String.IsNullOrEmpty(v) Then
-                                    column.SourceFields = fields
-                                Else
-                                    column.SourceFields = Array.FindAll(fields, Function(f) String.IsNullOrEmpty(f.SchemaVersion) OrElse f.SchemaVersion = v)
-                                End If
-                            End If
-                        End If
-
-                        column._pi = pi
-                        l.Add(column)
+                    If Not l.Exists(Function(ep) ep.PropertyAlias = prop.PropertyAlias) Then
+                        prop._pi = pi
+                        l.Add(prop)
                     End If
                 End If
             Next
@@ -956,19 +1018,20 @@ Public Class ObjectMappingEngine
         Return GetEntitySchema(type).ChangeValueType(propertyAlias, o)
     End Function
 
-    Public Function GetSinglePK(ByVal t As Type, Optional ByVal oschema As IEntitySchema = Nothing) As String
+    Public Function GetPrimaryKey(ByVal t As Type, Optional ByVal oschema As IEntitySchema = Nothing) As String
         If oschema Is Nothing Then
             oschema = GetEntitySchema(t)
         End If
-        Dim pk As String = Nothing
-        For Each mp As MapField2Column In oschema.GetPKs
-            If String.IsNullOrEmpty(pk) Then
-                pk = mp.PropertyAlias
-            Else
-                Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", t))
-            End If
-        Next
-        Return pk
+        'Dim pk As String = Nothing
+        'For Each mp As MapField2Column In oschema.GetPKs
+        '    If String.IsNullOrEmpty(pk) Then
+        '        pk = mp.PropertyAlias
+        '    Else
+        '        Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", t))
+        '    End If
+        'Next
+        'Return pk
+        Return oschema.GetPK?.PropertyAlias
     End Function
 
     '<CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062")> _
@@ -1289,8 +1352,13 @@ Public Class ObjectMappingEngine
     ''' вызов <see cref="IOptimizedValues.GetValueOptimized"/> обрамляется объектом, который возвращает метод <see cref="IPropertyLazyLoad.Read"/></remarks>
     ''' <exception cref="ArgumentException">Если тип не реализует интерфейс <see cref="IOptimizedValues"/> и параметр <paramref name="pi"/> не задан.</exception>
     Public Shared Function GetPropertyValue(ByVal obj As Object, ByVal propertyAlias As String, ByVal oschema As IEntitySchema, Optional ByVal pi As Reflection.PropertyInfo = Nothing) As Object
+        If obj Is Nothing Then
+            Throw New ArgumentNullException(NameOf(obj))
+        End If
+
         Dim ov As IOptimizedValues = TryCast(obj, IOptimizedValues)
         If ov Is Nothing Then
+l1:
             If pi Is Nothing Then
                 Dim m As MapField2Column = Nothing
                 If oschema Is Nothing Then
@@ -1303,18 +1371,31 @@ Public Class ObjectMappingEngine
                 pi = m.PropertyInfo
             End If
 
-            Return pi.GetValue(obj, Nothing)
+            If pi Is Nothing Then
+                Dim t = obj.GetType
+                pi = t.GetProperty(propertyAlias)
+            End If
+
+            Return pi?.GetValue(obj, Nothing)
         Else
             'If GetType(_IEntity).IsAssignableFrom(obj.GetType) AndAlso CType(obj, _IEntity).IsPropertyLoaded(propertyAlias) Then
             '    Return ov.GetValueOptimized(propertyAlias, oschema)
             'Else
+            Dim r As Object
+            Dim found As Boolean
             Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
             If ll IsNot Nothing Then
                 Using ll.Read(propertyAlias)
-                    Return ov.GetValueOptimized(propertyAlias, oschema)
+                    r = ov.GetValueOptimized(propertyAlias, oschema, found)
                 End Using
             Else
-                Return ov.GetValueOptimized(propertyAlias, oschema)
+                r = ov.GetValueOptimized(propertyAlias, oschema, found)
+            End If
+
+            If Not found Then
+                GoTo l1
+            Else
+                Return r
             End If
             'End If
         End If
@@ -1336,13 +1417,19 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException(NameOf(obj))
         End If
 
-        Dim schema As IEntitySchema = GetEntitySchema(obj.GetType)
+        Dim schema As IEntitySchema = Nothing
+        Dim e = TryCast(obj, IEntity)
+        If e IsNot Nothing Then
+            schema = e.GetEntitySchema(Me)
+        Else
+            schema = GetEntitySchema(obj.GetType)
+        End If
 
         SetPropertyValue(obj, propertyAlias, value, schema, Nothing)
     End Sub
 
-    Public Shared Sub SetPropertyValue(ByVal obj As Object, ByVal propertyAlias As String, ByVal value As Object, _
-        ByVal oschema As IEntitySchema, Optional ByVal pi As Reflection.PropertyInfo = Nothing)
+    Public Shared Sub SetPropertyValue(ByVal obj As Object, ByVal propertyAlias As String, ByVal value As Object,
+                                       ByVal oschema As IEntitySchema, Optional ByVal pi As Reflection.PropertyInfo = Nothing)
 
         If obj Is Nothing Then
             Throw New ArgumentNullException(NameOf(obj))
@@ -1350,6 +1437,7 @@ Public Class ObjectMappingEngine
 
         Dim ov As IOptimizedValues = TryCast(obj, IOptimizedValues)
         If ov Is Nothing Then
+l1:
             If pi Is Nothing Then
                 Dim m As MapField2Column = Nothing
                 If oschema Is Nothing Then
@@ -1359,18 +1447,44 @@ Public Class ObjectMappingEngine
                 If Not oschema.FieldColumnMap.TryGetValue(propertyAlias, m) Then
                     Throw New ArgumentException(String.Format("Type {0} doesnot contain field {1}", obj.GetType, propertyAlias))
                 End If
+
+                If m.OptimizedSetValue IsNot Nothing AndAlso m.OptimizedSetValue IsNot MapField2Column.EmptyOptimizedSetValue Then
+
+                    Dim uc As IUndoChanges = TryCast(obj, IUndoChanges)
+                    If uc IsNot Nothing Then
+                        Using uc.Write(propertyAlias)
+                            m.OptimizedSetValue(obj, value)
+                        End Using
+                    Else
+                        m.OptimizedSetValue(obj, value)
+                    End If
+
+
+                    Return
+                End If
+
                 pi = m.PropertyInfo
+            End If
+
+            If pi Is Nothing Then
+                Dim t = obj.GetType
+                pi = t.GetProperty(propertyAlias)
             End If
 
             pi.SetValue(obj, value, Nothing)
         Else
             Dim uc As IUndoChanges = TryCast(obj, IUndoChanges)
+            Dim r As Boolean
             If uc IsNot Nothing Then
                 Using uc.Write(propertyAlias)
-                    ov.SetValueOptimized(propertyAlias, oschema, value)
+                    r = ov.SetValueOptimized(propertyAlias, oschema, value)
                 End Using
             Else
-                ov.SetValueOptimized(propertyAlias, oschema, value)
+                r = ov.SetValueOptimized(propertyAlias, oschema, value)
+            End If
+
+            If Not r Then
+                GoTo l1
             End If
         End If
     End Sub
@@ -1415,16 +1529,18 @@ Public Class ObjectMappingEngine
     'End Function
 
     Public Shared Function ConvertColumn2SelExp(ByVal c As EntityPropertyAttribute, ByVal t As Type) As SelectExpression
-        Dim se As New SelectExpression(t, c.PropertyAlias)
         'se.Column = c.Column
-        se.Attributes = c.Behavior
+        Dim se As New SelectExpression(t, c.PropertyAlias) With {
+            .Attributes = c.Behavior
+        }
         Return se
     End Function
 
     Public Shared Function ConvertColumn2SelExp(ByVal c As EntityPropertyAttribute, ByVal os As EntityUnion) As SelectExpression
-        Dim se As New SelectExpression(os, c.PropertyAlias)
         'se.Column = c.Column
-        se.Attributes = c.Behavior
+        Dim se As New SelectExpression(os, c.PropertyAlias) With {
+            .Attributes = c.Behavior
+        }
         Return se
     End Function
 
@@ -1698,8 +1814,9 @@ Public Class ObjectMappingEngine
         Return ObjectMappingEngine.CreateAndInitSchemaAndNames(tp, Me, GetIdic, GetNames, ea)
     End Function
 
-    Private Shared Function CreateAndInitSchema(ByVal tp As Type, ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, _
-        ByVal names As IDictionary, ByVal ea As EntityAttribute) As IEntitySchema
+    Private Shared Function CreateAndInitSchema(ByVal tp As Type, ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary,
+                                                ByVal names As IDictionary, ByVal ea As EntityAttribute) As IEntitySchema
+
         Dim schema As IEntitySchema = Nothing
         Dim mpeVersion As String = Nothing
         Dim c2int As ObjectMappingEngine.ConvertVersionToIntDelegate = Nothing
@@ -1725,8 +1842,8 @@ Public Class ObjectMappingEngine
                     bsch = GetEntitySchema(tp.BaseType, mpe, idic, names)
                 End If
                 If bsch IsNot Nothing Then
-                    schema = New SimpleMultiTableObjectSchema(tp, ownTable, _
-                        GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, If(mpe IsNot Nothing, mpe._features, Nothing)), bsch, mpeVersion, mpe, idic, names)
+                    schema = New SimpleMultiTableObjectSchema(tp, ownTable,
+                        GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, mpe?._features), bsch, mpeVersion, mpe, idic, names)
                     Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
                     If n IsNot Nothing Then
                         n.InitSchema(mpe, tp)
@@ -1737,7 +1854,7 @@ Public Class ObjectMappingEngine
                     If n IsNot Nothing Then
                         n.InitSchema(mpe, tp)
                     End If
-                    ApplyAttributes2Schema(schema, GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, If(mpe IsNot Nothing, mpe._features, Nothing)), mpe, idic, names)
+                    ApplyAttributes2Schema(schema, GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, mpe?._features), mpe, idic, names)
                 End If
             Else
                 Dim tbl As SourceFragment = ea._tbl
@@ -1750,7 +1867,7 @@ Public Class ObjectMappingEngine
                 If n IsNot Nothing Then
                     n.InitSchema(mpe, tp)
                 End If
-                Dim l As List(Of EntityPropertyAttribute) = GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, If(mpe IsNot Nothing, mpe._features, Nothing))
+                Dim l As List(Of EntityPropertyAttribute) = GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, mpe?._features)
                 ApplyAttributes2Schema(schema, l, mpe, idic, names)
             End If
         Else
@@ -1760,9 +1877,9 @@ Public Class ObjectMappingEngine
                 If n IsNot Nothing Then
                     n.InitSchema(mpe, tp)
                 End If
-                Dim l As List(Of EntityPropertyAttribute) = GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, If(mpe IsNot Nothing, mpe._features, Nothing))
+                Dim l As List(Of EntityPropertyAttribute) = GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, mpe?._features)
                 If Not ea.RawProperties AndAlso l.Count < schema.FieldColumnMap.Count Then
-                    l = GetMappedProperties(tp, mpeVersion, True, True, c2int, If(mpe IsNot Nothing, mpe._features, Nothing))
+                    l = GetMappedProperties(tp, mpeVersion, True, True, c2int, mpe?._features)
                 End If
                 ApplyAttributes2Schema(schema, l, mpe, idic, names)
             Catch ex As Exception
@@ -1773,8 +1890,8 @@ Public Class ObjectMappingEngine
         Return schema
     End Function
 
-    Public Shared Function CreateAndInitSchemaAndNames(ByVal tp As Type, ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, _
-        ByVal names As IDictionary, ByVal ea As EntityAttribute) As IEntitySchema
+    Public Shared Function CreateAndInitSchemaAndNames(ByVal tp As Type, ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary,
+                                                       ByVal names As IDictionary, ByVal ea As EntityAttribute) As IEntitySchema
 
         Dim schema As IEntitySchema = CreateAndInitSchema(tp, mpe, idic, names, ea)
 
@@ -1832,7 +1949,7 @@ Public Class ObjectMappingEngine
         Return schema
     End Function
 
-    Private Shared Function CreateAndInitSchemaAndNamesWithMapping(ByVal tp As Type, ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary, _
+    Private Shared Function CreateAndInitSchemaAndNamesWithMapping(ByVal tp As Type, ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary,
         ByVal names As IDictionary, ByVal ownEntityAttr As EntityAttribute) As IEntitySchema
         Dim schema As IEntitySchema = CreateAndInitSchema(tp, mpe, idic, names, ownEntityAttr)
 
@@ -2103,7 +2220,7 @@ Public Class ObjectMappingEngine
         End If
     End Function
 
-    <Obsolete("Use GetSharedSourceFragment method")> _
+    <Obsolete("Use GetSharedSourceFragment method")>
     Public Function GetSharedTable(ByVal tableName As String) As SourceFragment 'Implements IDbSchema.GetSharedTable
         Dim t As SourceFragment = CType(_sharedTables(tableName), SourceFragment)
         If t Is Nothing Then
@@ -2487,9 +2604,9 @@ Public Class ObjectMappingEngine
         M2M
     End Enum
 
-    Public Sub AppendJoin(ByVal selectOS As EntityUnion, ByVal selectType As Type, ByVal selSchema As IEntitySchema, _
-        ByVal joinOS As EntityUnion, ByVal type2join As Type, ByVal sh As IEntitySchema, _
-        ByRef filter As IFilter, ByVal l As List(Of QueryJoin), _
+    Public Sub AppendJoin(ByVal selectOS As EntityUnion, ByVal selectType As Type, ByVal selSchema As IEntitySchema,
+        ByVal joinOS As EntityUnion, ByVal type2join As Type, ByVal sh As IEntitySchema,
+        ByRef filter As IFilter, ByVal l As List(Of QueryJoin),
         ByVal filterInfo As IDictionary, ByVal jt As JoinType)
 
         Dim jft As JoinFieldType
@@ -2517,9 +2634,9 @@ Public Class ObjectMappingEngine
         AppendJoin(selectOS, selectType, selSchema, joinOS, type2join, sh, filter, l, jt, filterInfo, jft, field)
     End Sub
 
-    Public Sub AppendJoin(ByVal selectOS As EntityUnion, ByVal selectType As Type, ByVal selSchema As IEntitySchema, _
-        ByVal joinOS As EntityUnion, ByVal type2join As Type, ByVal sh As IEntitySchema, _
-        ByRef filter As IFilter, ByVal l As List(Of QueryJoin), ByVal jt As JoinType, _
+    Public Sub AppendJoin(ByVal selectOS As EntityUnion, ByVal selectType As Type, ByVal selSchema As IEntitySchema,
+        ByVal joinOS As EntityUnion, ByVal type2join As Type, ByVal sh As IEntitySchema,
+        ByRef filter As IFilter, ByVal l As List(Of QueryJoin), ByVal jt As JoinType,
         ByVal filterInfo As IDictionary, ByVal jft As JoinFieldType, ByVal propertyAlias As String)
 
         Select Case jft
@@ -2528,13 +2645,13 @@ Public Class ObjectMappingEngine
                 'If pks.Count <> 1 Then
                 '    Throw New OrmManagerException(String.Format("Type {0} has {1} primary key column instead of one", type2join, pks.Count))
                 'End If
-                l.Add(MakeJoin(joinOS, GetSinglePK(type2join, sh), selectOS, propertyAlias, FilterOperation.Equal, jt, False))
+                l.Add(MakeJoin(joinOS, GetPrimaryKey(type2join, sh), selectOS, propertyAlias, FilterOperation.Equal, jt, False))
             Case JoinFieldType.Reverse
                 'Dim pks As List(Of EntityPropertyAttribute) = GetPrimaryKeys(selectType, selSchema)
                 'If pks.Count <> 1 Then
                 '    Throw New OrmManagerException(String.Format("Type {0} has {1} primary key columns instead of one", selectType, pks.Count))
                 'End If
-                l.Add(MakeJoin(selectOS, GetSinglePK(selectType, selSchema), joinOS, propertyAlias, FilterOperation.Equal, jt, True))
+                l.Add(MakeJoin(selectOS, GetPrimaryKey(selectType, selSchema), joinOS, propertyAlias, FilterOperation.Equal, jt, True))
             Case JoinFieldType.M2M
                 l.AddRange(JCtor.join(joinOS).onM2M(selectOS).ToList)
             Case Else
@@ -2581,7 +2698,7 @@ Public Class ObjectMappingEngine
     '    Return New QueryJoin() {mj, tj}
     'End Function
 
-    Public Function MakeJoin(ByVal joinOS As EntityUnion, ByVal pk As String, ByVal selectOS As EntityUnion, ByVal field As String, _
+    Public Function MakeJoin(ByVal joinOS As EntityUnion, ByVal pk As String, ByVal selectOS As EntityUnion, ByVal field As String,
            ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Joins.JoinType, ByVal switchTable As Boolean) As Worm.Criteria.Joins.QueryJoin
 
         Dim schema As ObjectMappingEngine = Me
@@ -2605,214 +2722,214 @@ Public Class ObjectMappingEngine
     '    Return AssignValue2Property(propType, MappingEngine, cache, value, obj, map, propertyAlias, Nothing, Nothing, Nothing, objectLoaded)
     'End Function
 
-    ''' <summary>
-    ''' Присваевает свойству объекта значение.
-    ''' </summary>
-    ''' <param name="propType"></param>
-    ''' <param name="MappingEngine"></param>
-    ''' <param name="cache"></param>
-    ''' <param name="sv"></param>
-    ''' <param name="obj"></param>
-    ''' <param name="map"></param>
-    ''' <param name="propertyAlias"></param>
-    ''' <param name="ll"></param>
-    ''' <param name="m"></param>
-    ''' <param name="oschema"></param>
-    ''' <param name="objectLoaded"></param>
-    ''' <returns>Значение, присвоенное свойству объекта</returns>
-    ''' <remarks>
-    ''' Тип значения и тип свойства не обязательно должны совпадать. Например, тип свойства может быть <see cref="System.Xml.XmlDocument"/>, а тип значения <see cref="String"/>. 
-    ''' Функция пытается выполнить преобразование и возвращает преобразованное значение.
-    ''' Поддерживаются следующие преобразования
-    ''' <list type="table">
-    ''' <item>
-    ''' <term><see cref="String"/></term>
-    ''' <description><see cref="System.Xml.XmlDocument"/></description>
-    ''' </item>
-    ''' <item>
-    ''' <term><see cref="String"/></term>
-    ''' <description><see cref="System.Enum"/></description>
-    ''' </item>
-    ''' <item>
-    ''' <term>Любой</term>
-    ''' <description>Nullable(Of )</description>
-    ''' </item>
-    ''' <item>
-    ''' <term><see cref="Decimal"/></term>
-    ''' <description><see cref="Long"/></description>
-    ''' </item>
-    ''' <item>
-    ''' <term><see cref="Date"/></term>
-    ''' <description><see cref="Byte()"/></description>
-    ''' </item>
-    ''' </list>
-    ''' </remarks>
-    Public Shared Function AssignValue2Property(ByVal propType As Type, ByVal MappingEngine As ObjectMappingEngine, ByVal cache As Cache.CacheBase,
-        ByVal sv As PKDesc(), ByVal obj As Object, ByVal map As Collections.IndexedCollection(Of String, MapField2Column),
-        ByVal propertyAlias As String, ByVal ll As IPropertyLazyLoad, ByVal m As MapField2Column, ByVal oschema As IEntitySchema,
-        ByVal objectLoaded As ObjectLoadedDelegate, crMan As ICreateManager) As Object
+    '''' <summary>
+    '''' Присваевает свойству объекта значение.
+    '''' </summary>
+    '''' <param name="propType"></param>
+    '''' <param name="MappingEngine"></param>
+    '''' <param name="cache"></param>
+    '''' <param name="sv"></param>
+    '''' <param name="obj"></param>
+    '''' <param name="map"></param>
+    '''' <param name="propertyAlias"></param>
+    '''' <param name="ll"></param>
+    '''' <param name="m"></param>
+    '''' <param name="oschema"></param>
+    '''' <param name="objectLoaded"></param>
+    '''' <returns>Значение, присвоенное свойству объекта</returns>
+    '''' <remarks>
+    '''' Тип значения и тип свойства не обязательно должны совпадать. Например, тип свойства может быть <see cref="System.Xml.XmlDocument"/>, а тип значения <see cref="String"/>. 
+    '''' Функция пытается выполнить преобразование и возвращает преобразованное значение.
+    '''' Поддерживаются следующие преобразования
+    '''' <list type="table">
+    '''' <item>
+    '''' <term><see cref="String"/></term>
+    '''' <description><see cref="System.Xml.XmlDocument"/></description>
+    '''' </item>
+    '''' <item>
+    '''' <term><see cref="String"/></term>
+    '''' <description><see cref="System.Enum"/></description>
+    '''' </item>
+    '''' <item>
+    '''' <term>Любой</term>
+    '''' <description>Nullable(Of )</description>
+    '''' </item>
+    '''' <item>
+    '''' <term><see cref="Decimal"/></term>
+    '''' <description><see cref="Long"/></description>
+    '''' </item>
+    '''' <item>
+    '''' <term><see cref="Date"/></term>
+    '''' <description><see cref="Byte()"/></description>
+    '''' </item>
+    '''' </list>
+    '''' </remarks>
+    'Public Shared Function AssignValue2Property(ByVal propType As Type, ByVal MappingEngine As ObjectMappingEngine, ByVal cache As Cache.CacheBase,
+    '                                            ByVal sv As PKDesc(), ByVal obj As Object, ByVal map As Collections.IndexedCollection(Of String, MapField2Column),
+    '                                            ByVal propertyAlias As String, ByVal ll As IPropertyLazyLoad, ByVal m As MapField2Column, ByVal oschema As IEntitySchema,
+    '                                            ByVal objectLoaded As ObjectLoadedDelegate, crMan As ICreateManager) As Object
 
-        Dim pi As Reflection.PropertyInfo = m.PropertyInfo
-        If sv Is Nothing Then
-            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, Nothing, oschema, pi)
-            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-        Else
-            Dim value As Object = sv(0).Value
+    '    Dim pi As Reflection.PropertyInfo = m.PropertyInfo
+    '    If sv Is Nothing Then
+    '        ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, Nothing, oschema, pi)
+    '        If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '    Else
+    '        Dim value As Object = sv(0).Value
 
-            If value.GetType Is propType Then
-                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
-                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-            ElseIf GetType(System.Xml.XmlDocument) Is propType AndAlso TypeOf (value) Is String Then
-                Dim o As New System.Xml.XmlDocument
-                o.LoadXml(CStr(value))
-                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, o, oschema, pi)
-                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-                Return o
-            ElseIf propType.IsEnum AndAlso TypeOf (value) Is String Then
-                Dim svalue As String = CStr(value).Trim
-                If svalue = String.Empty Then
-                    value = 0
-                Else
-                    value = [Enum].Parse(propType, svalue, True)
-                End If
-                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
-                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-                Return value
-            ElseIf propType.IsGenericType AndAlso GetType(Nullable(Of )).Name = propType.Name Then
-                Dim t As Type = propType.GetGenericArguments()(0)
-                Dim v As Object = Nothing
-                If t.IsPrimitive Then
-                    v = Convert.ChangeType(value, t)
-                ElseIf t.IsEnum Then
-                    If TypeOf (value) Is String Then
-                        Dim svalue As String = CStr(value).Trim
-                        If svalue = String.Empty Then
-                            v = [Enum].ToObject(t, 0)
-                        Else
-                            v = [Enum].Parse(t, svalue, True)
-                        End If
-                    Else
-                        v = [Enum].ToObject(t, value)
-                    End If
-                ElseIf t Is value.GetType Then
-                    v = value
-                Else
-                    Try
-                        v = t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
-                            Nothing, Nothing, New Object() {value})
-                    Catch ex As MissingMethodException
-                        'Debug.WriteLine(c.FieldName & ": " & original_type.Name)
-                        'v = Convert.ChangeType(value, t)
-                    End Try
-                End If
-                Dim v2 As Object = propType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
-                    Nothing, Nothing, New Object() {v})
-                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, v2, oschema, pi)
-                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-                Return v2
-            ElseIf (propType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (propType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
-                Try
-                    Dim v As Object = Convert.ChangeType(value, propType)
-                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, v, oschema, pi)
-                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-                    Return v
-                Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
-                    Dim v As Object = Convert.ChangeType(value, propType)
-                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, v, oschema, pi)
-                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-                    Return v
-                End Try
-            ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
-                Dim dt As DateTime = CDate(value)
-                Dim l As Long = dt.ToBinary
-                Using ms As New IO.MemoryStream
-                    Dim sw As New IO.StreamWriter(ms)
-                    sw.Write(l)
-                    sw.Flush()
-                    value = ms.ToArray
-                End Using
-                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
-                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-            Else
-                If GetType(_IEntity).IsAssignableFrom(propType) OrElse ObjectMappingEngine.IsEntityType(propType) Then
-                    Dim type_created As Type = propType
-                    Dim en As String = MappingEngine.GetEntityNameByType(type_created)
-                    If Not String.IsNullOrEmpty(en) Then
-                        Dim cr As Type = MappingEngine.GetTypeByEntityName(en)
-                        If cr IsNot Nothing AndAlso type_created.IsAssignableFrom(cr) Then
-                            type_created = cr
-                        End If
-                        If type_created Is Nothing Then
-                            Throw New OrmManagerException("Cannot find type for entity " & en)
-                        End If
-                    End If
-                    'If GetType(IKeyEntity).IsAssignableFrom(type_created) Then
-                    '    o = Entity.CreateKeyEntity(value, type_created, cache, MappingEngine)
-                    '    o.SetObjectState(ObjectState.NotLoaded)
-                    '    Dim cb As ICacheBehavior = CType(MappingEngine.GetEntitySchema(type_created), ICacheBehavior)
-                    '    o = CType(cache.FindObjectInCache(type_created, o, New CacheKey(CType(o, ICachedEntity)), cb, cache.GetOrmDictionary(type_created, cb), True, True), _IEntity)
-                    'Else
-                    '    Dim pks As IList(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(type_created)
-                    '    If pks.Count <> 1 Then
-                    '        Throw New ObjectMappingException(String.Format("Type {0} has no single primary key", type_created))
-                    '    End If
-                    '    If GetType(_ICachedEntity).IsAssignableFrom(type_created) Then
-                    '        o = Entity.CreateEntity(New PKDesc() {New PKDesc(pks(0).PropertyAlias, value)}, type_created, cache, MappingEngine)
-                    '        o.SetObjectState(ObjectState.NotLoaded)
-                    '        Dim cb As ICacheBehavior = CType(MappingEngine.GetEntitySchema(type_created), ICacheBehavior)
-                    '        o = CType(cache.FindObjectInCache(type_created, o, New CacheKey(CType(o, ICachedEntity)), cb, cache.GetOrmDictionary(type_created, cb), True, True), _IEntity)
-                    '    Else
-                    '        o = Entity.CreateEntity(type_created, cache, MappingEngine)
-                    '        MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value)
-                    '    End If
-                    'End If
-                    Dim o As Object = Entity.CreateObject(sv, type_created, cache, MappingEngine)
-                    Dim e As _IEntity = TryCast(o, _IEntity)
-                    Dim cce As ICachedEntity = TryCast(o, ICachedEntity)
-                    Dim pkw As PKWrapper = Nothing
-                    If e IsNot Nothing Then
-                        e.SetObjectState(ObjectState.NotLoaded)
-                    End If
-                    If cce IsNot Nothing Then
-                        pkw = New CacheKey(CType(o, ICachedEntity))
-                        Dim cb As ICacheBehavior = TryCast(MappingEngine.GetEntitySchema(type_created), ICacheBehavior)
-                        o = cache.FindObjectInCache(type_created, o, pkw, cb, cache.GetOrmDictionary(type_created, cb), True, True)
-                        'Else
-                        '    pkw = New PKWrapper(sv)
-                    End If
-                    e = TryCast(o, _IEntity)
-                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, o, oschema, pi)
-                    If e IsNot Nothing Then
-                        Dim eo As IEntity = TryCast(obj, IEntity)
-                        If eo IsNot Nothing AndAlso eo.GetICreateManager IsNot Nothing Then
-                            e.SetCreateManager(eo.GetICreateManager)
-                        ElseIf crMan IsNot Nothing Then
-                            e.SetCreateManager(crMan)
-                        End If
-                        If objectLoaded IsNot Nothing Then objectLoaded(e)
-                    End If
-                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-                    Return o
-                    'ElseIf ObjectMappingEngine.IsEntityType(propType, MappingEngine) Then
-                    '    Dim o As Object = Activator.CreateInstance(propType)
-                    '    Dim pks As IList(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(propType)
-                    '    If pks.Count <> 1 Then
-                    '        Throw New ObjectMappingException(String.Format("Type {0} has no single primary key", propType))
-                    '    Else
-                    '        MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value)
-                    '    End If
-                    '    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, o, oschema, pi)
-                    '    If ce IsNot Nothing Then OrmManager.SetLoaded(ce, propertyAlias, True, True)
-                    '    Return o
-                Else
-                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
-                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-                End If
-            End If
-            Return value
-        End If
-        Return Nothing
-    End Function
+    '        If value.GetType Is propType Then
+    '            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
+    '            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '        ElseIf GetType(System.Xml.XmlDocument) Is propType AndAlso TypeOf (value) Is String Then
+    '            Dim o As New System.Xml.XmlDocument
+    '            o.LoadXml(CStr(value))
+    '            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, o, oschema, pi)
+    '            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '            Return o
+    '        ElseIf propType.IsEnum AndAlso TypeOf (value) Is String Then
+    '            Dim svalue As String = CStr(value).Trim
+    '            If svalue = String.Empty Then
+    '                value = 0
+    '            Else
+    '                value = [Enum].Parse(propType, svalue, True)
+    '            End If
+    '            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
+    '            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '            Return value
+    '        ElseIf propType.IsGenericType AndAlso GetType(Nullable(Of )).Name = propType.Name Then
+    '            Dim t As Type = propType.GetGenericArguments()(0)
+    '            Dim v As Object = Nothing
+    '            If t.IsPrimitive Then
+    '                v = Convert.ChangeType(value, t)
+    '            ElseIf t.IsEnum Then
+    '                If TypeOf (value) Is String Then
+    '                    Dim svalue As String = CStr(value).Trim
+    '                    If svalue = String.Empty Then
+    '                        v = [Enum].ToObject(t, 0)
+    '                    Else
+    '                        v = [Enum].Parse(t, svalue, True)
+    '                    End If
+    '                Else
+    '                    v = [Enum].ToObject(t, value)
+    '                End If
+    '            ElseIf t Is value.GetType Then
+    '                v = value
+    '            Else
+    '                Try
+    '                    v = t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance,
+    '                        Nothing, Nothing, New Object() {value})
+    '                Catch ex As MissingMethodException
+    '                    'Debug.WriteLine(c.FieldName & ": " & original_type.Name)
+    '                    'v = Convert.ChangeType(value, t)
+    '                End Try
+    '            End If
+    '            Dim v2 As Object = propType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance,
+    '                Nothing, Nothing, New Object() {v})
+    '            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, v2, oschema, pi)
+    '            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '            Return v2
+    '        ElseIf (propType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (propType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
+    '            Try
+    '                Dim v As Object = Convert.ChangeType(value, propType)
+    '                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, v, oschema, pi)
+    '                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '                Return v
+    '            Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
+    '                Dim v As Object = Convert.ChangeType(value, propType)
+    '                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, v, oschema, pi)
+    '                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '                Return v
+    '            End Try
+    '        ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
+    '            Dim dt As DateTime = CDate(value)
+    '            Dim l As Long = dt.ToBinary
+    '            Using ms As New IO.MemoryStream
+    '                Dim sw As New IO.StreamWriter(ms)
+    '                sw.Write(l)
+    '                sw.Flush()
+    '                value = ms.ToArray
+    '            End Using
+    '            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
+    '            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '        Else
+    '            If GetType(_IEntity).IsAssignableFrom(propType) OrElse ObjectMappingEngine.IsEntityType(propType) Then
+    '                Dim type_created As Type = propType
+    '                Dim en As String = MappingEngine.GetEntityNameByType(type_created)
+    '                If Not String.IsNullOrEmpty(en) Then
+    '                    Dim cr As Type = MappingEngine.GetTypeByEntityName(en)
+    '                    If cr IsNot Nothing AndAlso type_created.IsAssignableFrom(cr) Then
+    '                        type_created = cr
+    '                    End If
+    '                    If type_created Is Nothing Then
+    '                        Throw New OrmManagerException("Cannot find type for entity " & en)
+    '                    End If
+    '                End If
+    '                'If GetType(IKeyEntity).IsAssignableFrom(type_created) Then
+    '                '    o = Entity.CreateKeyEntity(value, type_created, cache, MappingEngine)
+    '                '    o.SetObjectState(ObjectState.NotLoaded)
+    '                '    Dim cb As ICacheBehavior = CType(MappingEngine.GetEntitySchema(type_created), ICacheBehavior)
+    '                '    o = CType(cache.FindObjectInCache(type_created, o, New CacheKey(CType(o, ICachedEntity)), cb, cache.GetOrmDictionary(type_created, cb), True, True), _IEntity)
+    '                'Else
+    '                '    Dim pks As IList(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(type_created)
+    '                '    If pks.Count <> 1 Then
+    '                '        Throw New ObjectMappingException(String.Format("Type {0} has no single primary key", type_created))
+    '                '    End If
+    '                '    If GetType(_ICachedEntity).IsAssignableFrom(type_created) Then
+    '                '        o = Entity.CreateEntity(New PKDesc() {New PKDesc(pks(0).PropertyAlias, value)}, type_created, cache, MappingEngine)
+    '                '        o.SetObjectState(ObjectState.NotLoaded)
+    '                '        Dim cb As ICacheBehavior = CType(MappingEngine.GetEntitySchema(type_created), ICacheBehavior)
+    '                '        o = CType(cache.FindObjectInCache(type_created, o, New CacheKey(CType(o, ICachedEntity)), cb, cache.GetOrmDictionary(type_created, cb), True, True), _IEntity)
+    '                '    Else
+    '                '        o = Entity.CreateEntity(type_created, cache, MappingEngine)
+    '                '        MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value)
+    '                '    End If
+    '                'End If
+    '                Dim o As Object = Entity.CreateObject(sv, type_created, cache, MappingEngine)
+    '                Dim e As _IEntity = TryCast(o, _IEntity)
+    '                Dim cce As ICachedEntity = TryCast(o, ICachedEntity)
+    '                Dim pkw As PKWrapper = Nothing
+    '                If e IsNot Nothing Then
+    '                    e.SetObjectState(ObjectState.NotLoaded)
+    '                End If
+    '                If cce IsNot Nothing Then
+    '                    pkw = New CacheKey(CType(o, ICachedEntity))
+    '                    Dim cb As ICacheBehavior = TryCast(MappingEngine.GetEntitySchema(type_created), ICacheBehavior)
+    '                    o = cache.FindObjectInCache(type_created, o, pkw, cb, cache.GetOrmDictionary(type_created, cb), True, True)
+    '                    'Else
+    '                    '    pkw = New PKWrapper(sv)
+    '                End If
+    '                e = TryCast(o, _IEntity)
+    '                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, o, oschema, pi)
+    '                If e IsNot Nothing Then
+    '                    Dim eo As IEntity = TryCast(obj, IEntity)
+    '                    If eo IsNot Nothing AndAlso eo.GetICreateManager IsNot Nothing Then
+    '                        e.SetCreateManager(eo.GetICreateManager)
+    '                    ElseIf crMan IsNot Nothing Then
+    '                        e.SetCreateManager(crMan)
+    '                    End If
+    '                    If objectLoaded IsNot Nothing Then objectLoaded(e)
+    '                End If
+    '                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '                Return o
+    '                'ElseIf ObjectMappingEngine.IsEntityType(propType, MappingEngine) Then
+    '                '    Dim o As Object = Activator.CreateInstance(propType)
+    '                '    Dim pks As IList(Of EntityPropertyAttribute) = MappingEngine.GetPrimaryKeys(propType)
+    '                '    If pks.Count <> 1 Then
+    '                '        Throw New ObjectMappingException(String.Format("Type {0} has no single primary key", propType))
+    '                '    Else
+    '                '        MappingEngine.SetPropertyValue(o, pks(0).PropertyAlias, value)
+    '                '    End If
+    '                '    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, o, oschema, pi)
+    '                '    If ce IsNot Nothing Then OrmManager.SetLoaded(ce, propertyAlias, True, True)
+    '                '    Return o
+    '            Else
+    '                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
+    '                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '            End If
+    '        End If
+    '        Return value
+    '    End If
+    '    Return Nothing
+    'End Function
 
     'Public Function CreateObj(ByVal objType As Type, ByVal pkValue As Object, ByVal oschema As IEntitySchema) As Object
     '    If GetType(_IEntity).IsAssignableFrom(objType) Then
@@ -2859,6 +2976,101 @@ Public Class ObjectMappingEngine
     '        Throw New NotSupportedException
     '    End If
     'End Function
+    Public Function ParseValueFromStorage(ByVal att As Field2DbRelations,
+                                          ByVal obj As Object, ByVal m As MapField2Column, ByVal propertyAlias As String,
+                                          ByVal oschema As IEntitySchema, cache As CacheBase, crMan As ICreateManager,
+                                          ByVal sv As IEnumerable(Of PKDesc), ByVal ll As IPropertyLazyLoad, ByVal fac As List(Of Pair(Of String, IEnumerable(Of PKDesc)))) As Object
+        Dim pi As Reflection.PropertyInfo = m?.PropertyInfo
+
+        If sv Is Nothing OrElse sv.Count = 0 OrElse sv.All(Function(it) it Is Nothing) Then
+            If m IsNot Nothing AndAlso m.OptimizedSetValue IsNot Nothing AndAlso m.OptimizedSetValue IsNot MapField2Column.EmptyOptimizedSetValue Then
+                m.OptimizedSetValue(obj, Nothing)
+            Else
+                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, Nothing, oschema, pi)
+            End If
+            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+        Else
+            If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
+                fac?.Add(New Pair(Of String, IEnumerable(Of PKDesc))(propertyAlias, sv))
+                Return Nothing
+            End If
+
+            If pi Is Nothing Then
+
+                If m IsNot Nothing AndAlso m.OptimizedSetValue IsNot Nothing AndAlso m.OptimizedSetValue IsNot MapField2Column.EmptyOptimizedSetValue Then
+                    m.OptimizedSetValue(obj, sv(0).Value)
+                Else
+                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, sv(0).Value, oschema)
+                End If
+                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+                Return Nothing
+            End If
+
+            Dim propType = pi.PropertyType
+            If GetType(_IEntity).IsAssignableFrom(propType) OrElse ObjectMappingEngine.IsEntityType(propType) Then
+                Dim type_created As Type = propType
+                Dim en As String = GetEntityNameByType(type_created)
+                If Not String.IsNullOrEmpty(en) Then
+                    Dim cr As Type = GetTypeByEntityName(en)
+                    If cr IsNot Nothing AndAlso type_created.IsAssignableFrom(cr) Then
+                        type_created = cr
+                    End If
+                    If type_created Is Nothing Then
+                        Throw New OrmManagerException("Cannot find type for entity " & en)
+                    End If
+                End If
+
+                Dim o As Object = Entity.CreateObject(sv, type_created, Me)
+                Dim e As _IEntity = TryCast(o, _IEntity)
+                Dim cce As ICachedEntity = TryCast(o, ICachedEntity)
+                Dim pkw As PKWrapper = Nothing
+                If e IsNot Nothing Then
+                    e.Init(Me)
+                    'RaiseObjectCreated(e)
+                    'e.SetObjectState(ObjectState.NotLoaded)
+                End If
+                If cce IsNot Nothing Then
+                    pkw = New CacheKey(CType(o, ICachedEntity))
+                    Dim cb As ICacheBehavior = TryCast(GetEntitySchema(type_created), ICacheBehavior)
+                    o = cache.FindObjectInCache(type_created, o, pkw, cb, cache.GetOrmDictionary(type_created, cb), True, True)
+                    'Else
+                    '    pkw = New PKWrapper(sv)
+                End If
+
+                e = TryCast(o, _IEntity)
+                If e IsNot Nothing Then
+                    Dim eo As IEntity = TryCast(obj, IEntity)
+                    If eo IsNot Nothing AndAlso eo.GetICreateManager IsNot Nothing Then
+                        e.SetCreateManager(eo.GetICreateManager)
+                    ElseIf crMan IsNot Nothing Then
+                        e.SetCreateManager(crMan)
+                    End If
+                End If
+
+                If m.OptimizedSetValue IsNot Nothing AndAlso m.OptimizedSetValue IsNot MapField2Column.EmptyOptimizedSetValue Then
+                    m.OptimizedSetValue(obj, o)
+                Else
+                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, o, oschema, pi)
+                End If
+
+                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+
+                Return o
+            ElseIf sv.Count > 1 Then
+                Throw New OrmManagerException($"Multiple column property {propertyAlias} in {obj.GetType} property should be factory or entity")
+            Else
+                If m.OptimizedSetValue IsNot Nothing AndAlso m.OptimizedSetValue IsNot MapField2Column.EmptyOptimizedSetValue Then
+                    m.OptimizedSetValue(obj, sv(0).Value)
+                Else
+                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, sv(0).Value, oschema, pi)
+                End If
+
+                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+            End If
+        End If
+
+        Return Nothing
+    End Function
 
     Public Function GetPOCOEntitySchema(ByVal t As Type) As IEntitySchema
         Dim s As IEntitySchema = GetEntitySchema(t, False)
@@ -2968,10 +3180,11 @@ Public Class ObjectMappingEngine
         Return l
     End Function
 
-    Friend Shared Sub InitPOCO(ByVal rt As Type, ByVal oschema As IEntitySchema, _
-        ByVal ctd As ComponentModel.ICustomTypeDescriptor, ByVal mpe As ObjectMappingEngine, _
-        ByVal e As _IEntity, ByVal ro As Object, ByVal cache As Cache.CacheBase, ByVal contextInfo As Object, _
-        Optional ByVal pref As String = Nothing, Optional crMan As ICreateManager = Nothing)
+    Friend Shared Sub InitPOCO(ByVal rt As Type, ByVal oschema As IEntitySchema,
+                               ByVal ctd As ComponentModel.ICustomTypeDescriptor, ByVal mpe As ObjectMappingEngine,
+                               ByVal e As _IEntity, ByVal ro As Object, ByVal cache As Cache.CacheBase, ByVal contextInfo As Object,
+                               Optional ByVal pref As String = Nothing, Optional crMan As ICreateManager = Nothing)
+
         Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
         For Each m As MapField2Column In map
             Dim pa As String = m.PropertyAlias
@@ -2991,16 +3204,17 @@ Public Class ObjectMappingEngine
                 v = Nothing
             End If
 
-            Dim pit As Type = pi.PropertyType
-            v = ObjectMappingEngine.AssignValue2Property(pit, mpe, cache, New PKDesc() {New PKDesc(pa, v)}, ro, map, m.PropertyAlias, TryCast(ro, IPropertyLazyLoad), m, oschema, Nothing, crMan)
-            If v IsNot Nothing AndAlso IsEntityType(pit) Then
-                Dim schema As IEntitySchema = mpe.GetEntitySchema(rt, False)
+            Dim o = mpe.ParseValueFromStorage(m.Attributes, ro, m, pa, oschema, cache, crMan, {New PKDesc(pa, v)}, TryCast(ro, IPropertyLazyLoad), Nothing)
+            Dim pit As Type = o?.GetType
+            'v = ObjectMappingEngine.AssignValue2Property(pit, mpe, cache, New PKDesc() {New PKDesc(pa, v)}, ro, map, m.PropertyAlias, TryCast(ro, IPropertyLazyLoad), m, oschema, Nothing, crMan)
+            If IsEntityType(pit) Then
+                Dim schema As IEntitySchema = mpe.GetEntitySchema(pit, False)
                 If schema Is Nothing Then
                     schema = ObjectMappingEngine.GetEntitySchema(pit, mpe, Nothing, Nothing)
                     mpe.AddEntitySchema(pit, schema)
                 End If
 
-                InitPOCO(pit, schema, ctd, mpe, e, v, cache, contextInfo, m.PropertyAlias, crMan)
+                InitPOCO(pit, schema, ctd, mpe, e, o, cache, contextInfo, m.PropertyAlias, crMan)
             End If
         Next
     End Sub
@@ -3010,59 +3224,67 @@ Public Class ObjectMappingEngine
             Return False
         End Get
     End Property
-
-    Public Shared Sub AssignValue2PK(ByVal obj As Object, ByVal isNull As Boolean, ByVal oschema As IEntitySchema, _
-        ByVal ll As IPropertyLazyLoad, ByVal m As MapField2Column, ByVal propertyAlias As String, _
-        ByVal value As Object)
-        If Not isNull Then
-            Dim pi As Reflection.PropertyInfo = m.PropertyInfo
-
-            Try
-                If pi Is Nothing Then
-                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema)
-                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-                Else
-                    Dim propType As Type = pi.PropertyType
-                    If (propType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (propType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
-                        Dim v As Object = Convert.ChangeType(value, propType)
-                        ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, v, oschema, pi)
-                        If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-                    ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
-                        Dim dt As DateTime = CDate(value)
-                        Dim l As Long = dt.ToBinary
-                        Using ms As New IO.MemoryStream
-                            Dim sw As New IO.StreamWriter(ms)
-                            sw.Write(l)
-                            sw.Flush()
-                            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, ms.ToArray, oschema, pi)
-                            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-                        End Using
-                    Else
-                        'If c.FieldName = "ID" Then
-                        '    obj.Identifier = CInt(value)
-                        'Else
-                        ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
-                        'End If
-                        If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-                    End If
-                End If
-            Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
-                Dim dt As DateTime = CDate(value)
-                Dim l As Long = dt.ToBinary
-                Using ms As New IO.MemoryStream
-                    Dim sw As New IO.StreamWriter(ms)
-                    sw.Write(l)
-                    sw.Flush()
-                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, ms.ToArray, oschema, pi)
-                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-                End Using
-            Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0 AndAlso pi IsNot Nothing
-                Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, v, oschema, pi)
-                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-            End Try
+    Friend Shared Sub SetPK(ByVal e As Object, ByVal pk As IEnumerable(Of PKDesc2), ByVal oschema As IEntitySchema)
+        Dim op As IOptimizePK = TryCast(e, IOptimizePK)
+        If op IsNot Nothing Then
+            op.SetPK(pk)
+        Else
+            Dim m = oschema.GetPK
+            For Each p In pk
+                'Dim sf = m.SourceFields.FirstOrDefault(Function(it) it.SourceFieldExpression = p.Column)
+                ObjectMappingEngine.SetPropertyValue(e, MakePKName(Nothing, p.Column), p.Value, oschema, p.pi)
+            Next
         End If
     End Sub
+    'Public Shared Sub AssignValue2PK(ByVal obj As Object, ByVal oschema As IEntitySchema,
+    '                                 ByVal pi As PropertyInfo, ByVal propertyAlias As String,
+    '                                 ByVal value As Object)
+    '    Try
+    '        If pi Is Nothing Then
+    '            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema)
+    '            'If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '        Else
+    '            Dim propType As Type = pi.PropertyType
+    '            If (propType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (propType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
+    '                Dim v As Object = Convert.ChangeType(value, propType)
+    '                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, v, oschema, pi)
+    '                'If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '            ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
+    '                Dim dt As DateTime = CDate(value)
+    '                Dim l As Long = dt.ToBinary
+    '                Using ms As New IO.MemoryStream
+    '                    Dim sw As New IO.StreamWriter(ms)
+    '                    sw.Write(l)
+    '                    sw.Flush()
+    '                    ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, ms.ToArray, oschema, pi)
+    '                    'If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '                End Using
+    '            Else
+    '                'If c.FieldName = "ID" Then
+    '                '    obj.Identifier = CInt(value)
+    '                'Else
+    '                ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, value, oschema, pi)
+    '                'End If
+    '                'If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '            End If
+    '        End If
+    '    Catch ex As ArgumentException When ex.Message.Contains("'System.DateTime'") AndAlso ex.Message.Contains("'System.Byte[]'")
+    '        Dim dt As DateTime = CDate(value)
+    '        Dim l As Long = dt.ToBinary
+    '        Using ms As New IO.MemoryStream
+    '            Dim sw As New IO.StreamWriter(ms)
+    '            sw.Write(l)
+    '            sw.Flush()
+    '            ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, ms.ToArray, oschema, pi)
+    '            'If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '        End Using
+    '    Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0 AndAlso pi IsNot Nothing
+    '        Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+    '        ObjectMappingEngine.SetPropertyValue(obj, propertyAlias, v, oschema, pi)
+    '        'If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+    '    End Try
+
+    'End Sub
 
     Public Overridable Function CreateEntity(ByVal t As Type) As Object
         If _ce IsNot Nothing Then
@@ -3075,7 +3297,7 @@ Public Class ObjectMappingEngine
     Public Function CloneIdentity(ByVal e As Object, ByVal oschema As IEntitySchema) As Object
         Dim o As Object = CreateEntity(e.GetType)
 
-        OrmManager.SetPK(o, OrmManager.GetPKValues(e, oschema), oschema, Me)
+        OrmManager.SetPK(o, oschema.GetPKs(e), oschema, Me)
 
         Return o
     End Function
@@ -3135,4 +3357,45 @@ Public Class ObjectMappingEngine
 
 End Class
 
+'Public Class ColumnTypeMap
+'    Public Property Column As String
+'    Public PropType As Type
+'    Public DBType As Type
+
+'    Public Function ChangeType(v As Object) As Object
+'        Return Convert.ChangeType(v, PropType)
+'    End Function
+
+'    Public Shared Function NeedMap(propType As Type, dbType As Type) As ColumnTypeMap
+'        If propType Is dbType Then
+'            Return Nothing
+'        End If
+
+
+'    End Function
+'End Class
 'End Namespace
+
+Friend Class PKDesc2
+    Inherits PKDesc
+
+    Public pi As PropertyInfo
+    Public svo As IOptimizeSetValue.SetValueDelegate
+    Public fldNull As Boolean
+
+    Public Sub New(column As String, value As Object, pi As PropertyInfo)
+        MyBase.New(column, value)
+        Me.pi = pi
+    End Sub
+    Public Sub New(column As String, value As Object, pi As PropertyInfo, svo As IOptimizeSetValue.SetValueDelegate)
+        MyBase.New(column, value)
+        Me.pi = pi
+        Me.svo = svo
+    End Sub
+    Public Sub New(column As String, value As Object, pi As PropertyInfo, svo As IOptimizeSetValue.SetValueDelegate, fldNull As Boolean)
+        MyBase.New(column, value)
+        Me.pi = pi
+        Me.svo = svo
+        Me.fldNull = fldNull
+    End Sub
+End Class

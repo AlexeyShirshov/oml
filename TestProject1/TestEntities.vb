@@ -17,11 +17,11 @@ Public Interface IEnt
 
 End Interface
 
-<Serializable()> _
-<Worm.Entities.Meta.Entity(GetType(EntitySchema1v1Implementation), "1"), _
-Worm.Entities.Meta.Entity(GetType(EntitySchema1v2Implementation), "2"), _
-Worm.Entities.Meta.Entity(GetType(EntitySchema1v3Implementation), "3"), _
-Worm.Entities.Meta.Entity(GetType(EntitySchema1v4Implementation), "joins")> _
+<Serializable()>
+<Worm.Entities.Meta.Entity(GetType(EntitySchema1v1Implementation), "1"),
+Worm.Entities.Meta.Entity(GetType(EntitySchema1v2Implementation), "2"),
+Worm.Entities.Meta.Entity(GetType(EntitySchema1v3Implementation), "3"),
+Worm.Entities.Meta.Entity(GetType(EntitySchema1v4Implementation), "joins")>
 Public Class Entity
     Inherits SinglePKEntity
     Implements IEnt
@@ -30,8 +30,9 @@ Public Class Entity
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        Init(id, cache, schema)
+    Public Sub New(ByVal id As Integer)
+        _id = id
+        PKLoaded(1, "ID")
     End Sub
 
     Private _id As Integer
@@ -56,7 +57,7 @@ Public Class Entity
     End Property
 
     Private _char As String
-    <EntityProperty(PropertyAlias:="Char", SchemaVersion:=ObjectMappingEngine.NeedEntitySchemaMapping)> _
+    <EntityProperty(PropertyAlias:="Char", SchemaVersion:="joins")>
     Public Property [Char]() As String
         Get
             Using Read("Char")
@@ -149,8 +150,9 @@ Public Class EntitySchema1v1Implementation
     Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         Get
             If _idx Is Nothing Then
-                Dim idx As New OrmObjectIndex
-                idx.Add(New MapField2Column("ID", "id", Table))
+                Dim idx As New OrmObjectIndex From {
+                    New MapField2Column("ID", Table, "id")
+                }
                 _idx = idx
             End If
             Return _idx
@@ -227,7 +229,7 @@ Public Class EntitySchema1v4Implementation
         Get
             If _idx Is Nothing Then
                 _idx = MyBase.FieldColumnMap()
-                _idx.Add(New MapField2Column("Char", "s", GetTables()(Tables2.Second)))
+                _idx.Add(New MapField2Column("Char", GetTables()(Tables2.Second), "s"))
             End If
             Return _idx
         End Get
@@ -262,8 +264,8 @@ Public Class Entity2
 
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        MyBase.New(id, cache, schema)
+    Public Sub New(ByVal id As Integer)
+        MyBase.New(id)
     End Sub
 
     'Public Overrides Function Clone() As Object
@@ -296,7 +298,7 @@ Public Class EntitySchema2v1Implementation
             Dim idx As Worm.Collections.IndexedCollection(Of String, MapField2Column) = MyBase.FieldColumnMap()
             If Not _coladded Then
                 Try
-                    idx.Add(New MapField2Column("Str", "s", GetTables()(Tables2.Second)))
+                    idx.Add(New MapField2Column("Str", GetTables()(Tables2.Second), "s"))
                 Catch ex As ArgumentException
                     'just eat
                     'Diagnostics.Debug.WriteLine("duplicate add")
@@ -348,7 +350,7 @@ Public Class EntitySchema2v2Implementation
             Dim idx As Worm.Collections.IndexedCollection(Of String, MapField2Column) = MyBase.FieldColumnMap()
             If Not _coladded Then
                 Try
-                    idx.Add(New MapField2Column("Str", "s", GetTables()(Tables2.Second)))
+                    idx.Add(New MapField2Column("Str", GetTables()(Tables2.Second), "s"))
                 Catch ex As ArgumentException
                     'just eat
                     'Diagnostics.Debug.WriteLine("duplicate add")
@@ -388,8 +390,9 @@ Public Class Entity4
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        Init(id, cache, schema)
+    Public Sub New(ByVal id As Integer)
+        _id = id
+        PKLoaded(1, "ID")
     End Sub
 
     Private _id As Integer
@@ -453,9 +456,10 @@ Public Class EntitySchema4v1Implementation
     Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         Get
             If _idx Is Nothing Then
-                Dim idx As New OrmObjectIndex
-                idx.Add(New MapField2Column("ID", "id", Table))
-                idx.Add(New MapField2Column("Title", "name", Table))
+                Dim idx As New OrmObjectIndex From {
+                    New MapField2Column("ID", Table, "id"),
+                    New MapField2Column("Title", Table, "name")
+                }
                 _idx = idx
             End If
             Return _idx
@@ -507,8 +511,8 @@ Public Class EntitySchema4v1Implementation
     Public Class Comparer
         Implements System.Collections.IComparer, System.Collections.Generic.IComparer(Of Entity4)
 
-        Private _s As Entity4Sort
-        Private _st As Integer = -1
+        Private ReadOnly _s As Entity4Sort
+        Private ReadOnly _st As Integer = -1
 
         Public Sub New(ByVal s As Entity4Sort, ByVal st As SortExpression.SortType)
             _s = s
@@ -535,6 +539,8 @@ Public Class EntitySchema4v1Implementation
                     Select Case _s
                         Case Entity4Sort.Name
                             Return x.Title.CompareTo(y.Title) * _st
+                        Case Else
+                            Throw New NotImplementedException(_s.ToString)
                     End Select
                 End If
             End If
@@ -613,8 +619,9 @@ Public Class Entity5
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        Init(id, cache, schema)
+    Public Sub New(ByVal id As Integer)
+        _id = id
+        PKLoaded(1, "ID")
     End Sub
 
     <EntityProperty(Field2DbRelations.PrimaryKey)> _
@@ -693,10 +700,11 @@ Public Class EntitySchema5v1Implementation
     Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         Get
             If _idx Is Nothing Then
-                Dim idx As New OrmObjectIndex
-                idx.Add(New MapField2Column("ID", "id", Table))
-                idx.Add(New MapField2Column("Title", "name", Table))
-                idx.Add(New MapField2Column("Version", "version", Table))
+                Dim idx As New OrmObjectIndex From {
+                    New MapField2Column("ID", Table, "id"),
+                    New MapField2Column("Title", Table, "name"),
+                    New MapField2Column("Version", Table, "version")
+                }
                 _idx = idx
             End If
             Return _idx

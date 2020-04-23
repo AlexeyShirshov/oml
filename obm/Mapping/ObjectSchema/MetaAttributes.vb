@@ -2,21 +2,28 @@ Imports System
 
 Namespace Entities.Meta
 
-    <AttributeUsage(AttributeTargets.Property, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _
+    <AttributeUsage(AttributeTargets.Property, AllowMultiple:=True, Inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")>
     <Serializable()> _
     Public NotInheritable Class SourceFieldAttribute
         Inherits Attribute
+        Implements IVersionable
+        Private _version As String
+        Private _verOper As SchemaVersionOperatorEnum
+        Private _feature As String
+        Private _columnName As String
+        Private _columnExpression As String
+        Private _type As String
+        Private _size As Integer
+        Private _isNotNullable As Boolean
 
         Friend Sub New()
         End Sub
 
-        Public Sub New(ByVal columnExpression As String, ByVal primaryKeyPropertyAlias As String)
-            Me.ColumnExpression = columnExpression
-            PrimaryKey = primaryKeyPropertyAlias
+        Public Sub New(ByVal column As String)
+            Me.ColumnExpression = column
         End Sub
 
-        Private _columnName As String
-        Public Property ColumnName() As String
+        Public Property ColumnAlias() As String
             Get
                 Return _columnName
             End Get
@@ -25,7 +32,10 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        Private _columnExpression As String
+        ''' <summary>
+        ''' Column name or expression 
+        ''' </summary>
+        ''' <returns></returns>
         Public Property ColumnExpression() As String
             Get
                 Return _columnExpression
@@ -35,17 +45,16 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        Private _pk As String
-        Public Property PrimaryKey() As String
-            Get
-                Return _pk
-            End Get
-            Set(ByVal value As String)
-                _pk = value
-            End Set
-        End Property
+        'Private _pk As String
+        'Public Property PrimaryKey() As String
+        '    Get
+        '        Return _pk
+        '    End Get
+        '    Set(ByVal value As String)
+        '        _pk = value
+        '    End Set
+        'End Property
 
-        Private _type As String
         Public Property SourceFieldType() As String
             Get
                 Return _type
@@ -55,7 +64,6 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        Private _size As Integer
         Public Property SourceFieldSize() As Integer
             Get
                 Return _size
@@ -65,7 +73,6 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        Private _isNotNullable As Boolean
         Public Property IsNullable() As Boolean
             Get
                 Return Not _isNotNullable
@@ -75,8 +82,7 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        Private _version As String
-        Public Property SchemaVersion() As String
+        Public Property SchemaVersion() As String Implements IVersionable.SchemaVersion
             Get
                 Return _version
             End Get
@@ -84,14 +90,29 @@ Namespace Entities.Meta
                 _version = value
             End Set
         End Property
-
+        Public Property SchemaVersionOperator() As SchemaVersionOperatorEnum Implements IVersionable.SchemaVersionOperator
+            Get
+                Return _verOper
+            End Get
+            Set(ByVal value As SchemaVersionOperatorEnum)
+                _verOper = value
+            End Set
+        End Property
+        Public Property Feature As String Implements IVersionable.Feature
+            Get
+                Return _feature
+            End Get
+            Set(value As String)
+                _feature = value
+            End Set
+        End Property
     End Class
 
-    <AttributeUsage(AttributeTargets.Property, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _
-    <Serializable()> _
+    <AttributeUsage(AttributeTargets.Property, Inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")>
+    <Serializable()>
     Public NotInheritable Class EntityPropertyAttribute
         Inherits Attribute
-        Implements IComparable(Of EntityPropertyAttribute), ICloneable
+        Implements IComparable(Of EntityPropertyAttribute), ICloneable, IVersionable
 
         Private _propertyAlias As String
         Private _behavior As Field2DbRelations
@@ -116,22 +137,38 @@ Namespace Entities.Meta
             Me._behavior = behavior
         End Sub
 
-        Public Sub New(ByVal columnExpression As String)
-            _sf = New SourceFieldAttribute() {New SourceFieldAttribute With {.ColumnExpression = columnExpression}}
-            Me._behavior = Field2DbRelations.None
-        End Sub
+        'Public Sub New(ByVal columnExpression As String)
+        '    _sf = New SourceFieldAttribute() {New SourceFieldAttribute With {.ColumnExpression = columnExpression}}
+        '    Me._behavior = Field2DbRelations.None
+        'End Sub
 
-        Public Sub New(ByVal columnExpression As String, ByVal behavior As Field2DbRelations)
-            _sf = New SourceFieldAttribute() {New SourceFieldAttribute With {.ColumnExpression = columnExpression}}
-            Me._behavior = behavior
-        End Sub
+        'Public Sub New(ByVal columnExpression As String, ByVal behavior As Field2DbRelations)
+        '    _sf = New SourceFieldAttribute() {New SourceFieldAttribute With {.ColumnExpression = columnExpression}}
+        '    Me._behavior = behavior
+        'End Sub
 
-        Public Sub New(ByVal columnExpression As String, ByVal behavior As Field2DbRelations, ByVal propertyAlias As String)
+        'Public Sub New(ByVal columnExpression As String, ByVal behavior As Field2DbRelations, ByVal propertyAlias As String)
+        '    _propertyAlias = propertyAlias
+        '    _behavior = behavior
+        '    _sf = New SourceFieldAttribute() {New SourceFieldAttribute With {.ColumnExpression = columnExpression}}
+        'End Sub
+        Public Sub New(ByVal propertyAlias As String)
+            _propertyAlias = propertyAlias
+        End Sub
+        Public Sub New(ByVal behavior As Field2DbRelations, ByVal propertyAlias As String)
             _propertyAlias = propertyAlias
             _behavior = behavior
-            _sf = New SourceFieldAttribute() {New SourceFieldAttribute With {.ColumnExpression = columnExpression}}
         End Sub
-
+        'Public Sub New(ByVal behavior As Field2DbRelations, ByVal propertyAlias As String, sourceFields() As SourceFieldAttribute)
+        '    _propertyAlias = propertyAlias
+        '    _behavior = behavior
+        '    _sf = sourceFields
+        'End Sub
+        Public Sub New(ByVal behavior As Field2DbRelations, ByVal propertyAlias As String, column As String)
+            _propertyAlias = propertyAlias
+            _behavior = behavior
+            _sf = {New SourceFieldAttribute() With {.ColumnExpression = column}}
+        End Sub
         'Friend Sub New(ByVal propertAlias As String, ByVal columnExpression As String)
         '    _propertyAlias = propertAlias
         'End Sub
@@ -171,7 +208,7 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        Public Property SchemaVersion() As String
+        Public Property SchemaVersion() As String Implements IVersionable.SchemaVersion
             Get
                 Return _version
             End Get
@@ -180,7 +217,7 @@ Namespace Entities.Meta
             End Set
         End Property
 
-        Public Property SchemaVersionOperator() As SchemaVersionOperatorEnum
+        Public Property SchemaVersionOperator() As SchemaVersionOperatorEnum Implements IVersionable.SchemaVersionOperator
             Get
                 Return _verOper
             End Get
@@ -208,104 +245,104 @@ Namespace Entities.Meta
             Return _propertyAlias.GetHashCode
         End Function
 
-        Public Property Column() As String
-            Get
-                If _sf.Length = 1 Then
-                    Return _sf(0).ColumnExpression
-                Else
-                    Return Nothing
-                End If
-            End Get
-            Set(ByVal value As String)
-                If _sf.Length = 0 Then
-                    ReDim _sf(0)
-                    _sf(0) = New SourceFieldAttribute
-                ElseIf _sf.Length > 1 Then
-                    Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
-                End If
-                _sf(0).ColumnExpression = value
-            End Set
-        End Property
+        'Public Property Column() As String
+        '    Get
+        '        If _sf.Length = 1 Then
+        '            Return _sf(0).ColumnExpression
+        '        Else
+        '            Return Nothing
+        '        End If
+        '    End Get
+        '    Set(ByVal value As String)
+        '        If _sf.Length = 0 Then
+        '            ReDim _sf(0)
+        '            _sf(0) = New SourceFieldAttribute
+        '        ElseIf _sf.Length > 1 Then
+        '            Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
+        '        End If
+        '        _sf(0).ColumnExpression = value
+        '    End Set
+        'End Property
 
-        ''' <summary>
-        ''' Column alias
-        ''' </summary>
-        ''' <value></value>
-        ''' <returns>Column alias</returns>
-        ''' <remarks></remarks>
-        Public Property ColumnName() As String
-            Get
-                If _sf.Length = 1 Then
-                    Return _sf(0).ColumnName
-                Else
-                    Return Nothing
-                End If
-            End Get
-            Set(ByVal value As String)
-                If _sf.Length = 0 Then
-                    ReDim _sf(0)
-                ElseIf _sf.Length > 1 Then
-                    Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
-                End If
-                _sf(0).ColumnName = value
-            End Set
-        End Property
+        '''' <summary>
+        '''' Column alias
+        '''' </summary>
+        '''' <value></value>
+        '''' <returns>Column alias</returns>
+        '''' <remarks></remarks>
+        'Public Property ColumnName() As String
+        '    Get
+        '        If _sf.Length = 1 Then
+        '            Return _sf(0).ColumnAlias
+        '        Else
+        '            Return Nothing
+        '        End If
+        '    End Get
+        '    Set(ByVal value As String)
+        '        If _sf.Length = 0 Then
+        '            ReDim _sf(0)
+        '        ElseIf _sf.Length > 1 Then
+        '            Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
+        '        End If
+        '        _sf(0).ColumnAlias = value
+        '    End Set
+        'End Property
 
-        Public Property DBType() As String
-            Get
-                If _sf.Length = 1 Then
-                    Return _sf(0).SourceFieldType
-                Else
-                    Return Nothing
-                End If
-            End Get
-            Set(ByVal value As String)
-                If _sf.Length = 0 Then
-                    ReDim _sf(0)
-                ElseIf _sf.Length > 1 Then
-                    Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
-                End If
-                _sf(0).SourceFieldType = value
-            End Set
-        End Property
+        'Public Property DBType() As String
+        '    Get
+        '        If _sf.Length = 1 Then
+        '            Return _sf(0).SourceFieldType
+        '        Else
+        '            Return Nothing
+        '        End If
+        '    End Get
+        '    Set(ByVal value As String)
+        '        If _sf.Length = 0 Then
+        '            ReDim _sf(0)
+        '        ElseIf _sf.Length > 1 Then
+        '            Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
+        '        End If
+        '        _sf(0).SourceFieldType = value
+        '    End Set
+        'End Property
 
-        Public Property DBSize() As Integer
-            Get
-                If _sf.Length = 1 Then
-                    Return _sf(0).SourceFieldSize
-                Else
-                    Return Nothing
-                End If
-            End Get
-            Set(ByVal value As Integer)
-                If _sf.Length = 0 Then
-                    ReDim _sf(0)
-                ElseIf _sf.Length > 1 Then
-                    Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
-                End If
-                _sf(0).SourceFieldSize = value
-            End Set
-        End Property
+        'Public Property DBSize() As Integer
+        '    Get
+        '        If _sf.Length = 1 Then
+        '            Return _sf(0).SourceFieldSize
+        '        Else
+        '            Return Nothing
+        '        End If
+        '    End Get
+        '    Set(ByVal value As Integer)
+        '        If _sf.Length = 0 Then
+        '            ReDim _sf(0)
+        '        ElseIf _sf.Length > 1 Then
+        '            Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
+        '        End If
+        '        _sf(0).SourceFieldSize = value
+        '    End Set
+        'End Property
 
-        Public Property Nullable() As Boolean
-            Get
-                If _sf.Length = 1 Then
-                    Return _sf(0).IsNullable
-                Else
-                    Return Nothing
-                End If
-            End Get
-            Set(ByVal value As Boolean)
-                If _sf.Length = 0 Then
-                    ReDim _sf(0)
-                ElseIf _sf.Length > 1 Then
-                    Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
-                End If
-                _sf(0).IsNullable = value
-            End Set
-        End Property
+        'Public Property Nullable() As Boolean
+        '    Get
+        '        If _sf.Length = 1 Then
+        '            Return _sf(0).IsNullable
+        '        Else
+        '            Return Nothing
+        '        End If
+        '    End Get
+        '    Set(ByVal value As Boolean)
+        '        If _sf.Length = 0 Then
+        '            ReDim _sf(0)
+        '        ElseIf _sf.Length > 1 Then
+        '            Throw New NotSupportedException("Use SourceFieldAttribute to add one more Column")
+        '        End If
+        '        _sf(0).IsNullable = value
+        '    End Set
+        'End Property
 
-        Public Property Feature As String
+        Public Property Feature As String Implements IVersionable.Feature
             Get
                 Return _feature
             End Get
@@ -319,14 +356,21 @@ Namespace Entities.Meta
         End Function
 
         Private Function _Clone() As Object Implements System.ICloneable.Clone
-            Dim c As New EntityPropertyAttribute(Behavior)
             'c._idx = _idx
-            c._propertyAlias = _propertyAlias
+            Dim c As New EntityPropertyAttribute(Behavior) With {
+                ._propertyAlias = _propertyAlias
+            }
             Dim sf(_sf.Length - 1) As SourceFieldAttribute
             Array.Copy(_sf, sf, _sf.Length)
             c._sf = sf
             Return c
         End Function
+        'Friend ReadOnly Property HasColumns As Boolean
+        '    Get
+        '        Return _sf.Length > 0
+        '    End Get
+        'End Property
+
     End Class
 
     <FlagsAttribute(), CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2217")> _
@@ -344,38 +388,46 @@ Namespace Entities.Meta
         [ReadOnly] = 4
         InsertDefault = 8
         RV = 16
-        ''' <summary>
-        ''' RV or [ReadOnly] or SyncUpdate or SyncInsert
-        ''' </summary>
-        ''' <remarks></remarks>
-        RowVersion = 23
         PK = 32
-        ''' <summary>
-        ''' PK or SyncInsert or [ReadOnly] or Identity
-        ''' </summary>
-        ''' <remarks></remarks>
-        PrimaryKey = 549
         NotSerialized = 64
         Factory = 128
         Hidden = CInt(2 ^ 8)
         Identity = CInt(2 ^ 9)
+
+#Region " Compound "
+        ''' <summary>
+        ''' RV or [ReadOnly] or SyncUpdate or SyncInsert
+        ''' </summary>
+        ''' <remarks></remarks>
+        RowVersion = RV Or [ReadOnly] Or SyncUpdate Or SyncInsert
+        ''' <summary>
+        ''' PK or SyncInsert or [ReadOnly] or Identity
+        ''' </summary>
+        ''' <remarks></remarks>
+        PrimaryKey = PK Or SyncInsert Or [ReadOnly] Or Identity
+        Virtual = Hidden Or [ReadOnly] Or InsertDefault
+        PartOfPK = [ReadOnly] Or SyncInsert
+#End Region
     End Enum
 
     <AttributeUsage(AttributeTargets.Class, allowmultiple:=True, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _
     Public NotInheritable Class EntityAttribute
         Inherits Attribute
+        Implements IVersionable
 
-        Private _t As Type
-        Private _v As String
+        Private ReadOnly _t As Type
         Private _entityName As String
         Private _table As String
         Private _schema As String
-        Private _pk As String
+        'Private _pk As String()
         Private _rawProps As Boolean
         Private _notInheritBase As Boolean
 
 
         Friend _tbl As SourceFragment
+        Private _v As String
+        Private _feature As String
+        Private _verOper As SchemaVersionOperatorEnum
 
         Public Sub New(ByVal tableSchema As String, ByVal tableName As String, ByVal version As String)
             _v = version
@@ -407,12 +459,30 @@ Namespace Entities.Meta
             End Get
         End Property
 
-        Public ReadOnly Property Version() As String
+        Public Property Version() As String Implements IVersionable.SchemaVersion
             Get
                 Return _v
             End Get
+            Set(value As String)
+                _v = value
+            End Set
         End Property
-
+        Public Property SchemaVersionOperator() As SchemaVersionOperatorEnum Implements IVersionable.SchemaVersionOperator
+            Get
+                Return _verOper
+            End Get
+            Set(ByVal value As SchemaVersionOperatorEnum)
+                _verOper = value
+            End Set
+        End Property
+        Public Property Feature As String Implements IVersionable.Feature
+            Get
+                Return _feature
+            End Get
+            Set(value As String)
+                _feature = value
+            End Set
+        End Property
         Public Property EntityName() As String
             Get
                 Return _entityName
@@ -455,6 +525,15 @@ Namespace Entities.Meta
                 _rawProps = value
             End Set
         End Property
+        'Public Property PKSourceFields As String()
+        '    Get
+        '        Return _pk
+        '    End Get
+        '    Set(value As String())
+        '        _pk = value
+        '    End Set
+        'End Property
+
     End Class
 
     <AttributeUsage(AttributeTargets.Property, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _

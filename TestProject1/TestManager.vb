@@ -8,12 +8,12 @@ Imports Worm.Criteria
 Imports Worm.Query
 Imports Worm
 Imports System.Linq
-Imports CoreFramework.Structures
+Imports CoreFramework.cfStructures
 
 <TestClass()> Public Class TestManager
     Implements INewObjectsStore, Worm.ICreateManager
 
-    Private _schemas As New System.Collections.Hashtable
+    Private ReadOnly _schemas As New System.Collections.Hashtable
 
     Protected Function GetSchema(ByVal v As String) As Worm.ObjectMappingEngine
         Dim s As Worm.ObjectMappingEngine = CType(_schemas(v), Worm.ObjectMappingEngine)
@@ -63,7 +63,7 @@ Imports CoreFramework.Structures
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\test.mdf"))
         Return New CustomMgr(cache, schema, gen, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
-        Return New CustomMgr(cache, schema, gen, "Server=.\sqlexpress;Integrated security=true;Initial catalog=test")
+        Return New CustomMgr(cache, schema, gen, "Server=dev01;Integrated security=true;Initial catalog=test")
 #End If
     End Function
 
@@ -73,7 +73,7 @@ Imports CoreFramework.Structures
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\test.mdf"))
         Return New CustomMgr(cache, schema, gen, "Server=.\sqlexpressS;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
-        Return New CustomMgr(cache, schema, gen, "Server=.\sqlexpress;Integrated security=true;Initial catalog=test")
+        Return New CustomMgr(cache, schema, gen, "Server=dev01;Integrated security=true;Initial catalog=test")
 #End If
     End Function
 
@@ -86,14 +86,14 @@ Imports CoreFramework.Structures
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\test.mdf"))
         Return New OrmDBManager("Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", schema, gen, New OrmCache)
 #Else
-        Return New OrmDBManager("Server=.\sqlexpress;Integrated security=true;Initial catalog=test", schema, gen, New OrmCache)
+        Return New OrmDBManager("Server=dev01;Integrated security=true;Initial catalog=test", schema, gen, New OrmCache)
 #End If
     End Function
 
     <TestMethod()> _
     Public Sub TestLoad()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim o As New Entity(1, mgr.Cache, mgr.MappingEngine)
+            Dim o As New Entity(1)
             Assert.IsFalse(o.InternalProperties.IsLoaded)
 
             o.Load()
@@ -105,7 +105,7 @@ Imports CoreFramework.Structures
     <TestMethod()> _
     Public Sub TestLoad2()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim o As New Entity5(1, mgr.Cache, mgr.MappingEngine)
+            Dim o As New Entity5(1)
             Assert.IsFalse(o.InternalProperties.IsLoaded)
 
             o.Load()
@@ -119,7 +119,7 @@ Imports CoreFramework.Structures
     <TestMethod()> _
     Public Sub TestEditCreated()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim o As New Entity4(1, mgr.Cache, mgr.MappingEngine)
+            Dim o As New Entity4(1)
             Assert.AreEqual(ObjectState.Created, o.InternalProperties.ObjectState)
             o.Title = "asdfasdf"
             Assert.AreEqual(ObjectState.Created, o.InternalProperties.ObjectState)
@@ -567,7 +567,7 @@ Imports CoreFramework.Structures
     <TestMethod()> _
     Public Sub TestAdd()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim e As Entity = New Entity(-100, mgr.Cache, mgr.MappingEngine)
+            Dim e As Entity = New Entity(-100)
             Assert.IsNull(e.InternalProperties.OriginalCopy)
 
             mgr.BeginTransaction()
@@ -585,7 +585,7 @@ Imports CoreFramework.Structures
     <TestMethod()> _
     Public Sub TestAdd2()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim e As Entity = New Entity(-100, mgr.Cache, mgr.MappingEngine)
+            Dim e As Entity = New Entity(-100)
 
             mgr.BeginTransaction()
             Try
@@ -608,7 +608,7 @@ Imports CoreFramework.Structures
     <TestMethod()> _
     Public Sub TestAdd3()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim e As Entity = New Entity(-100, mgr.Cache, mgr.MappingEngine)
+            Dim e As Entity = New Entity(-100)
             Dim c As ICollection(Of Entity4) = e.GetCmd(GetType(Entity4)).ToList(Of Entity4)(mgr)
             Assert.AreEqual(0, c.Count)
 
@@ -633,7 +633,7 @@ Imports CoreFramework.Structures
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             mgr.Cache.NewObjectManager = Me
             'mgr.FindNewDelegate = AddressOf GetNew
-            Dim e As Entity = New Entity(Me.GetIdentity, mgr.Cache, mgr.MappingEngine)
+            Dim e As Entity = New Entity(Me.GetIdentity)
             AddNew(e)
             Dim e2 As TestProject1.Entity4 = New QueryCmd().GetByID(Of Entity4)(10, mgr)
 
@@ -695,7 +695,7 @@ Imports CoreFramework.Structures
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             mgr.Cache.NewObjectManager = Me
             'mgr.FindNewDelegate = AddressOf GetNew
-            Dim e As Entity = New Entity(GetIdentity, mgr.Cache, mgr.MappingEngine)
+            Dim e As Entity = New Entity(GetIdentity)
             AddNew(e)
             Dim e2 As TestProject1.Entity4 = New QueryCmd().GetByID(Of Entity4)(10, mgr)
             Dim c2 As ICollection(Of Entity) = e2.GetCmd(GetType(Entity)).ToList(Of Entity)(mgr)
@@ -1041,7 +1041,7 @@ Imports CoreFramework.Structures
             mgr.Cache.NewObjectManager = Me
             'mgr.FindNewDelegate = AddressOf GetNew
             Dim e As Entity = New QueryCmd().GetByID(Of Entity)(1, GetByIDOptions.EnsureExistsInStore, mgr)
-            Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.MappingEngine)
+            Dim e4 As New Entity4(GetIdentity)
             AddNew(e4)
             Dim id As Integer = e4.ID
             e4.Title = "90bu13n4gf0bh185g8b18bg81bg8b5gfvlojkqndrg90h5"
@@ -1079,7 +1079,7 @@ Imports CoreFramework.Structures
             'mgr.FindNewDelegate = AddressOf GetNew
             mgr.Cache.NewObjectManager = Me
             Dim e As Entity = New QueryCmd().GetByID(Of Entity)(1, GetByIDOptions.EnsureExistsInStore, mgr)
-            Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.MappingEngine)
+            Dim e4 As New Entity4(GetIdentity)
             AddNew(e4)
             Dim id As Integer = e4.ID
             e4.Title = "kqndrg90h5"
@@ -1118,10 +1118,10 @@ Imports CoreFramework.Structures
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             'mgr.FindNewDelegate = AddressOf GetNew
             mgr.Cache.NewObjectManager = Me
-            Dim e As New Entity(GetIdentity, mgr.Cache, mgr.MappingEngine)
+            Dim e As New Entity(GetIdentity)
             AddNew(e)
             Dim id As Integer = e.ID
-            Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.MappingEngine)
+            Dim e4 As New Entity4(GetIdentity)
             AddNew(e4)
             Dim id4 As Integer = e4.ID
             e4.Title = "kqndrg90h5"

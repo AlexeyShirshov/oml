@@ -160,7 +160,7 @@ Namespace Expressions2
                                 r = IParameterExpression.EvalResult.Found
                             End If
                         ElseIf ObjectMappingEngine.IsEntityType(vt) Then
-                            If Equals(mpe.GetPropertyValue(evaluatedValue, mpe.GetSinglePK(vt)), filterValue) Then
+                            If Equals(mpe.GetPropertyValue(evaluatedValue, mpe.GetPrimaryKey(vt)), filterValue) Then
                                 r = IParameterExpression.EvalResult.Found
                             End If
                         End If

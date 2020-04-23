@@ -243,6 +243,14 @@ Public Class MySQLGenerator
         Return False
     End Function
 
+    Public Overrides Function RollbackSavepoint(name As String) As String
+        Throw New NotImplementedException()
+    End Function
+
+    Public Overrides Function Savepoint(name As String) As String
+        Throw New NotImplementedException()
+    End Function
+
     'Public Overrides ReadOnly Property NamedParams As Boolean
     '    Get
     '        Return False

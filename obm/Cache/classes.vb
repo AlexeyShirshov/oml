@@ -14,8 +14,8 @@ Namespace Cache
     ''' <threadsafety static="true" instance="true"/>
     <Serializable()> _
     Public Class EntityProxy
-        Private _id As IEnumerable(Of PKDesc)
-        Private _t As Type
+        Private ReadOnly _id As IEnumerable(Of PKDesc)
+        Private ReadOnly _t As Type
 
         Public Sub New(ByVal id As IEnumerable(Of PKDesc), ByVal type As Type)
             _id = id
@@ -56,10 +56,16 @@ Namespace Cache
 
         Protected Function IdEquals(ByVal ids As IEnumerable(Of PKDesc)) As Boolean
             If _id.Count <> ids.Count Then Return False
-            For i As Integer = 0 To _id.Count - 1
-                Dim p As PKDesc = _id(i)
-                Dim p2 As PKDesc = ids(i)
-                If p.PropertyAlias <> p2.PropertyAlias OrElse Not p.Value.Equals(p.Value) Then
+            'For i As Integer = 0 To _id.Count - 1
+            '    Dim p As PKDesc = _id(i)
+            '    Dim p2 As PKDesc = ids(i)
+            '    If p.PropertyAlias <> p2.PropertyAlias OrElse Not p.Value.Equals(p.Value) Then
+            '        Return False
+            '    End If
+            'Next
+            For Each id In _id
+                Dim id2 = ids.FirstOrDefault(Function(it) it.Column = id.Column)
+                If id2 Is Nothing OrElse Not Object.Equals(id2.Value, id.Value) Then
                     Return False
                 End If
             Next
@@ -77,8 +83,12 @@ Namespace Cache
         Protected Function GetIdsString() As String
             Dim sb As New StringBuilder
             For Each p As PKDesc In _id
-                sb.Append(p.PropertyAlias).Append(":").Append(p.Value).Append(",")
+                sb.Append("""").Append(p.Column).Append("""").Append(":").Append("""").Append(p.Value).Append("""").Append(",")
             Next
+            If sb.Length > 0 Then
+                sb.Length -= 1
+            End If
+
             Return sb.ToString
         End Function
 
@@ -89,8 +99,8 @@ Namespace Cache
 
     <Serializable()> _
     Public Class EntityField
-        Private _field As String
-        Private _t As Type
+        Private ReadOnly _field As String
+        Private ReadOnly _t As Type
 
         Public Sub New(ByVal field As String, ByVal type As Type)
             _field = field
@@ -159,11 +169,11 @@ Namespace Cache
 
         Public ReadOnly User As Object
         '<CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2104")> _
-        Private _obj As Object
+        Private ReadOnly _obj As Object
         Public ReadOnly DateTime As Date
         Public ReadOnly Reason As ReasonEnum
         'Private _obj As EntityProxy
-        Private _oldpk() As PKDesc
+        Private ReadOnly _oldpk() As PKDesc
 
 #If DEBUG Then
         Protected _stack As String
@@ -210,7 +220,7 @@ Namespace Cache
     Public Class CacheKey
         Inherits PKWrapper
 
-        Private _key As Integer
+        Private ReadOnly _key As Integer
 
         Public Sub New(ByVal o As ICachedEntity)
             MyBase.New(o.GetPKValues(Nothing))
@@ -233,8 +243,8 @@ Namespace Cache
     ''' <threadsafety static="true" instance="true"/>
     <Serializable()> _
     Public Class WeakEntityReference
-        Private _e As EntityProxy
-        Private _ref As WeakReference
+        Private ReadOnly _e As EntityProxy
+        Private ReadOnly _ref As WeakReference
         'Private _sl As New CoreFramework.Threading.SpinLockRef 
 
         Public Sub New(ByVal o As ICachedEntity)
@@ -248,7 +258,7 @@ Namespace Cache
 
         Protected Function GetEntityFromCacheOrCreate(ByVal mgr As OrmManager, ByVal cache As CacheBase, ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type, _
             ByVal addOnCreate As Boolean, ByVal filterInfo As Object, ByVal mpe As ObjectMappingEngine, ByVal dic As IDictionary) As ICachedEntity
-            Dim o As _ICachedEntity = CType(CachedEntity.CreateObject(pk, type, cache, mpe), _ICachedEntity)
+            Dim o As _ICachedEntity = CType(CachedEntity.CreateObject(pk, type, mpe), _ICachedEntity)
 
             o.SetObjectState(ObjectState.NotLoaded)
 
@@ -359,8 +369,8 @@ Namespace Cache
     Public Class WeakEntityList
         Implements ICollection(Of WeakEntityReference), ICollection
 
-        Private _l As Generic.List(Of WeakEntityReference)
-        Private _t As Type
+        Private ReadOnly _l As Generic.List(Of WeakEntityReference)
+        Private ReadOnly _t As Type
 
         Public Sub New(ByVal l As List(Of WeakEntityReference), ByVal t As Type)
             _l = l
@@ -491,7 +501,7 @@ Namespace Cache
         'Implements IEnumerable(Of WeekEntityList)
         Implements ICollection(Of WeakEntityList), ICollection
 
-        Private _l As List(Of WeakEntityList)
+        Private ReadOnly _l As List(Of WeakEntityList)
 
         Public Sub New(ByVal l As List(Of WeakEntityList))
             _l = l
@@ -615,8 +625,8 @@ Namespace Cache
     Class DependentTypes
         Implements IDependentTypes
 
-        Private _d As New List(Of Type)
-        Private _u As New List(Of Type)
+        Private ReadOnly _d As New List(Of Type)
+        Private ReadOnly _u As New List(Of Type)
 
         Public Sub AddBoth(ByVal t As Type)
             AddDeleted(t)

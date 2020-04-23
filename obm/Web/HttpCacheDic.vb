@@ -589,7 +589,7 @@ Namespace Cache
         End Sub
 
         Public Function ContainsItem(ByVal item As System.Collections.Generic.KeyValuePair(Of Object, TValue)) As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).Contains
-            collection.Contains(GetPair(item))
+            Return collection.Contains(GetPair(item))
         End Function
 
         Public Sub CopyTo(ByVal array() As System.Collections.Generic.KeyValuePair(Of Object, TValue), ByVal arrayIndex As Integer) Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).CopyTo

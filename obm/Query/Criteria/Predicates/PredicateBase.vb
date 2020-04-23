@@ -88,7 +88,13 @@ Namespace Criteria
                 Return GetLink(CreateFilter(New EntityValue(value), FilterOperation.Equal))
             End If
         End Function
-
+        Public Function eq(ByVal value As ICachedEntity) As PredicateLink
+            If value Is Nothing Then
+                Return is_null()
+            Else
+                Return GetLink(CreateFilter(New CachedEntityValue(value), FilterOperation.Equal))
+            End If
+        End Function
         Public Function eq(ByVal al As QueryAlias, ByVal propertyAlias As String) As PredicateLink
             Return GetLink(CreateJoinFilter(New ObjectProperty(al, propertyAlias), FilterOperation.Equal))
         End Function
@@ -104,7 +110,6 @@ Namespace Criteria
         Public Function eq(ByVal tbl As SourceFragment, ByVal column As String) As PredicateLink
             Return GetLink(CreateJoinFilter(tbl, column, FilterOperation.Equal))
         End Function
-
         Public Function not_eq(ByVal value As ISinglePKEntity) As PredicateLink
             If value Is Nothing Then
                 Return is_not_null()
@@ -112,7 +117,13 @@ Namespace Criteria
                 Return GetLink(CreateFilter(New EntityValue(value), FilterOperation.NotEqual))
             End If
         End Function
-
+        Public Function not_eq(ByVal value As ICachedEntity) As PredicateLink
+            If value Is Nothing Then
+                Return is_not_null()
+            Else
+                Return GetLink(CreateFilter(New CachedEntityValue(value), FilterOperation.NotEqual))
+            End If
+        End Function
         Public Function greater_than_eq(ByVal value As Object) As PredicateLink
             Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.GreaterEqualThan))
         End Function

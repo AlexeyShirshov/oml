@@ -5,10 +5,11 @@ Imports Worm.Entities.Meta
 Imports System.Collections.Generic
 Imports Worm.Query
 Imports System.Linq
+Imports Worm.Criteria.Conditions
 
 Namespace Criteria.Joins
 
-    <Serializable()> _
+    <Serializable()>
     Public Class JoinFilter
         Implements Core.IFilter
 
@@ -75,7 +76,7 @@ Namespace Criteria.Joins
             _oper = operation
         End Sub
 
-        Public Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String, _
+        Public Sub New(ByVal os As EntityUnion, ByVal propertyAlias As String,
                        ByVal os2 As EntityUnion, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
             Dim f As FieldReference = Nothing
             If os IsNot Nothing Then
@@ -368,7 +369,7 @@ Namespace Criteria.Joins
 
             'Return b
 
-            Return (_l.Equals(obj._l) AndAlso _r.Equals(obj._r)) OrElse _
+            Return (_l.Equals(obj._l) AndAlso _r.Equals(obj._r)) OrElse
                 (_l.Equals(obj._r) AndAlso _r.Equals(obj._l))
         End Function
 
@@ -423,8 +424,8 @@ Namespace Criteria.Joins
         '    Return MakeQueryStmt(schema, stmt, filterInfo, almgr, pname)
         'End Function
 
-        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext, _
-            ByVal contextInfo As IDictionary, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
+        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, ByVal executor As Query.IExecutionContext,
+                                      ByVal contextInfo As IDictionary, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
 
             Dim [alias] As String = String.Empty
             Dim alias2 As String = String.Empty
@@ -456,7 +457,7 @@ Namespace Criteria.Joins
                     'Else
                     '    map = New MapField2Column(Nothing, f, _l.Property.Entity.ObjectAlias.Tbl)
                     'End If
-                    map = New MapField2Column(f, executor.FindColumn(schema, f), _l.Property.Entity.ObjectAlias.Tbl)
+                    map = New MapField2Column(f, _l.Property.Entity.ObjectAlias.Tbl, executor.FindColumn(schema, f))
                     os = _l.Property.Entity
                 Else 'If _l.Property.Entity IsNot Nothing AndAlso _eu IsNot Nothing Then
                     Dim f As String = _l.Property.GetPropertyAlias(schema, oschema)
@@ -482,14 +483,14 @@ Namespace Criteria.Joins
                 'ElseIf _d1 IsNot Nothing Then
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d1.First)).GetFieldColumnMap(_d1.Second)
             ElseIf _l.Column IsNot Nothing Then
-                map = New MapField2Column(Nothing, _l.Column.Second, _l.Column.First)
+                map = New MapField2Column(Nothing, _l.Column.First, _l.Column.Second)
                 If almgr.ContainsKey(map.Table, _eu) Then
                     os = _eu
                 ElseIf almgr.ContainsKey(map.Table, _eu2) Then
                     os = _eu2
                 End If
-            ElseIf _l.CustomTemplate IsNot Nothing Then
-                [alias] = _l.CustomTemplate.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, contextInfo, False, executor)
+            ElseIf _l.FilterValue IsNot Nothing Then
+                [alias] = _l.FilterValue.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, contextInfo, False, executor)
             Else
                 Throw New InvalidOperationException
             End If
@@ -520,7 +521,7 @@ Namespace Criteria.Joins
                     'Else
                     '    map2 = New MapField2Column(Nothing, f, _r.Property.Entity.ObjectAlias.Tbl)
                     'End If
-                    map2 = New MapField2Column(f, executor.FindColumn(schema, f), _r.Property.Entity.ObjectAlias.Tbl)
+                    map2 = New MapField2Column(f, _r.Property.Entity.ObjectAlias.Tbl, executor.FindColumn(schema, f))
                     os2 = _r.Property.Entity
                 Else 'If _r.Property.Entity IsNot Nothing Then
                     Dim f As String = _r.Property.GetPropertyAlias(schema, oschema)
@@ -546,14 +547,14 @@ Namespace Criteria.Joins
                 'ElseIf _d2 IsNot Nothing Then
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d2.First)).GetFieldColumnMap(_d2.Second)
             ElseIf _r.Column IsNot Nothing Then
-                map2 = New MapField2Column(Nothing, _r.Column.Second, _r.Column.First)
+                map2 = New MapField2Column(Nothing, _r.Column.First, _r.Column.Second)
                 If almgr.ContainsKey(map2.Table, _eu) Then
                     os2 = _eu
                 ElseIf almgr.ContainsKey(map2.Table, _eu2) Then
                     os2 = _eu2
                 End If
-            ElseIf _r.CustomTemplate IsNot Nothing Then
-                [alias2] = _r.CustomTemplate.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, contextInfo, False, executor)
+            ElseIf _r.FilterValue IsNot Nothing Then
+                [alias2] = _r.FilterValue.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, contextInfo, False, executor)
             Else
                 Throw New InvalidOperationException
             End If
@@ -578,16 +579,55 @@ Namespace Criteria.Joins
             End If
 
             Dim lp As String = [alias]
-            If map IsNot Nothing Then
-                lp &= map.SourceFieldExpression
-            End If
-
             Dim rp As String = alias2
-            If map2 IsNot Nothing Then
-                rp &= map2.SourceFieldExpression
+
+            Dim sb As New StringBuilder
+
+            sb.Append(lp)
+
+            If map IsNot Nothing Then
+                Dim start = sb.Length
+
+                For i = 0 To map.SourceFields.Count - 1
+                    Dim sf = map.SourceFields(i)
+                    sb.Append(sf.SourceFieldExpression)
+                    sb.Append(stmt.Oper2String(_oper))
+
+                    sb.Append(rp)
+
+                    If map2 IsNot Nothing Then
+                        Dim sf2 = map2.SourceFields(i)
+                        sb.Append(sf2.SourceFieldExpression)
+                    ElseIf i > 0 Then
+                        Throw New InvalidOperationException
+                    End If
+
+                    sb.Append(" and ")
+                    sb.Append(lp)
+                Next
+
+                If sb.Length > start Then
+                    sb.Length -= 5 + lp.Length ' cut and
+                End If
+            Else
+
+                sb.Append(stmt.Oper2String(_oper))
+                sb.Append(rp)
+
+                If map2 IsNot Nothing Then
+
+                    For i = 0 To map2.SourceFields.Count - 1
+                        Dim sf2 = map2.SourceFields(i)
+                        sb.Append(sf2.SourceFieldExpression)
+
+                        If i > 0 Then
+                            Throw New InvalidOperationException
+                        End If
+                    Next
+                End If
             End If
 
-            Return lp & stmt.Oper2String(_oper) & rp
+            Return sb.ToString
         End Function
 
         Public ReadOnly Property Filter() As Core.IFilter Implements Core.IGetFilter.Filter
@@ -637,11 +677,11 @@ Namespace Criteria.Joins
             End With
 
             If _l IsNot Nothing Then
-                obj._l = _l.clone
+                obj._l = _l.Clone
             End If
 
             If _r IsNot Nothing Then
-                obj._r = _r.clone
+                obj._r = _r.Clone
             End If
 
             If _eu IsNot Nothing Then
@@ -655,15 +695,29 @@ Namespace Criteria.Joins
             Return True
         End Function
 
-        Protected Shared Function ChangeEntityJoinToValue(ByVal schema As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal value As IFilterValue) As IFilter
+        Protected Shared Function ChangeEntityJoinToValue(ByVal mpe As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal values As IEnumerable(Of IFilterValue)) As IFilter
             For Each _fl As IFilter In source.GetAllFilters()
                 Dim fl As JoinFilter = TryCast(_fl, JoinFilter)
                 If fl IsNot Nothing Then
                     Dim f As IFilter = Nothing
-                    If fl._l.Property.Entity IsNot Nothing AndAlso fl._l.Property.Entity.GetRealType(schema) Is t AndAlso fl._l.Property.PropertyAlias = propertyAlias Then
-                        f = SetJF(fl._r, value, fl._oper)
-                    ElseIf fl._r.Property.Entity IsNot Nothing AndAlso fl._r.Property.Entity.GetRealType(schema) Is t AndAlso fl._r.Property.PropertyAlias = propertyAlias Then
-                        f = SetJF(fl._l, value, fl._oper)
+                    If fl._l.Property.Entity IsNot Nothing AndAlso fl._l.Property.Entity.GetRealType(mpe) Is t AndAlso fl._l.Property.PropertyAlias = propertyAlias Then
+                        f = CreateFilter(mpe, fl._r, values, fl._oper, fl._l.Property.Entity, t)
+                        'If values.Count = 1 Then
+                        '    f = New EntityFilter(fl._r.Property, values.First, fl._oper)
+                        'Else
+                        '    Dim oschema = mpe.GetEntitySchema(fl._l.Property.Entity)
+                        '    Dim pk = oschema.GetPK
+                        '    Dim fields = pk.SourceFields
+                        '    Dim cond As New Condition.ConditionConstructor
+                        '    For i = 0 To fields.Count - 1
+                        '        Dim fld = fields(i).SourceFieldExpression
+                        '        Dim v = values(i)
+                        '        cond.AddFilter(New TableFilter(fl._r.Column.First, fl._r.Column.Second, v, fl._oper))
+                        '    Next
+                        '    f = cond.Condition
+                        'End If
+                    ElseIf fl._r.Property.Entity IsNot Nothing AndAlso fl._r.Property.Entity.GetRealType(mpe) Is t AndAlso fl._r.Property.PropertyAlias = propertyAlias Then
+                        f = CreateFilter(mpe, fl._l, values, fl._oper, fl._r.Property.Entity, t)
                         'ElseIf fl._d1 IsNot Nothing Then
                         '    Dim tt As Type = schema.GetTypeByEntityName(fl._d1.First)
                         '    If tt Is t AndAlso fl._d1.Second = propertyAlias Then
@@ -683,7 +737,7 @@ Namespace Criteria.Joins
             Next
             Return Nothing
         End Function
-        Protected Shared Function ChangeTableJoinToValue(gen As StmtGenerator, ByVal schema As ObjectMappingEngine, ByVal source As IFilter,
+        Protected Shared Function ChangeTableJoinToValue(gen As StmtGenerator, ByVal mpe As ObjectMappingEngine, ByVal source As IFilter,
                                                          ByVal sf As SourceFragment, ByVal fields As IEnumerable(Of SourceField),
                                                          ByVal values As IEnumerable(Of IFilterValue)) As IFilter
             Dim l As New List(Of Pair(Of JoinFilter, IFilter))
@@ -719,10 +773,33 @@ Namespace Criteria.Joins
 
             Return Nothing
         End Function
+        Private Shared Function CreateFilter(mpe As ObjectMappingEngine, ByVal fr As FieldReference, ByVal values As IEnumerable(Of IFilterValue), oper As FilterOperation, e As EntityUnion, t As Type) As IFilter
+            If values.Count = 1 Then
+                If fr.Property.IsEmpty Then
+                    Return New TableFilter(fr.Column.First, fr.Column.Second, values(0), oper)
+                Else
+                    Return New EntityFilter(fr.Property, values.First, oper)
+                End If
+            Else
+                'Return New EntityFilter(fr.Property, New CachedEntityValue(values, t), oper)
+                Dim oschema = mpe.GetEntitySchema(e)
+                Dim pk = oschema.GetPK
+                Dim fields = pk.SourceFields
+                Dim cond As New Condition.ConditionConstructor
+                For i = 0 To fields.Count - 1
+                    Dim fld = fields(i).SourceFieldExpression
+                    Dim v = values(i)
+                    'cond.AddFilter(New TableFilter(fr.Column.First, fr.Column.Second, v, oper))
+                    cond.AddFilter(New TableFilter(pk.Table, fld, v, oper))
+                Next
+                Return cond.Condition
+            End If
+        End Function
         Private Shared Function SetJF(ByVal fr As FieldReference, _
                                ByVal value As IFilterValue, ByVal oper As FilterOperation) As IFilter
             If fr.Property.Entity IsNot Nothing Then
-                Return New EntityFilter(fr.Property, value, oper)
+                Throw New InvalidOperationException
+                'Return New EntityFilter(fr.Property, value, oper)
             Else
                 Return New TableFilter(fr.Column.First, fr.Column.Second, value, oper)
             End If
@@ -741,15 +818,15 @@ Namespace Criteria.Joins
         '    End If
         'End Function
 
-        Public Shared Function ChangeEntityJoinToLiteral(ByVal schema As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal literal As String) As IFilter
-            Return ChangeEntityJoinToValue(schema, source, t, propertyAlias, New LiteralValue(literal))
+        Public Shared Function ChangeEntityJoinToLiteral(ByVal schema As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal literals As IEnumerable(Of String)) As IFilter
+            Return ChangeEntityJoinToValue(schema, source, t, propertyAlias, literals.Select(Function(it) New LiteralValue(it)))
         End Function
         Public Shared Function ChangeTableJoinToLiteral(gen As StmtGenerator, ByVal schema As ObjectMappingEngine, ByVal source As IFilter,
-                                                        ByVal sf As SourceFragment, ByVal fields As IEnumerable(Of SourceField), ByVal literal As String) As IFilter
-            Return ChangeTableJoinToValue(gen, schema, source, sf, fields, {New LiteralValue(literal)})
+                                                        ByVal sf As SourceFragment, ByVal fields As IEnumerable(Of SourceField), ByVal literals As IEnumerable(Of String)) As IFilter
+            Return ChangeTableJoinToValue(gen, schema, source, sf, fields, literals.Select(Function(it) New LiteralValue(it)))
         End Function
         Public Shared Function ChangeEntityJoinToParam(ByVal schema As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal value As TypeWrap(Of Object)) As IFilter
-            Return ChangeEntityJoinToValue(schema, source, t, propertyAlias, New ScalarValue(value.Value))
+            Return ChangeEntityJoinToValue(schema, source, t, propertyAlias, {New ScalarValue(value.Value)})
         End Function
 
         Public Sub Prepare(ByVal executor As Query.IExecutor, ByVal schema As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Values.IQueryElement.Prepare

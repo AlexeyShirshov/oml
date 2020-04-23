@@ -15,15 +15,16 @@ Namespace Entities
 
         Protected _props As New ConcurrentDictionary(Of String, Object)
 
-        Public Overridable Overloads Function GetValue( _
-            ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema) As Object Implements IOptimizedValues.GetValueOptimized
-            Return _props(propertyAlias)
+        Public Overridable Overloads Function GetValue(ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema, ByRef found As Boolean) As Object Implements IOptimizedValues.GetValueOptimized
+            Dim r As Object = Nothing
+            found = _props.TryGetValue(propertyAlias, r)
+            Return r
         End Function
 
-        Public Overridable Sub SetValue( _
-            ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
+        Public Overridable Overloads Function SetValue(ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema, ByVal value As Object) As Boolean Implements IOptimizedValues.SetValueOptimized
             _props(propertyAlias) = value
-        End Sub
+            Return True
+        End Function
 
         Default Public Property Item(ByVal field As String) As Object
             Get
@@ -56,9 +57,9 @@ Namespace Entities
         Protected Class PropDesc
             Inherits PropertyDescriptor
 
-            Private _pi As Reflection.PropertyInfo
-            Private _name As String
-            Private _t As Type
+            Private ReadOnly _pi As Reflection.PropertyInfo
+            Private ReadOnly _name As String
+            Private ReadOnly _t As Type
 
             Public Sub New(ByVal pi As Reflection.PropertyInfo)
                 MyBase.New(pi.Name, Nothing)
@@ -205,7 +206,7 @@ Namespace Entities
         Inherits AnonymousEntity
         Implements _ICachedEntity, IPropertyLazyLoad, IUndoChanges, IOptimizePK
 
-        Friend _pk() As String
+        Friend _pk As IEnumerable(Of String)
         Private _hasPK As Boolean
         Private _key As Integer?
 
@@ -215,8 +216,8 @@ Namespace Entities
         Private _copy As AnonymousCachedEntity
         <NonSerialized()> _
         Friend _myschema As IEntitySchema
-        <NonSerialized()> _
-        Private _alterLock As New Object
+        <NonSerialized()>
+        Private ReadOnly _alterLock As New Object
         <NonSerialized()> _
         Private _readRaw As Boolean
         '<NonSerialized()> _
@@ -224,8 +225,8 @@ Namespace Entities
 
         Private _loaded As Boolean
         Private _loaded_members As IDictionary(Of String, Boolean)
-        <NonSerialized()> _
-        Private _sl As New SpinLockRef
+        <NonSerialized()>
+        Private ReadOnly _sl As New SpinLockRef
         <NonSerialized()>
         Public Event Added(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.Added
         <NonSerialized()>
@@ -260,16 +261,16 @@ Namespace Entities
             Return False
         End Function
 
-        Public Overloads Sub Init(ByVal pk As IEnumerable(Of Meta.PKDesc), ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine) Implements _ICachedEntity.Init
-            MyBase.Init(cache, schema)
-            Dim spk As New List(Of String)
-            For Each p As PKDesc In pk
-                spk.Add(p.PropertyAlias)
-                Me(p.PropertyAlias) = p.Value
-            Next
-            _pk = spk.ToArray
-            PKLoaded(pk.Count, Nothing)
-        End Sub
+        'Public Overloads Sub Init(ByVal pk As IEnumerable(Of Meta.PKDesc), ByVal schema As ObjectMappingEngine) Implements _ICachedEntity.Init
+        '    MyBase.Init(schema)
+        '    Dim spk As New List(Of String)
+        '    For Each p As PKDesc In pk
+        '        spk.Add(p.Column)
+        '        Me(p.Column) = p.Value
+        '    Next
+        '    _pk = spk
+        '    PKLoaded(pk.Count, Nothing)
+        'End Sub
 
         Public ReadOnly Property IsPKLoaded() As Boolean Implements _ICachedEntity.IsPKLoaded
             Get
@@ -286,7 +287,9 @@ Namespace Entities
                 IsPropertyLoaded(p) = True
             Next
         End Sub
-
+        Private Sub _PKLoaded(ByVal pkCount As Integer, propertyAlias As String) Implements _ICachedEntity.PKLoaded
+            PKLoaded(pkCount, CType(Nothing, IPropertyMap))
+        End Sub
         Public Sub RaiseOriginalCopyRemoved() Implements IUndoChanges.RaiseOriginalCopyRemoved
             RaiseEvent OriginalCopyRemoved(Me)
         End Sub
@@ -516,10 +519,10 @@ Namespace Entities
         Protected Overridable Sub SetPK(ByVal pk As IEnumerable(Of PKDesc)) Implements IOptimizePK.SetPK
             Dim spk As New List(Of String)
             For Each p As PKDesc In pk
-                spk.Add(p.PropertyAlias)
-                Me(p.PropertyAlias) = p.Value
+                spk.Add(p.Column)
+                Me(p.Column) = p.Value
             Next
-            _pk = spk.ToArray
+            _pk = spk
             PKLoaded(pk.Count, Nothing)
         End Sub
 
@@ -1017,8 +1020,12 @@ Namespace Entities
             Get
                 Dim r As New StringBuilder
                 For Each pk As String In _pk
-                    r.Append(pk).Append(":").Append(Me(pk).ToString)
+                    r.Append("""").Append(pk).Append("""").Append(":").Append("""").Append(Me(pk).ToString).Append("""").Append(",")
                 Next
+                If r.Length > 0 Then
+                    r.Length -= 1
+                End If
+
                 Return r.ToString
             End Get
         End Property

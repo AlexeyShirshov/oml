@@ -1,6 +1,7 @@
 ﻿Imports System.Collections.Generic
 Imports Worm.Query
 Imports Worm.Entities.Meta
+Imports System.Linq
 
 Namespace Expressions2
     <Serializable()> _
@@ -231,33 +232,40 @@ Namespace Expressions2
         '    RaiseEvent OnChange()
         'End Sub
 
-        Public Shared Function GetMapping(Of T As SelectExpression)(ByVal selectList As IEnumerable(Of T)) As Collections.IndexedCollection(Of String, MapField2Column)
+        Public Shared Function GetMapping(Of T As SelectExpression)(ByVal selectList As IEnumerable(Of T), ByVal mpe As ObjectMappingEngine, ByVal executor As Query.IExecutionContext) As Collections.IndexedCollection(Of String, MapField2Column)
+            If selectList Is Nothing Then
+                Throw New ArgumentNullException(NameOf(selectList))
+            End If
+
             Dim c As New OrmObjectIndex
-            Return GetMapping(c, selectList)
+            Return GetMapping(c, selectList, mpe, executor)
         End Function
 
-        Public Shared Function GetMapping(Of T As SelectExpression)(ByVal c As OrmObjectIndex, ByVal selectList As IEnumerable(Of T)) As Collections.IndexedCollection(Of String, MapField2Column)
-            For Each s As T In selectList
+        Public Shared Function GetMapping(Of T As SelectExpression)(ByVal c As OrmObjectIndex, ByVal selectList As IEnumerable(Of T), ByVal mpe As ObjectMappingEngine, ByVal executor As Query.IExecutionContext) As Collections.IndexedCollection(Of String, MapField2Column)
+            For Each s As T In If(selectList, {})
                 Dim pa As String = s.GetIntoPropertyAlias
                 'If String.IsNullOrEmpty(pa) Then
                 '    Throw New OrmManagerException("Alias for property in custom type is not specified")
                 'End If
                 Dim te As TableExpression = TryCast(s.Operand, TableExpression)
                 If te IsNot Nothing Then
-                    Dim m As MapField2Column = New MapField2Column(If(pa, te.SourceField), te.SourceField, te.SourceFragment, s.Attributes)
+                    Dim m As MapField2Column = New MapField2Column(If(pa, te.SourceField), te.SourceFragment, s.Attributes, New SourceField(te.SourceField) With {.SourceFieldAlias = s.ColumnAlias})
                     c.Add(m)
-                    m.SourceFields(0).SourceFieldAlias = s.ColumnAlias
                 Else
                     Dim ee As EntityExpression = TryCast(s.Operand, EntityExpression)
                     If ee IsNot Nothing Then
-                        Dim m As MapField2Column = New MapField2Column(If(pa, ee.ObjectProperty.PropertyAlias), Nothing, Nothing, s.Attributes)
+                        Dim m As MapField2Column = New MapField2Column(If(pa, ee.ObjectProperty.PropertyAlias), Nothing, s.Attributes) With {.SourceFields = ee.GetMap(mpe, executor).SourceFields}
                         c.Add(m)
-                        m.SourceFields(0).SourceFieldAlias = s.ColumnAlias
+                        'm.SourceFields(0).SourceFieldAlias = s.ColumnAlias
                     Else
                         Dim pe As PropertyAliasExpression = TryCast(s.Operand, PropertyAliasExpression)
-                        Dim m As MapField2Column = New MapField2Column(If(pa, pe.PropertyAlias), Nothing, Nothing, s.Attributes)
+                        Dim m As MapField2Column = New MapField2Column(If(pa, pe.PropertyAlias), Nothing, s.Attributes)
                         c.Add(m)
-                        m.SourceFields(0).SourceFieldAlias = s.ColumnAlias
+
+                        If executor IsNot Nothing Then
+                            m.SourceFields = executor.FindColumn(mpe, m.PropertyAlias).Select(Function(it) New SourceField(it))
+                        End If
+                        'm.SourceFields(0).SourceFieldAlias = s.ColumnAlias
                     End If
                 End If
             Next
@@ -409,8 +417,9 @@ Namespace Expressions2
         End Function
 
         Public Function GetExpressions() As Expressions2.IExpression() Implements Expressions2.IExpression.GetExpressions
-            Dim l As New List(Of Expressions2.IExpression)
-            l.Add(Me)
+            Dim l As New List(Of Expressions2.IExpression) From {
+                Me
+            }
             l.AddRange(_exp.GetExpressions)
             Return l.ToArray
         End Function

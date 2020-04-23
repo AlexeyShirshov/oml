@@ -15,7 +15,7 @@ Public Class TestReject
     <TestMethod()> _
     Public Sub TestAdd()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
-            Dim t1 As New Table2(-100, mgr.Cache, mgr.MappingEngine)
+            Dim t1 As New Table2(-100)
 
             mgr.BeginTransaction()
             Try
@@ -36,7 +36,7 @@ Public Class TestReject
     <TestMethod()> _
     Public Sub TestAdd2()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
-            Dim t1 As New Table2(-100, mgr.Cache, mgr.MappingEngine)
+            Dim t1 As New Table2(-100)
 
             mgr.BeginTransaction()
             Try
@@ -108,7 +108,7 @@ Public Class TestReject
     Public Sub TestSaver()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
             Dim t2 As Table1 = New QueryCmd().GetByID(Of Table1)(1, mgr)
-            Dim t1 As New Table2(-100, mgr.Cache, mgr.MappingEngine)
+            Dim t1 As New Table2(-100)
             Assert.IsNull(t2.InternalProperties.OriginalCopy)
 
             mgr.BeginTransaction()
@@ -136,7 +136,7 @@ Public Class TestReject
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestUpdate()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New Worm.ObjectMappingEngine("1"))
-            Dim t1 As New Table2(-100, mgr.Cache, mgr.MappingEngine)
+            Dim t1 As New Table2(-100)
             Dim t2 As Table2 = New QueryCmd().GetByID(Of Table2)(1, mgr)
             mgr.BeginTransaction()
             Try

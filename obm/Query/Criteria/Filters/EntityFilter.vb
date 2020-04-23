@@ -247,10 +247,10 @@ l1:
 
         'Public MustOverride Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Entities.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
 
-        Public Overloads Function MakeQueryStmt(ByVal oschema As IEntitySchema, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator, _
-             ByVal executor As Query.IExecutionContext, ByVal contextInfo As IDictionary, _
-             ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, _
-             ByVal pname As Entities.Meta.ICreateParam, ByVal t As Type) As String
+        Public Overloads Function MakeQueryStmt(ByVal oschema As IEntitySchema, ByVal fromClause As QueryCmd.FromClauseDef, ByVal stmt As StmtGenerator,
+                                                ByVal executor As Query.IExecutionContext, ByVal contextInfo As IDictionary,
+                                                ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable,
+                                                ByVal pname As Entities.Meta.ICreateParam, ByVal t As Type) As String
             'If _oschema Is Nothing Then
             '    _oschema = oschema
             'End If
@@ -277,7 +277,7 @@ l1:
                 If Template.ObjectSource.IsQuery Then
                     tbl = Template.ObjectSource.ObjectAlias.Tbl
                     Dim q As QueryCmd = Template.ObjectSource.ObjectAlias.Query
-                    map = New MapField2Column(Template.PropertyAlias, CType(q, Query.IExecutionContext).FindColumn(schema, Template.PropertyAlias), tbl)
+                    map = New MapField2Column(Template.PropertyAlias, tbl, CType(q, Query.IExecutionContext).FindColumn(schema, Template.PropertyAlias).Select(Function(it) New SourceField(it)).ToArray)
                 Else
                     Try
                         If executor Is Nothing Then
@@ -305,7 +305,38 @@ l1:
                 'Else
                 '    Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
                 'End If
-                Return [alias] & map.SourceFieldExpression & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, contextInfo, pname, almgr, False, oschema, executor)
+
+                Dim imulti = TryCast(Value, IFilterMultiValue)
+                If imulti IsNot Nothing Then
+                    Dim cnt = imulti.Params.Count
+                    If cnt <> map.SourceFields.Count Then
+                        Throw New ObjectMappingException($"Number of values {cnt} is not equals to number of columns {map.SourceFields.Count} in type {t}")
+                    ElseIf cnt = 1 Then
+                        GoTo l1
+                    End If
+
+                    Dim sb As New StringBuilder
+                    sb.Append("(")
+                    For i = 0 To cnt - 1
+                        Dim p = imulti.Params(i)
+                        Dim col = map.SourceFields(i).SourceFieldExpression
+                        sb.Append([alias] & col & Template.OperToStmt(stmt) & p.GetParam(schema, fromClause, stmt, pname, almgr, AddressOf New cls(oschema, Template.PropertyAlias).PrepareValue, contextInfo, False, executor))
+                        sb.Append(" and ")
+                    Next
+                    If sb.Length > 1 Then
+                        sb.Length -= 5 'cut and
+                        sb.Append(")")
+                    Else
+                        sb.Length -= 1
+                    End If
+
+                    Return sb.ToString
+                ElseIf map.SourceFields.Count > 1 Then
+                    Throw New ObjectMappingException($"Number of columns {map.SourceFields.Count} in type {t} requires IFilterMultiValue value. Passed {Value.GetType}")
+                Else
+l1:
+                    Return [alias] & map.SourceFields.First.SourceFieldExpression & Template.OperToStmt(stmt) & GetParam(schema, fromClause, stmt, contextInfo, pname, almgr, False, oschema, executor)
+                End If
             Else
                 Return String.Empty
             End If
@@ -315,14 +346,14 @@ l1:
         '    Return MakeQueryStmt(oschema, stmt, filterInfo, schema, almgr, pname, Nothing)
         'End Function
 
-        Public Overridable Overloads Function MakeSingleQueryStmt(ByVal oschema As IEntitySchema, _
-            ByVal stmt As StmtGenerator, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, _
-            ByVal pname As ICreateParam, ByVal executor As Query.IExecutionContext) As Pair(Of String)
+        Public Overridable Overloads Function MakeSingleQueryStmt(ByVal oschema As IEntitySchema,
+                                                                  ByVal stmt As StmtGenerator, ByVal mpe As ObjectMappingEngine, ByVal almgr As IPrepareTable,
+                                                                  ByVal pname As ICreateParam, ByVal executor As Query.IExecutionContext) As IEnumerable(Of ITemplateFilterBase.ColParam)
             'If _oschema Is Nothing Then
             '    _oschema = oschema
             'End If
 
-            If schema Is Nothing Then
+            If mpe Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
 
@@ -335,25 +366,52 @@ l1:
                 pd = AddressOf New cls(oschema, Template.PropertyAlias).PrepareValue
             End If
 
-            Dim prname As String = Value.GetParam(schema, Nothing, stmt, pname, almgr, pd, Nothing, False, Nothing)
-
             Dim map As MapField2Column = oschema.FieldColumnMap()(Template.PropertyAlias)
-            Dim rt As Type = Template.ObjectSource.GetRealType(schema)
+            Dim imulti = TryCast(Value, IFilterMultiValue)
+            If imulti IsNot Nothing Then
+                Dim cnt = imulti.Params.Count
+                If cnt <> map.SourceFields.Count Then
+                    Throw New ObjectMappingException($"Number of values {cnt} is not equals to number of columns {map.SourceFields.Count}")
+                ElseIf cnt = 1 Then
+                    GoTo l1
+                End If
 
-            Dim v As IEvaluableValue = TryCast(val(), IEvaluableValue)
+                Dim l As New List(Of ITemplateFilterBase.ColParam)
+
+                For i = 0 To cnt - 1
+                    Dim p = imulti.Params(i)
+                    Dim col = map.SourceFields(i).SourceFieldExpression
+                    Dim prname = p.GetParam(mpe, Nothing, stmt, pname, almgr, pd, Nothing, False, executor)
+                    PrepareParam(oschema, mpe, pname, p, prname)
+                    l.Add(New ITemplateFilterBase.ColParam With {.Column = map.SourceFields(i).SourceFieldExpression, .Param = prname})
+                Next
+
+                Return l
+            ElseIf map.SourceFields.Count > 1 Then
+                Throw New ObjectMappingException($"Number of columns {map.SourceFields.Count} requires IFilterMultiValue value. Passed {Value.GetType}")
+            Else
+l1:
+                Dim prname As String = Value.GetParam(mpe, Nothing, stmt, pname, almgr, pd, Nothing, False, executor)
+
+                PrepareParam(oschema, mpe, pname, TryCast(val(), IEvaluableValue), prname)
+
+                Return {New ITemplateFilterBase.ColParam With {.Column = map.SourceFields.First.SourceFieldExpression, .Param = prname}}
+            End If
+
+        End Function
+        Protected Sub PrepareParam(ByVal oschema As IEntitySchema, ByVal schema As ObjectMappingEngine, ByVal pname As ICreateParam, v As IEvaluableValue, prname As String)
             If v IsNot Nothing AndAlso v.Value Is DBNull.Value Then
+                Dim rt As Type = Template.ObjectSource.GetRealType(schema)
                 If oschema.GetPropertyTypeByName(rt, Template.PropertyAlias) Is GetType(Byte()) Then
                     pname.GetParameter(prname).DbType = System.Data.DbType.Binary
                 ElseIf oschema.GetPropertyTypeByName(rt, Template.PropertyAlias) Is GetType(Decimal) Then
                     pname.GetParameter(prname).DbType = System.Data.DbType.Decimal
                 End If
             End If
+        End Sub
+        Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator,
+                                                      ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal executor As Query.IExecutionContext) As IEnumerable(Of ITemplateFilterBase.ColParam)
 
-            Return New Pair(Of String)(map.SourceFieldExpression, prname)
-        End Function
-
-        Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal stmt As StmtGenerator, _
-            ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal executor As Query.IExecutionContext) As Pair(Of String)
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -453,43 +511,46 @@ l1:
                                         mpe As ObjectMappingEngine, obj As _IEntity, objEU As EntityUnion, oschema As IEntitySchema) As Pair(Of _IEntity, IEvaluableValue.EvalResult)
             Dim oo As _IEntity = Nothing
             If Not roots.TryGetValue(entity, oo) Then
-                Dim rt As Type = entity.GetRealType(mpe)
-                Dim lschema As IEntitySchema = mpe.GetEntitySchema(rt)
-                Dim pks As IEnumerable(Of MapField2Column) = lschema.GetPKs()
-                Dim o As _IEntity = Nothing
                 If joins IsNot Nothing Then
+
                     Dim join As QueryJoin = joins.FirstOrDefault(Function(it) it.ObjectSource = entity)
                     If join Is Nothing Then
                         Return New Pair(Of _IEntity, IEvaluableValue.EvalResult)(Nothing, IEvaluableValue.EvalResult.Unknown)
                     End If
-                    Dim pk As New List(Of PKDesc)
+
+                    Dim rt As Type = entity.GetRealType(mpe)
+                    Dim lschema As IEntitySchema = mpe.GetEntitySchema(rt)
+                    Dim pk As MapField2Column = lschema.GetPK
+                    Dim o As _IEntity = Nothing
+                    Dim pkFields As New List(Of PKDesc)
+
                     For Each ff As IFilter In join.Condition.GetAllFilters
                         Dim jf As JoinFilter = TryCast(ff, JoinFilter)
                         If jf IsNot Nothing Then
                             If jf.Left.Property.Entity IsNot Nothing AndAlso jf.Left.Property.Entity = entity AndAlso
                                 jf.Right.Property.Entity IsNot Nothing AndAlso jf.Right.Property.Entity = objEU AndAlso
-                                pks.Any(Function(it) it.PropertyAlias = jf.Left.Property.PropertyAlias) Then
+                                pk.PropertyAlias = jf.Left.Property.PropertyAlias Then
 
                                 Dim id As Object = ObjectMappingEngine.GetPropertyValue(obj, jf.Right.Property.PropertyAlias, oschema)
                                 Dim r As _ICachedEntity = TryCast(id, _ICachedEntity)
                                 If r IsNot Nothing Then
-                                    pk.AddRange(r.GetPKValues(lschema))
+                                    pkFields.AddRange(r.GetPKValues(lschema))
                                     Exit For
                                 Else
-                                    pk.Add(New PKDesc(jf.Left.Property.PropertyAlias, id))
+                                    pkFields.Add(New PKDesc(lschema.FieldColumnMap(jf.Left.Property.PropertyAlias).SourceFields(0).SourceFieldExpression, id))
                                 End If
 
                             ElseIf jf.Right.Property.Entity IsNot Nothing AndAlso jf.Right.Property.Entity = entity AndAlso
                                 jf.Left.Property.Entity IsNot Nothing AndAlso jf.Left.Property.Entity = objEU AndAlso
-                                pks.Any(Function(it) it.PropertyAlias = jf.Right.Property.PropertyAlias) Then
+                                pk.PropertyAlias = jf.Right.Property.PropertyAlias Then
 
                                 Dim id As Object = ObjectMappingEngine.GetPropertyValue(obj, jf.Left.Property.PropertyAlias, oschema)
                                 Dim r As _ICachedEntity = TryCast(id, _ICachedEntity)
                                 If r IsNot Nothing Then
-                                    pk.AddRange(r.GetPKValues(lschema))
+                                    pkFields.AddRange(r.GetPKValues(lschema))
                                     Exit For
                                 Else
-                                    pk.Add(New PKDesc(jf.Right.Property.PropertyAlias, id))
+                                    pkFields.Add(New PKDesc(lschema.FieldColumnMap(jf.Right.Property.PropertyAlias).SourceFields(0).SourceFieldExpression, id))
                                 End If
 
                             End If
@@ -501,8 +562,8 @@ l1:
                         End If
                     Next
 
-                    If pk.Count > 0 Then
-                        Dim jObj As ICachedEntity = OrmManager.CurrentManager.GetEntityFromCacheLoadedOrDB(pk.ToArray, rt)
+                    If pkFields.Count > 0 Then
+                        Dim jObj As ICachedEntity = OrmManager.CurrentManager.GetEntityFromCacheLoadedOrDB(pkFields.ToArray, rt)
                         If jObj IsNot Nothing Then
                             Dim newF As IFilter = join.Condition
                             For Each jf As JoinFilter In join.Condition.GetAllFilters.OfType(Of JoinFilter).
@@ -520,7 +581,12 @@ l1:
                                     If spke IsNot Nothing Then
                                         ef = New EntityFilter(jf.Left.Property, New EntityValue(spke), FilterOperation.Equal)
                                     Else
-                                        ef = New EntityFilter(jf.Left.Property, New ScalarValue(v), FilterOperation.Equal)
+                                        Dim cke = TryCast(v, ICachedEntity)
+                                        If cke IsNot Nothing Then
+                                            ef = New EntityFilter(jf.Left.Property, New CachedEntityValue(cke), FilterOperation.Equal)
+                                        Else
+                                            ef = New EntityFilter(jf.Left.Property, New ScalarValue(v), FilterOperation.Equal)
+                                        End If
                                     End If
 
                                     newF = newF.ReplaceFilter(jf, ef)
@@ -536,8 +602,14 @@ l1:
                                     If spke IsNot Nothing Then
                                         ef = New EntityFilter(jf.Left.Property, New EntityValue(spke), FilterOperation.Equal)
                                     Else
-                                        ef = New EntityFilter(jf.Left.Property, New ScalarValue(v), FilterOperation.Equal)
+                                        Dim cke = TryCast(v, ICachedEntity)
+                                        If cke IsNot Nothing Then
+                                            ef = New EntityFilter(jf.Left.Property, New CachedEntityValue(cke), FilterOperation.Equal)
+                                        Else
+                                            ef = New EntityFilter(jf.Left.Property, New ScalarValue(v), FilterOperation.Equal)
+                                        End If
                                     End If
+
                                     newF = newF.ReplaceFilter(jf, ef)
                                 End If
                             Next

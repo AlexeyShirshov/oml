@@ -51,11 +51,15 @@ Namespace Database.Storedprocs
                 cols = New List(Of SelectExpression)
                 'Dim pks As List(Of EntityPropertyAttribute) = mgr.MappingEngine.GetPrimaryKeys(GetType(T))
                 Dim oschema As IEntitySchema = mgr.MappingEngine.GetEntitySchema(GetType(T))
-                For Each m As MapField2Column In oschema.GetPKs
-                    Dim exp As New TableExpression(m.SourceFieldExpression)
-                    Dim se As New SelectExpression(exp, m.PropertyAlias, GetType(T))
-                    se.Attributes = m.Attributes
-                    se.CorrectFieldIndex = True
+                Dim pk = oschema.GetPK
+                'For Each m In pk.SourceFields
+                '    Dim exp As New TableExpression(m.SourceFieldExpression)
+                '    Dim se As New SelectExpression(exp, m.PropertyAlias, GetType(T))
+                '    se.Attributes = m.Attributes
+                '    se.CorrectFieldIndex = True
+                '    cols.Add(se)
+                'Next
+                For Each se As SelectExpression In FCtor.prop(GetType(T), pk.PropertyAlias).ToArray
                     cols.Add(se)
                 Next
             End If
@@ -212,10 +216,10 @@ Namespace Database.Storedprocs
                 _pk = pk
             End Sub
 
-            Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
-                Dim l As New List(Of Pair(Of String, Object))
+            Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of ParamValue)
+                Dim l As New List(Of ParamValue)
                 For i As Integer = 0 To _obj.Length - 1
-                    l.Add(New Pair(Of String, Object)(_names(i).Trim, _obj(i)))
+                    l.Add(New ParamValue(_names(i).Trim) With {.Value = _obj(i)})
                 Next
                 Return l
             End Function

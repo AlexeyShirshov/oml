@@ -1,9 +1,11 @@
 Imports Worm.Cache
 Imports Worm.Entities.Meta
 Imports Worm.Entities
+Imports System.Collections.Generic
+Imports System.Linq
+Imports Worm
 
-
-<Entity(GetType(Table3Implementation), "1", EntityName:="Table3")> _
+<Entity(GetType(Table3Implementation), "1", EntityName:="Table3")>
 Public Class Table3
     Inherits SinglePKEntity
     Implements IOptimizedValues, IEntityFactory, ICopyProperties
@@ -19,11 +21,11 @@ Public Class Table3
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        Init(id, cache, schema)
+    Public Sub New(ByVal id As Integer)
+        _id = id
     End Sub
 
-    <EntityProperty(Field2DbRelations.PrimaryKey)> _
+    <EntityProperty(Field2DbRelations.PrimaryKey)>
     Public Property ID() As Integer
         Get
             Return _id
@@ -73,8 +75,8 @@ Public Class Table3
     '    End If
     'End Function
 
-    Public Overridable Sub SetValue( _
-        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
+    Public Overridable Function SetValueOptimized(
+        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) As Boolean Implements IOptimizedValues.SetValueOptimized
         Select Case fieldName
             Case "Ref"
                 RefObject = CType(value, SinglePKEntity)
@@ -87,12 +89,16 @@ Public Class Table3
             Case "ID"
                 Identifier = value
             Case Else
-                Throw New NotSupportedException(fieldName)
+                Return False
+                'Throw New NotSupportedException(fieldName)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
-    End Sub
 
-    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+        Return True
+    End Function
+
+    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema, ByRef found As Boolean) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+        found = True
         Select Case propertyAlias
             Case "Ref"
                 Return _obj
@@ -103,13 +109,16 @@ Public Class Table3
             Case "XML"
                 Return _x
             Case Else
-                Return GetValueReflection(propertyAlias, schema)
+                found = False
+                'Return GetValueReflection(propertyAlias, schema)
                 'Throw New NotSupportedException(propertyAlias)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
+
+        Return Nothing
     End Function
 
-    <EntityPropertyAttribute(PropertyAlias:="Ref", behavior:=Field2DbRelations.Factory)> _
+    <EntityPropertyAttribute(PropertyAlias:="Ref", Behavior:=Field2DbRelations.Factory)>
     Public Property RefObject() As ISinglePKEntity
         Get
             Using Read("Ref")
@@ -123,7 +132,7 @@ Public Class Table3
         End Set
     End Property
 
-    <EntityPropertyAttribute(PropertyAlias:="Code")> _
+    <EntityPropertyAttribute(PropertyAlias:="Code")>
     Public Property Code() As Byte
         Get
             Using Read("Code")
@@ -141,7 +150,7 @@ Public Class Table3
         End Set
     End Property
 
-    <EntityPropertyAttribute(PropertyAlias:="Version", behavior:=Field2DbRelations.RowVersion)> _
+    <EntityPropertyAttribute(PropertyAlias:="Version", Behavior:=Field2DbRelations.RowVersion)>
     Public Property Version() As Byte()
         Get
             Using Read("Version")
@@ -155,7 +164,7 @@ Public Class Table3
         End Set
     End Property
 
-    <EntityPropertyAttribute(PropertyAlias:="XML")> _
+    <EntityPropertyAttribute(PropertyAlias:="XML")>
     Public Property Xml() As System.Xml.XmlDocument
         Get
             Using Read("XML")
@@ -180,9 +189,13 @@ Public Class Table3
         End Using
     End Sub
 
-    Public Function CreateContainingEntity(ByVal mgr As Worm.OrmManager, ByVal propertyAlias As String, ByVal value As Object) As Worm.Entities._IEntity Implements Worm.Entities.IEntityFactory.CreateContainingEntity
-        _obj = mgr.GetKeyEntityFromCacheOrCreate(CType(value, PKDesc())(0).Value, GetObjectType())
+    Public Function CreateContainingEntity(ByVal mgr As Worm.OrmManager, ByVal propertyAlias As String, ByVal value As IEnumerable(Of PKDesc)) As Object Implements Worm.Entities.IEntityFactory.CreateContainingEntity
+        _obj = mgr.GetKeyEntityFromCacheOrCreate(value(0).Value, GetObjectType())
         Return _obj
+    End Function
+
+    Public Function ExtractValues(mpe As ObjectMappingEngine, oschema As IEntitySchema, propertyAlias As String) As IEnumerable(Of PKDesc) Implements IEntityFactory.ExtractValues
+        Return _obj.GetPKs(mpe)
     End Function
 End Class
 
@@ -206,11 +219,11 @@ Public Class Table3Implementation
         Get
             If _idx Is Nothing Then
                 Dim idx As New OrmObjectIndex
-                idx.Add(New MapField2Column("ID", "id", Table))
-                idx.Add(New MapField2Column("Ref", "ref_id", Table))
-                idx.Add(New MapField2Column("Code", "code", Table))
-                idx.Add(New MapField2Column("Version", "v", Table))
-                idx.Add(New MapField2Column("XML", "x", Table))
+                idx.Add(New MapField2Column("ID", Table, "id"))
+                idx.Add(New MapField2Column("Ref", Table, "ref_id"))
+                idx.Add(New MapField2Column("Code", Table, "code"))
+                idx.Add(New MapField2Column("Version", Table, "v"))
+                idx.Add(New MapField2Column("XML", Table, "x"))
                 _idx = idx
             End If
             Return _idx
@@ -239,8 +252,8 @@ Public Class Table33
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
-        MyBase.New(id, cache, schema)
+    Public Sub New(ByVal id As Integer)
+        MyBase.New(id)
     End Sub
 
     'Protected Overrides Function GetNew() As Table3

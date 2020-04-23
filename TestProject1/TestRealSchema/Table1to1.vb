@@ -15,8 +15,8 @@ Public Class Tables1to1
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCache, ByVal schema As Worm.ObjectMappingEngine)
-        Init(id, cache, schema)
+    Public Sub New(ByVal id As Integer)
+        _id = id
     End Sub
 
     Private _id As Integer
@@ -49,8 +49,7 @@ Public Class Tables1to1
         End With
     End Sub
 
-    Public Overridable Sub SetValue( _
-        ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) Implements IOptimizedValues.SetValueOptimized
+    Public Overridable Function SetValueOptimized(ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) As Boolean Implements IOptimizedValues.SetValueOptimized
         Select Case fieldName
             Case "K"
                 K = CStr(value)
@@ -59,13 +58,17 @@ Public Class Tables1to1
             Case "Table1Back"
                 Table1Back = CType(value, TestProject1.Table1)
             Case Else
-                SetValueReflection(fieldName, value, oschema)
+                Return False
+                'SetValueReflection(fieldName, value, oschema)
                 'Throw New NotSupportedException(fieldName)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
-    End Sub
 
-    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+        Return True
+    End Function
+
+    Public Function GetValueOptimized(ByVal propertyAlias As String, ByVal schema As Worm.Entities.Meta.IEntitySchema, ByRef found As Boolean) As Object Implements Worm.Entities.IOptimizedValues.GetValueOptimized
+        found = True
         Select Case propertyAlias
             Case "K"
                 Return _k
@@ -76,11 +79,12 @@ Public Class Tables1to1
             Case "ID"
                 Return Identifier
             Case Else
-                Throw New NotSupportedException(propertyAlias)
+                found = False
+                'Throw New NotSupportedException(propertyAlias)
                 'MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
+        Return Nothing
     End Function
-
     <EntityPropertyAttribute(PropertyAlias:="K")> _
     Public Property K() As String
         Get
@@ -142,10 +146,10 @@ Public Class Tables1to1
             Get
                 If _idx Is Nothing Then
                     Dim idx As New OrmObjectIndex
-                    idx.Add(New MapField2Column("ID", "id", Table))
-                    idx.Add(New MapField2Column("K", "k", Table))
-                    idx.Add(New MapField2Column("Table1", "table1", Table))
-                    idx.Add(New MapField2Column("Table1Back", "table1_back", Table))
+                    idx.Add(New MapField2Column("ID", Table, "id"))
+                    idx.Add(New MapField2Column("K", Table, "k"))
+                    idx.Add(New MapField2Column("Table1", Table, "table1"))
+                    idx.Add(New MapField2Column("Table1Back", Table, "table1_back"))
                     _idx = idx
                 End If
                 Return _idx

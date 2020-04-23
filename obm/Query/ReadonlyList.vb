@@ -371,7 +371,7 @@ Public Class ReadOnlyObjectList(Of T As {Entities._IEntity})
     'End Property
     ''' <summary>
     ''' Необходимо использовать только для вновь созданных <see cref="ReadOnlyObjectList(Of T)" />
-    ''' Возвращает не потокобезопасный <see cref="List(Of T)"/>
+    ''' Возвращает не потокобезопасный <see cref="Generic.List(Of T)"/>
     ''' </summary>
     ''' <value></value>
     ''' <returns></returns>
