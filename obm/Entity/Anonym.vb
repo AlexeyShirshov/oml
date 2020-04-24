@@ -15,23 +15,23 @@ Namespace Entities
 
         Protected _props As New ConcurrentDictionary(Of String, Object)
 
-        Public Overridable Overloads Function GetValue(ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema, ByRef found As Boolean) As Object Implements IOptimizedValues.GetValueOptimized
+        Public Overridable Function GetValueOptimized(ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema, ByRef found As Boolean) As Object Implements IOptimizedValues.GetValueOptimized
             Dim r As Object = Nothing
             found = _props.TryGetValue(propertyAlias, r)
             Return r
         End Function
 
-        Public Overridable Overloads Function SetValue(ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema, ByVal value As Object) As Boolean Implements IOptimizedValues.SetValueOptimized
+        Public Overridable Function SetValueOptimized(ByVal propertyAlias As String, ByVal oschema As Meta.IEntitySchema, ByVal value As Object) As Boolean Implements IOptimizedValues.SetValueOptimized
             _props(propertyAlias) = value
             Return True
         End Function
 
         Default Public Property Item(ByVal field As String) As Object
             Get
-                Return GetValue(field, Nothing)
+                Return GetValueOptimized(field, Nothing, Nothing)
             End Get
             Set(ByVal value As Object)
-                SetValue(field, Nothing, value)
+                SetValueOptimized(field, Nothing, value)
             End Set
         End Property
 
@@ -516,23 +516,29 @@ Namespace Entities
         '    c.RegisterModification(mgr, Me, pk, ObjectModification.ReasonEnum.Unknown, TryCast(GetEntitySchema(mgr.MappingEngine), ICacheBehavior))
         '    If pk IsNot Nothing Then clone.SetPK(pk, mgr.MappingEngine)
         'End Sub
-        Protected Overridable Sub SetPK(ByVal pk As IEnumerable(Of PKDesc)) Implements IOptimizePK.SetPK
-            Dim spk As New List(Of String)
-            For Each p As PKDesc In pk
-                spk.Add(p.Column)
-                Me(p.Column) = p.Value
-            Next
-            _pk = spk
+        Protected Overridable Sub SetPK(ByVal pk As IPKDesc) Implements IOptimizePK.SetPK
+            If pk.Count = 1 AndAlso Not String.IsNullOrEmpty(pk.PKName) Then
+                _pk = {pk.PKName}
+                Me(pk.PKName) = pk(0).Value
+            Else
+                Dim spk As New List(Of String)
+                For Each p In pk
+                    spk.Add(p.Column)
+                    Me(p.Column) = p.Value
+                Next
+                _pk = spk
+            End If
+
             PKLoaded(pk.Count, Nothing)
         End Sub
 
-        Public Function GetPKValues() As IEnumerable(Of Meta.PKDesc) Implements IOptimizePK.GetPKValues
+        Public Function GetPKValues() As IPKDesc Implements IOptimizePK.GetPKValues
             If _pk Is Nothing Then
                 Throw New OrmObjectException("PK is not loaded")
             End If
-            Dim l As New List(Of PKDesc)
-            For Each pk As String In _pk
-                l.Add(New PKDesc(pk, Me(pk)))
+            Dim l As New PKDesc
+            For Each pk In _pk
+                l.Add(New ColumnValue(pk, Me(pk)))
             Next
             Return l
         End Function

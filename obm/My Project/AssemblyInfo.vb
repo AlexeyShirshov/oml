@@ -34,7 +34,7 @@ Imports System.Runtime
 ' by using the '*' as shown below:
 
 <Assembly: AssemblyVersion("4.2.0.1")>
-<Assembly: AssemblyFileVersion("4.2.266.20113")>
+<Assembly: AssemblyFileVersion("4.2.332.20115")>
 
 '<Assembly: FileIOPermission(SecurityAction.RequestRefuse)> 
 <Assembly: ConstrainedExecution.ReliabilityContract(ConstrainedExecution.Consistency.MayCorruptInstance, ConstrainedExecution.Cer.MayFail)>

@@ -268,6 +268,8 @@ Imports Worm.Entities.Meta
 
     <TestMethod()> _
     Public Sub TestM2MMany()
+        Dim e As Enum1
+        Dim e2 = New Nullable(Of [Enum1])(e)
 
         Dim q As New QueryCmd(Function() TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1")))
 

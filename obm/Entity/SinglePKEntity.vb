@@ -343,7 +343,7 @@ Namespace Entities
             End Get
         End Property
 
-        'Protected Overrides Sub Init(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As Cache.CacheBase, ByVal mpe As ObjectMappingEngine)
+        'Protected Overrides Sub Init(ByVal pk As IPKDesc, ByVal cache As Cache.CacheBase, ByVal mpe As ObjectMappingEngine)
         '    Init(pk.First.Value, cache, mpe)
         'End Sub
 

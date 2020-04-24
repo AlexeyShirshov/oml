@@ -654,7 +654,7 @@ Namespace Cache
             End Set
         End Property
 
-        Public Function IsNewObject(ByVal t As Type, ByVal id As IEnumerable(Of PKDesc)) As Boolean
+        Public Function IsNewObject(ByVal t As Type, ByVal id As IPKDesc) As Boolean
             Return NewObjectManager IsNot Nothing AndAlso NewObjectManager.GetNew(t, id) IsNot Nothing
         End Function
 
@@ -722,32 +722,30 @@ Namespace Cache
             Return CType(obj, ISinglePKEntity)
         End Function
 
-        Public Function GetEntityOrOrmFromCacheOrCreate(Of T As {New, _ICachedEntity})( _
-            ByVal pk As IEnumerable(Of PKDesc), ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As T
+        Public Function GetEntityOrOrmFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk As IPKDesc, ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As T
 
             Dim o As T = CachedEntity.CreateObject(Of T)(pk, mpe)
 
             o.SetObjectState(ObjectState.NotLoaded)
 
             Dim cb As ICacheBehavior = TryCast(mpe.GetEntitySchema(GetType(T)), ICacheBehavior)
-            Return CType(FindObjectInCache(GetType(T), o, New CacheKey(o), cb, _
+            Return CType(FindObjectInCache(GetType(T), o, New CacheKey(o), cb,
                 CType(GetOrmDictionary(Of T)(cb), System.Collections.IDictionary), addOnCreate, False), T)
         End Function
 
-        Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})( _
-            ByVal pk As IEnumerable(Of PKDesc), ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As T
+        Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk As IPKDesc, ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As T
 
             Dim o As T = CachedEntity.CreateEntity(Of T)(pk, mpe)
 
             o.SetObjectState(ObjectState.NotLoaded)
 
             Dim cb As ICacheBehavior = TryCast(mpe.GetEntitySchema(GetType(T)), ICacheBehavior)
-            Return CType(FindObjectInCache(GetType(T), o, New CacheKey(o), cb, _
+            Return CType(FindObjectInCache(GetType(T), o, New CacheKey(o), cb,
                 CType(GetOrmDictionary(Of T)(cb), System.Collections.IDictionary), addOnCreate, False), T)
         End Function
 
-        Public Function GetEntityFromCacheOrCreate(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type, _
-            ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As Object
+        Public Function GetEntityFromCacheOrCreate(ByVal pk As IPKDesc, ByVal type As Type,
+                                                   ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As Object
             Dim o As Object = CachedEntity.CreateObject(pk, type, mpe)
             Dim pkw As PKWrapper = Nothing
             Dim ce As _ICachedEntity = TryCast(o, _ICachedEntity)
@@ -765,8 +763,9 @@ Namespace Cache
             Return CType(FindObjectInCache(type, o, pkw, cb, GetOrmDictionary(type, cb), addOnCreate, False), ICachedEntity)
         End Function
 
-        Public Function GetEntityFromCacheOrCreate(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type, _
-            ByVal addOnCreate As Boolean, ByVal dic As IDictionary, ByVal mpe As ObjectMappingEngine) As Object
+        Public Function GetEntityFromCacheOrCreate(ByVal pk As IPKDesc, ByVal type As Type,
+                                                   ByVal addOnCreate As Boolean, ByVal dic As IDictionary, ByVal mpe As ObjectMappingEngine) As Object
+
             Dim o As Object = CachedEntity.CreateObject(pk, type, mpe)
             Dim pkw As PKWrapper = Nothing
             Dim ce As _ICachedEntity = TryCast(o, _ICachedEntity)
@@ -829,16 +828,16 @@ Namespace Cache
             Return GetPOCO(mpe, oschema, o, Nothing)
         End Function
 
-        Public Function GetPOCO(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, _
-            ByVal o As Object, ByVal mgr As OrmManager) As _ICachedEntity
+        Public Function GetPOCO(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema,
+                                ByVal o As Object, ByVal mgr As OrmManager) As _ICachedEntity
             Dim type As Type = o.GetType
             'Dim pk As New List(Of PKDesc)
             'For Each e As EntityPropertyAttribute In mpe.GetPrimaryKeys(type, oschema)
             '    Dim pkd As New PKDesc(e.PropertyAlias, ObjectMappingEngine.GetPropertyValue(o, e.PropertyAlias, oschema))
             '    pk.Add(pkd)
             'Next
-            Dim pks As IEnumerable(Of PKDesc) = oschema.GetPKs(o)
-            Dim c As _ICachedEntity = CachedEntity.CreateEntity(pks.ToArray, GetType(AnonymousCachedEntity), mpe)
+            Dim pks = oschema.GetPKs(o)
+            Dim c As _ICachedEntity = CachedEntity.CreateEntity(pks, GetType(AnonymousCachedEntity), mpe)
             Dim cc As IKeyProvider = TryCast(o, IKeyProvider)
             If cc IsNot Nothing Then
                 CType(c, AnonymousCachedEntity).SetKey(cc.Key)

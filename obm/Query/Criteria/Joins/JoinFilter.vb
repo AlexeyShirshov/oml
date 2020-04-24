@@ -608,9 +608,11 @@ Namespace Criteria.Joins
 
                 If sb.Length > start Then
                     sb.Length -= 5 + lp.Length ' cut and
+                Else
+                    GoTo l1
                 End If
             Else
-
+l1:
                 sb.Append(stmt.Oper2String(_oper))
                 sb.Append(rp)
 

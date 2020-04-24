@@ -14,10 +14,10 @@ Namespace Cache
     ''' <threadsafety static="true" instance="true"/>
     <Serializable()> _
     Public Class EntityProxy
-        Private ReadOnly _id As IEnumerable(Of PKDesc)
+        Private ReadOnly _id As IPKDesc
         Private ReadOnly _t As Type
 
-        Public Sub New(ByVal id As IEnumerable(Of PKDesc), ByVal type As Type)
+        Public Sub New(ByVal id As IPKDesc, ByVal type As Type)
             _id = id
             _t = type
         End Sub
@@ -37,7 +37,7 @@ Namespace Cache
             End Get
         End Property
 
-        Public ReadOnly Property PK() As IEnumerable(Of PKDesc)
+        Public ReadOnly Property PK() As IPKDesc
             Get
                 Return _id
             End Get
@@ -54,7 +54,7 @@ Namespace Cache
             Return _t Is obj._t AndAlso IdEquals(obj.PK)
         End Function
 
-        Protected Function IdEquals(ByVal ids As IEnumerable(Of PKDesc)) As Boolean
+        Protected Function IdEquals(ByVal ids As IPKDesc) As Boolean
             If _id.Count <> ids.Count Then Return False
             'For i As Integer = 0 To _id.Count - 1
             '    Dim p As PKDesc = _id(i)
@@ -82,7 +82,7 @@ Namespace Cache
 
         Protected Function GetIdsString() As String
             Dim sb As New StringBuilder
-            For Each p As PKDesc In _id
+            For Each p In _id
                 sb.Append("""").Append(p.Column).Append("""").Append(":").Append("""").Append(p.Value).Append("""").Append(",")
             Next
             If sb.Length > 0 Then
@@ -256,8 +256,9 @@ Namespace Cache
             _ref.Target = Nothing
         End Sub
 
-        Protected Function GetEntityFromCacheOrCreate(ByVal mgr As OrmManager, ByVal cache As CacheBase, ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type, _
-            ByVal addOnCreate As Boolean, ByVal filterInfo As Object, ByVal mpe As ObjectMappingEngine, ByVal dic As IDictionary) As ICachedEntity
+        Protected Function GetEntityFromCacheOrCreate(ByVal mgr As OrmManager, ByVal cache As CacheBase, ByVal pk As IPKDesc, ByVal type As Type,
+                                                      ByVal addOnCreate As Boolean, ByVal filterInfo As Object, ByVal mpe As ObjectMappingEngine, ByVal dic As IDictionary) As ICachedEntity
+
             Dim o As _ICachedEntity = CType(CachedEntity.CreateObject(pk, type, mpe), _ICachedEntity)
 
             o.SetObjectState(ObjectState.NotLoaded)

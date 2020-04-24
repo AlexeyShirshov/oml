@@ -259,10 +259,10 @@ Namespace Expressions2
                         'm.SourceFields(0).SourceFieldAlias = s.ColumnAlias
                     Else
                         Dim pe As PropertyAliasExpression = TryCast(s.Operand, PropertyAliasExpression)
-                        Dim m As MapField2Column = New MapField2Column(If(pa, pe.PropertyAlias), Nothing, s.Attributes)
+                        Dim m As MapField2Column = New MapField2Column(If(pa, pe?.PropertyAlias), Nothing, s.Attributes)
                         c.Add(m)
 
-                        If executor IsNot Nothing Then
+                        If executor IsNot Nothing AndAlso s.Operand.RequireSourceFields Then
                             m.SourceFields = executor.FindColumn(mpe, m.PropertyAlias).Select(Function(it) New SourceField(it))
                         End If
                         'm.SourceFields(0).SourceFieldAlias = s.ColumnAlias

@@ -764,31 +764,31 @@ Partial Public MustInherit Class OrmManager
     '    Return o
     'End Function
 
-    Public Function GetEntityFromCacheOrDB(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type) As ICachedEntity
+    Public Function GetEntityFromCacheOrDB(ByVal pk As IPKDesc, ByVal type As Type) As ICachedEntity
         Dim o As _ICachedEntity = CType(CreateObject(pk, type), _ICachedEntity)
         o.SetObjectState(ObjectState.NotLoaded)
         Return GetFromCacheAsIsOrLoadFromDB(o, GetDictionary(type))
     End Function
 
-    Public Function GetEntityFromCacheOrCreate(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type) As ICachedEntity
+    Public Function GetEntityFromCacheOrCreate(ByVal pk As IPKDesc, ByVal type As Type) As ICachedEntity
         Dim o As _ICachedEntity = CType(CreateObject(pk, type), _ICachedEntity)
         o.SetObjectState(ObjectState.NotLoaded)
         Return GetOrAdd2Cache(o, GetDictionary(type))
     End Function
 
-    Public Function GetEntityOrOrmFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk As IEnumerable(Of PKDesc)) As T
+    Public Function GetEntityOrOrmFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk As IPKDesc) As T
         Dim o As T = CreateObject(Of T)(pk)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(GetOrAdd2Cache(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
-    Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk As IEnumerable(Of PKDesc)) As T
+    Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk As IPKDesc) As T
         Dim o As T = CreateEntity(Of T)(pk)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(GetOrAdd2Cache(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
-    Public Function GetEntityFromCacheLoadedOrDB(pk() As PKDesc, type As Type) As ICachedEntity
+    Public Function GetEntityFromCacheLoadedOrDB(pk As IPKDesc, type As Type) As ICachedEntity
         Dim o As _ICachedEntity = CType(CreateObject(pk, type), _ICachedEntity)
         o.SetObjectState(ObjectState.NotLoaded)
         Return GetFromCacheLoadedOrLoadFromDB(o, GetDictionary(type))
@@ -900,7 +900,7 @@ Partial Public MustInherit Class OrmManager
         Return GetKeyEntityFromCacheOrDB(Of T)(id)
     End Function
 
-    Public Function [Get](Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc) As T
+    Public Function [Get](Of T As {_ICachedEntity, New})(ByVal pk As IPKDesc) As T
         Dim o As _ICachedEntity = CreateObject(Of T)(pk)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(GetFromCacheAsIsOrLoadFromDB(o, CType(GetDictionary(Of T)(), IDictionary)), T)
@@ -1588,7 +1588,7 @@ l1:
         Return r
     End Function
 
-    Public Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk As IEnumerable(Of PKDesc)) As T
+    Public Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk As IPKDesc) As T
         Dim r = CachedEntity.CreateObject(Of T)(pk, _schema)
         If r.GetICreateManager Is Nothing Then
             r.SetCreateManager(_crMan)
@@ -1596,7 +1596,7 @@ l1:
         Return r
     End Function
 
-    Public Function CreateObject(ByVal pk As IEnumerable(Of PKDesc), ByVal type As Type) As Object
+    Public Function CreateObject(ByVal pk As IPKDesc, ByVal type As Type) As Object
         Dim r = CachedEntity.CreateObject(pk, type, _schema)
         Dim e = TryCast(r, _IEntity)
         If e IsNot Nothing AndAlso e.GetICreateManager Is Nothing Then
@@ -1605,7 +1605,7 @@ l1:
         Return r
     End Function
 
-    Public Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk As IEnumerable(Of PKDesc)) As T
+    Public Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk As IPKDesc) As T
         Dim r = CachedEntity.CreateEntity(Of T)(pk, _schema)
         If r.GetICreateManager Is Nothing Then
             r.SetCreateManager(_crMan)
@@ -1613,7 +1613,7 @@ l1:
         Return r
     End Function
 
-    Public Function CreateEntity(ByVal pk As IEnumerable(Of PKDesc), ByVal t As Type) As _ICachedEntity
+    Public Function CreateEntity(ByVal pk As IPKDesc, ByVal t As Type) As _ICachedEntity
         Dim r = CachedEntity.CreateEntity(pk, t, _schema)
         If r.GetICreateManager Is Nothing Then
             r.SetCreateManager(_crMan)
@@ -2883,8 +2883,8 @@ l1:
                               joins As IEnumerable(Of Joins.QueryJoin), objEU As EntityUnion, ByRef evaluated As Boolean) As IReadOnlyList
         Return ApplyFilter(t, col, filter, joins, _schema, objEU, _start, _length, evaluated)
     End Function
-    Public Shared Function ApplySort(Of T As {_IEntity})(ByVal c As IEnumerable(Of T), _
-        ByVal s As OrderByClause, ByVal getObj As entityComparer.GetObjectDelegate, mpe As ObjectMappingEngine) As IEnumerable(Of T)
+    Public Shared Function ApplySort(Of T As {_IEntity})(ByVal c As IEnumerable(Of T),
+        ByVal s As OrderByClause, ByVal getObj As EntityComparer.GetObjectDelegate, mpe As ObjectMappingEngine) As IEnumerable(Of T)
         If c.Count > 0 Then
             If s IsNot Nothing Then
                 'For Each ns As SortExpression In s
@@ -3232,7 +3232,7 @@ l1:
     ''' <param name="length">Length of loaded window</param>
     ''' <returns>Collection of child objects</returns>
     ''' <remarks></remarks>
-    Public Function LoadObjects(Of T As {ICachedEntity})(ByVal objs As ReadOnlyEntityList(Of T), ByVal fields() As String, _
+    Public Function LoadObjects(Of T As {ICachedEntity})(ByVal objs As ReadOnlyEntityList(Of T), ByVal fields() As String,
         ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
 
         Dim col As ReadOnlyEntityList(Of T) = objs.LoadObjects(start, length)
@@ -3924,8 +3924,8 @@ l1:
 
 #End If
 
-    Public Shared Sub BuildDic(Of T As {New, DicIndexT(Of T2)}, T2 As {New, _IEntity})(ByVal name As String, ByVal cnt As Integer, _
-        ByVal level As Integer, ByVal root As T, ByRef last As T, _
+    Public Shared Sub BuildDic(Of T As {New, DicIndexT(Of T2)}, T2 As {New, _IEntity})(ByVal name As String, ByVal cnt As Integer,
+        ByVal level As Integer, ByVal root As T, ByRef last As T,
         ByRef first As Boolean, ByVal firstField As String, ByVal secField As String)
         'If name.Length = 0 Then name = "<без имени>"
 
@@ -4004,7 +4004,7 @@ l1:
         Return p
     End Function
 
-    <CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062")> _
+    <CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062")>
     Public Shared Function FirstDiffCharIndex(ByVal n1 As String, ByVal n2 As String) As Integer
         Dim l As String
         If n1 Is Nothing Then
@@ -4029,9 +4029,9 @@ l1:
         Return l.Length + 1
     End Function
 
-    Public Shared Sub AppendJoin(ByVal mpe As ObjectMappingEngine, ByVal selectType As Type, _
-        ByRef filter As IFilter, ByVal contextInfo As IDictionary, ByVal l As List(Of QueryJoin), _
-        ByVal selSchema As IEntitySchema, ByVal types As List(Of Type), ByVal type2join As System.Type, _
+    Public Shared Sub AppendJoin(ByVal mpe As ObjectMappingEngine, ByVal selectType As Type,
+        ByRef filter As IFilter, ByVal contextInfo As IDictionary, ByVal l As List(Of QueryJoin),
+        ByVal selSchema As IEntitySchema, ByVal types As List(Of Type), ByVal type2join As System.Type,
         ByVal t2jSchema As IEntitySchema, ByVal joinOS As EntityUnion, ByVal selectOS As EntityUnion)
 
         Dim field As String = selSchema.GetJoinFieldNameByType(type2join)
@@ -4099,10 +4099,10 @@ l1:
         Return New QueryJoin() {mj, tj}
     End Function
 
-    Protected Friend Shared Function MakeJoin(ByVal schema As ObjectMappingEngine, _
-        ByVal joinOS As EntityUnion, ByVal type2join As Type, _
-        ByVal selectType As EntityUnion, ByVal field As String, _
-        ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Joins.JoinType, _
+    Protected Friend Shared Function MakeJoin(ByVal schema As ObjectMappingEngine,
+        ByVal joinOS As EntityUnion, ByVal type2join As Type,
+        ByVal selectType As EntityUnion, ByVal field As String,
+        ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Joins.JoinType,
         Optional ByVal switchTable As Boolean = False) As Worm.Criteria.Joins.QueryJoin
 
         'Dim tbl As SourceFragment = GetTables(type2join)(0)
@@ -4238,7 +4238,7 @@ l1:
         'End If
     End Sub
 
-    Private Function GetSelList(ByVal original_type As Type, ByVal oschema As IEntitySchema, _
+    Private Function GetSelList(ByVal original_type As Type, ByVal oschema As IEntitySchema,
                              ByVal propertyAlias As String, ByVal selOS As EntityUnion) As LoadTypeDescriptor
         Dim arr As New List(Of String)
         For Each m As MapField2Column In oschema.GetAutoLoadFields
@@ -4284,9 +4284,9 @@ l1:
         Return New LoadTypeDescriptor(load, cols, oschema)
     End Function
 
-    Private Function FindObjectsToLoad(ByVal t As Type, ByVal oschema As IEntitySchema, _
-        ByVal selOS As EntityUnion, ByVal c As Condition.ConditionConstructor, ByVal eudic As Dictionary(Of String, EntityUnion), _
-        ByVal joins As List(Of QueryJoin), ByVal selDic As Dictionary(Of EntityUnion, LoadTypeDescriptor), _
+    Private Function FindObjectsToLoad(ByVal t As Type, ByVal oschema As IEntitySchema,
+        ByVal selOS As EntityUnion, ByVal c As Condition.ConditionConstructor, ByVal eudic As Dictionary(Of String, EntityUnion),
+        ByVal joins As List(Of QueryJoin), ByVal selDic As Dictionary(Of EntityUnion, LoadTypeDescriptor),
         ByVal propertyAlias As String) As LoadTypeDescriptor
 
         Dim p As LoadTypeDescriptor = GetSelList(t, oschema, propertyAlias, selOS)
@@ -4327,12 +4327,12 @@ l1:
     End Function
 
     Protected Function PrepareEntity2Load(ByVal obj As _IEntity, ByVal propertyAlias As String,
-        ByVal original_type As Type, ByVal eudic As Dictionary(Of String, EntityUnion),
-        ByVal js As List(Of QueryJoin), ByVal selDic As Dictionary(Of EntityUnion, LoadTypeDescriptor),
-        ByVal selOS As EntityUnion, ByVal oschema As IEntitySchema) As Condition.ConditionConstructor
+                                          ByVal original_type As Type, ByVal eudic As Dictionary(Of String, EntityUnion),
+                                          ByVal js As List(Of QueryJoin), ByVal selDic As Dictionary(Of EntityUnion, LoadTypeDescriptor),
+                                          ByVal selOS As EntityUnion, ByVal oschema As IEntitySchema) As Condition.ConditionConstructor
 
         Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
-        Dim pks As IEnumerable(Of PKDesc) = obj.GetPKValues(oschema)
+        Dim pks = obj.GetPKValues(oschema)
         'If GetType(ICachedEntity).IsAssignableFrom(original_type) Then
         '    pks = obj.GetPKValues(oschema)
         'Else
@@ -4343,7 +4343,7 @@ l1:
             Throw New OrmManagerException(String.Format("Entity {0} has no primary key", original_type))
         End If
 
-        For Each pk As PKDesc In pks
+        For Each pk In pks
             c.AddFilter(New cc.TableFilter(oschema.Table, pk.Column, New ScalarValue(pk.Value), Worm.Criteria.FilterOperation.Equal))
         Next
 
@@ -4356,7 +4356,7 @@ l1:
                                           props As IEnumerable(Of String)) As Condition.ConditionConstructor
 
         Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
-        Dim pks As IEnumerable(Of PKDesc) = obj.GetPKValues(oschema)
+        Dim pks = obj.GetPKValues(oschema)
         'If GetType(ICachedEntity).IsAssignableFrom(original_type) Then
         '    pks = obj.GetPKValues(oschema)
         'Else
@@ -4367,7 +4367,7 @@ l1:
             Throw New OrmManagerException(String.Format("Entity {0} has no primary key", original_type))
         End If
 
-        For Each pk As PKDesc In pks
+        For Each pk In pks
             c.AddFilter(New cc.TableFilter(oschema.Table, pk.Column, New ScalarValue(pk.Value), Worm.Criteria.FilterOperation.Equal))
         Next
 
@@ -4408,10 +4408,13 @@ l1:
 l1:
                         OrmManager.CopyBody(robj, e, oschema)
                         Dim map = oschema.GetAutoLoadFields
-                        For Each m As MapField2Column In map
-                            SetLoaded(ll, m.PropertyAlias, True)
-                        Next
-                        CheckIsAllLoaded(ll, MappingEngine, map.Count, map)
+                        If ll IsNot Nothing Then
+                            For Each m As MapField2Column In map
+                                SetLoaded(ll, m.PropertyAlias, True)
+                            Next
+                        End If
+
+                        CheckIsAllLoaded(e, MappingEngine, map.Count, map)
                     Else
                         Load(robj, oschema)
                         GoTo l1
@@ -4442,7 +4445,12 @@ l1:
         If uc IsNot Nothing AndAlso olds = Entities.ObjectState.Created AndAlso e.ObjectState = Entities.ObjectState.Modified Then
             AcceptChanges(uc, True, True)
         ElseIf e.IsLoaded Then
-            e.SetObjectState(Entities.ObjectState.None)
+#If DEBUG Then
+            If e.ObjectState <> ObjectState.None Then
+                Throw New OrmObjectException
+            End If
+#End If
+            'e.SetObjectState(Entities.ObjectState.None)
         End If
     End Sub
 
@@ -4658,7 +4666,7 @@ l1:
                     oldkey = New CacheKey(e)
                 End If
 
-                Dim newid As IEnumerable(Of PKDesc) = Nothing
+                Dim newid As IPKDesc = Nothing
                 If oc IsNot Nothing Then
                     newid = oc.GetPKValues(oschema)
                 End If
@@ -4835,7 +4843,7 @@ l1:
         'End Using
     End Function
 
-    Friend Sub CreateCopyForSaveNewEntry(ByVal e As _ICachedEntity, ByVal oschema As IEntitySchema, ByVal pk As IEnumerable(Of PKDesc))
+    Friend Sub CreateCopyForSaveNewEntry(ByVal e As _ICachedEntity, ByVal oschema As IEntitySchema, ByVal pk As IPKDesc)
         Dim uc As IUndoChanges = TryCast(e, IUndoChanges)
         If uc IsNot Nothing Then
             If uc.OriginalCopy IsNot Nothing Then
@@ -5008,20 +5016,30 @@ l1:
         Return old
     End Function
 
-    Friend Shared Function CheckIsAllLoaded(ByVal ll As IPropertyLazyLoad, ByVal mpe As ObjectMappingEngine,
+    Friend Shared Function CheckIsAllLoaded(ByVal e As Object, ByVal mpe As ObjectMappingEngine,
                                             ByVal loadedColumns As Integer, ByVal map As IEnumerable(Of MapField2Column)) As Boolean
         'Using SyncHelper(False)
         Dim allloaded As Boolean = True
-        For i As Integer = 0 To map.Count - 1
-            If Not ll.IsPropertyLoaded(map(i).PropertyAlias) Then
-                'Dim at As Field2DbRelations = schema.GetAttributes(Me.GetType, arr(i))
-                'If (at And Field2DbRelations.PK) <> Field2DbRelations.PK Then
-                allloaded = False
-                Exit For
-                'End If
+        Dim ll = TryCast(e, IPropertyLazyLoad)
+
+        If ll IsNot Nothing Then
+            For i As Integer = 0 To map.Count - 1
+                If Not ll.IsPropertyLoaded(map(i).PropertyAlias) Then
+                    'Dim at As Field2DbRelations = schema.GetAttributes(Me.GetType, arr(i))
+                    'If (at And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                    allloaded = False
+                    Exit For
+                    'End If
+                End If
+            Next
+            ll.IsLoaded = allloaded
+        Else
+            Dim ie = TryCast(e, IEntity)
+            If ie IsNot Nothing AndAlso Not ie.IsLoaded Then
+                allloaded = loadedColumns >= map.Count
+                ie.IsLoaded = allloaded
             End If
-        Next
-        ll.IsLoaded = allloaded
+        End If
 
         Return allloaded
 
@@ -5053,7 +5071,7 @@ l1:
 
 #End Region
 
-    Public Shared Sub SetPK(ByVal e As Object, ByVal pk As IEnumerable(Of PKDesc), ByVal oschema As IEntitySchema, ByVal mpe As ObjectMappingEngine)
+    Public Shared Sub SetPK(ByVal e As Object, ByVal pk As IPKDesc, ByVal oschema As IEntitySchema, ByVal mpe As ObjectMappingEngine)
         Dim op As IOptimizePK = TryCast(e, IOptimizePK)
         Dim ll As IPropertyLazyLoad = TryCast(e, IPropertyLazyLoad)
         If op IsNot Nothing Then
@@ -5064,7 +5082,7 @@ l1:
                 If pk.Count = 1 Then
                     ObjectMappingEngine.SetPropertyValue(e, m.PropertyAlias, pk(0).Value, oschema, m.PropertyInfo)
                 Else
-                    For Each p As PKDesc In pk
+                    For Each p In pk
                         Dim sf = m.SourceFields.FirstOrDefault(Function(it) it.SourceFieldExpression = p.Column)
                         ObjectMappingEngine.SetPropertyValue(e, MakePKName(Nothing, p.Column), p.Value, oschema, sf?.PropertyInfo)
                     Next
@@ -5077,7 +5095,7 @@ l1:
         End If
     End Sub
 
-    Public Shared Sub SetPK(ByVal o As Object, ByVal pk As IEnumerable(Of PKDesc), ByVal mpe As ObjectMappingEngine)
+    Public Shared Sub SetPK(ByVal o As Object, ByVal pk As IPKDesc, ByVal mpe As ObjectMappingEngine)
         Dim op As IOptimizePK = TryCast(o, IOptimizePK)
         If op IsNot Nothing Then
             op.SetPK(pk)
@@ -5093,7 +5111,7 @@ l1:
         End If
     End Sub
 
-    'Public Shared Function GetPKValues(ByVal e As Object, ByVal oschema As IEntitySchema) As IEnumerable(Of PKDesc)
+    'Public Shared Function GetPKValues(ByVal e As Object, ByVal oschema As IEntitySchema) As IPKDesc
     '    Dim op As IOptimizePK = TryCast(e, IOptimizePK)
     '    If op IsNot Nothing Then
     '        Return op.GetPKValues()

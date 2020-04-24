@@ -522,7 +522,7 @@ l1:
                     Dim lschema As IEntitySchema = mpe.GetEntitySchema(rt)
                     Dim pk As MapField2Column = lschema.GetPK
                     Dim o As _IEntity = Nothing
-                    Dim pkFields As New List(Of PKDesc)
+                    Dim pkFields As New PKDesc
 
                     For Each ff As IFilter In join.Condition.GetAllFilters
                         Dim jf As JoinFilter = TryCast(ff, JoinFilter)
@@ -537,7 +537,7 @@ l1:
                                     pkFields.AddRange(r.GetPKValues(lschema))
                                     Exit For
                                 Else
-                                    pkFields.Add(New PKDesc(lschema.FieldColumnMap(jf.Left.Property.PropertyAlias).SourceFields(0).SourceFieldExpression, id))
+                                    pkFields.Add(New ColumnValue(lschema.FieldColumnMap(jf.Left.Property.PropertyAlias).SourceFields(0).SourceFieldExpression, id))
                                 End If
 
                             ElseIf jf.Right.Property.Entity IsNot Nothing AndAlso jf.Right.Property.Entity = entity AndAlso
@@ -550,7 +550,7 @@ l1:
                                     pkFields.AddRange(r.GetPKValues(lschema))
                                     Exit For
                                 Else
-                                    pkFields.Add(New PKDesc(lschema.FieldColumnMap(jf.Right.Property.PropertyAlias).SourceFields(0).SourceFieldExpression, id))
+                                    pkFields.Add(New ColumnValue(lschema.FieldColumnMap(jf.Right.Property.PropertyAlias).SourceFields(0).SourceFieldExpression, id))
                                 End If
 
                             End If
@@ -563,7 +563,7 @@ l1:
                     Next
 
                     If pkFields.Count > 0 Then
-                        Dim jObj As ICachedEntity = OrmManager.CurrentManager.GetEntityFromCacheLoadedOrDB(pkFields.ToArray, rt)
+                        Dim jObj As ICachedEntity = OrmManager.CurrentManager.GetEntityFromCacheLoadedOrDB(pkFields, rt)
                         If jObj IsNot Nothing Then
                             Dim newF As IFilter = join.Condition
                             For Each jf As JoinFilter In join.Condition.GetAllFilters.OfType(Of JoinFilter).

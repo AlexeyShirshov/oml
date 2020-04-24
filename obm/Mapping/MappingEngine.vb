@@ -148,6 +148,9 @@ Public Class ObjectMappingEngine
         Dim map As Collections.IndexedCollection(Of String, MapField2Column) = schema.FieldColumnMap
 
         Dim pks As New List(Of EntityPropertyAttribute)
+        Dim attr As Field2DbRelations
+        Dim pkName As String = Nothing
+        Dim pi As PropertyInfo = Nothing
 
         For Each ep As EntityPropertyAttribute In attrs
 
@@ -176,6 +179,18 @@ Public Class ObjectMappingEngine
             Else
 
                 If (ep.Behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                    attr = ep.Behavior
+                    If String.IsNullOrEmpty(pkName) Then
+                        pkName = ep.PropertyAlias
+                        pi = ep._pi
+                    Else
+                        pkName = MapField2Column.PK
+                        pi = Nothing
+                    End If
+
+                    'If Not ep.SourceFields?.Any Then
+                    '    ep.SourceFields = {New SourceFieldAttribute(ep.PropertyAlias)}
+                    'End If
 
                     pks.Add(ep)
                 Else
@@ -185,7 +200,7 @@ Public Class ObjectMappingEngine
                     }
                     map.Add(m)
 
-                    If ep.SourceFields Is Nothing Then
+                    If Not ep.SourceFields?.Any Then
                         m.SourceFields = {New SourceField(ep.PropertyAlias)}
                     Else
                         m.SourceFields = (From k In ep.SourceFields
@@ -201,13 +216,22 @@ Public Class ObjectMappingEngine
         Next
 
         If pks.Any Then
-            Dim m As New MapField2Column(schema.Table, Field2DbRelations.PK) With {.Schema = schema,
+            Dim m As New MapField2Column(pkName, schema.Table, attr) With {
+                .Schema = schema,
                 .SourceFields = (From pk In pks
                                  From k In pk.SourceFields
                                  Select New SourceField(k.ColumnExpression) With {
                                              .DBType = New DBType(k.SourceFieldType, k.SourceFieldSize, k.IsNullable),
-                                             .SourceFieldAlias = k.ColumnAlias
-                                             }).ToArray}
+                                             .SourceFieldAlias = k.ColumnAlias,
+                                             .PropertyInfo = pk._pi
+                                             }).ToArray,
+                .PropertyInfo = pi
+            }
+
+            If Not m.SourceFields.Any Then
+                m.SourceFields = pks.Select(Function(it) New SourceField(it.PropertyAlias)).ToArray
+            End If
+
             map.Add(m)
 
         End If
@@ -541,7 +565,24 @@ Public Class ObjectMappingEngine
                 End If
             End If
         Else
-            Return ChooseOneVersionable(props, mpeVersion, convertVersion, features)
+            Dim o = ChooseOneVersionable(props, mpeVersion, convertVersion, features)
+            If o IsNot Nothing Then
+                If Not o.SourceFields?.Any Then
+                    Dim fields() As SourceFieldAttribute = CType(Attribute.GetCustomAttributes(pi, GetType(SourceFieldAttribute)), SourceFieldAttribute())
+                    If fields IsNot Nothing Then
+                        o.SourceFields = If(ChooseVersionable(mpeVersion, convertVersion, fields, features)?.ToArray, {})
+                    End If
+                End If
+                'If Not o.SourceFields?.Any Then
+                '    o.SourceFields = {New SourceFieldAttribute(o.PropertyAlias)}
+                'End If
+
+                If String.IsNullOrEmpty(o.PropertyAlias) Then
+                    o.PropertyAlias = pi.Name
+                End If
+            End If
+
+            Return o
         End If
     End Function
     Friend Shared Function GetMappedProperties(ByVal t As Type, ByVal mpeVersion As String,
@@ -554,9 +595,12 @@ Public Class ObjectMappingEngine
             Dim prop = CreateProp(t, CType(Attribute.GetCustomAttributes(pi, GetType(EntityPropertyAttribute)), EntityPropertyAttribute()), pi, raw, mpeVersion, convertVersion, features)
 
             If prop IsNot Nothing Then
-                If String.IsNullOrEmpty(prop.PropertyAlias) Then
-                    prop.PropertyAlias = pi.Name
-                End If
+                'If String.IsNullOrEmpty(prop.PropertyAlias) Then
+                '    prop.PropertyAlias = pi.Name
+                '    'For Each sf In prop.SourceFields
+                '    '    sf.ColumnExpression = pi.Name
+                '    'Next
+                'End If
 
                 prop._pi = pi
 
@@ -578,9 +622,12 @@ Public Class ObjectMappingEngine
                 Dim prop = CreateProp(t, props, pi, raw, mpeVersion, convertVersion, features)
 
                 If prop IsNot Nothing Then
-                    If String.IsNullOrEmpty(prop.PropertyAlias) Then
-                        prop.PropertyAlias = pi.Name
-                    End If
+                    'If String.IsNullOrEmpty(prop.PropertyAlias) Then
+                    '    prop.PropertyAlias = pi.Name
+                    '    'For Each sf In prop.SourceFields
+                    '    '    sf.ColumnExpression = pi.Name
+                    '    'Next
+                    'End If
 
                     If Not l.Exists(Function(ep) ep.PropertyAlias = prop.PropertyAlias) Then
                         prop._pi = pi
@@ -742,7 +789,7 @@ Public Class ObjectMappingEngine
     '    Return schema.GetM2MRelationColumn(subtype)
     'End Function
 
-    
+
 
     Public Function GetM2MRelations(ByVal maintype As Type) As M2MRelationDesc()
         If maintype Is Nothing Then
@@ -1009,7 +1056,7 @@ Public Class ObjectMappingEngine
     '    Return schema.MapSort2FieldName(sort)
     'End Function
 
-    <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822")> _
+    <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822")>
     Public Function ChangeValueType(ByVal type As Type, ByVal propertyAlias As String, ByVal o As Object) As Object
         If type Is Nothing Then
             Throw New ArgumentNullException("type")
@@ -1051,7 +1098,7 @@ Public Class ObjectMappingEngine
     '    End Try
     'End Function
 
-    <CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062")> _
+    <CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062")>
     Public Function GetPropertyTable(ByVal schema As IPropertyMap, ByVal propertAlias As String) As SourceFragment
         If schema Is Nothing Then
             Throw New ArgumentNullException("schema")
@@ -2979,7 +3026,7 @@ l1:
     Public Function ParseValueFromStorage(ByVal att As Field2DbRelations,
                                           ByVal obj As Object, ByVal m As MapField2Column, ByVal propertyAlias As String,
                                           ByVal oschema As IEntitySchema, cache As CacheBase, crMan As ICreateManager,
-                                          ByVal sv As IEnumerable(Of PKDesc), ByVal ll As IPropertyLazyLoad, ByVal fac As List(Of Pair(Of String, IEnumerable(Of PKDesc)))) As Object
+                                          ByVal sv As IEnumerable(Of ColumnValue), ByVal ll As IPropertyLazyLoad, ByVal fac As List(Of Pair(Of String, IPKDesc))) As Object
         Dim pi As Reflection.PropertyInfo = m?.PropertyInfo
 
         If sv Is Nothing OrElse sv.Count = 0 OrElse sv.All(Function(it) it Is Nothing) Then
@@ -2991,7 +3038,7 @@ l1:
             If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
         Else
             If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
-                fac?.Add(New Pair(Of String, IEnumerable(Of PKDesc))(propertyAlias, sv))
+                fac?.Add(New Pair(Of String, IPKDesc)(propertyAlias, New PKDesc(sv)))
                 Return Nothing
             End If
 
@@ -3020,15 +3067,10 @@ l1:
                     End If
                 End If
 
-                Dim o As Object = Entity.CreateObject(sv, type_created, Me)
-                Dim e As _IEntity = TryCast(o, _IEntity)
+                Dim o As Object = Entity.CreateObject(New PKDesc(sv), type_created, Me)
                 Dim cce As ICachedEntity = TryCast(o, ICachedEntity)
                 Dim pkw As PKWrapper = Nothing
-                If e IsNot Nothing Then
-                    e.Init(Me)
-                    'RaiseObjectCreated(e)
-                    'e.SetObjectState(ObjectState.NotLoaded)
-                End If
+
                 If cce IsNot Nothing Then
                     pkw = New CacheKey(CType(o, ICachedEntity))
                     Dim cb As ICacheBehavior = TryCast(GetEntitySchema(type_created), ICacheBehavior)
@@ -3037,7 +3079,7 @@ l1:
                     '    pkw = New PKWrapper(sv)
                 End If
 
-                e = TryCast(o, _IEntity)
+                Dim e = TryCast(o, _IEntity)
                 If e IsNot Nothing Then
                     Dim eo As IEntity = TryCast(obj, IEntity)
                     If eo IsNot Nothing AndAlso eo.GetICreateManager IsNot Nothing Then
@@ -3204,7 +3246,7 @@ l1:
                 v = Nothing
             End If
 
-            Dim o = mpe.ParseValueFromStorage(m.Attributes, ro, m, pa, oschema, cache, crMan, {New PKDesc(pa, v)}, TryCast(ro, IPropertyLazyLoad), Nothing)
+            Dim o = mpe.ParseValueFromStorage(m.Attributes, ro, m, pa, oschema, cache, crMan, {New ColumnValue(pa, v)}, TryCast(ro, IPropertyLazyLoad), Nothing)
             Dim pit As Type = o?.GetType
             'v = ObjectMappingEngine.AssignValue2Property(pit, mpe, cache, New PKDesc() {New PKDesc(pa, v)}, ro, map, m.PropertyAlias, TryCast(ro, IPropertyLazyLoad), m, oschema, Nothing, crMan)
             If IsEntityType(pit) Then
@@ -3224,12 +3266,12 @@ l1:
             Return False
         End Get
     End Property
-    Friend Shared Sub SetPK(ByVal e As Object, ByVal pk As IEnumerable(Of PKDesc2), ByVal oschema As IEntitySchema)
+    Friend Shared Sub SetPK(ByVal e As Object, ByVal pk As IEnumerable(Of PKDesc2), ByVal oschema As IEntitySchema, pkName As String)
         Dim op As IOptimizePK = TryCast(e, IOptimizePK)
         If op IsNot Nothing Then
-            op.SetPK(pk)
+            op.SetPK(New PKDesc(pk) With {.PKName = pkName})
         Else
-            Dim m = oschema.GetPK
+            'Dim m = oschema.GetPK
             For Each p In pk
                 'Dim sf = m.SourceFields.FirstOrDefault(Function(it) it.SourceFieldExpression = p.Column)
                 ObjectMappingEngine.SetPropertyValue(e, MakePKName(Nothing, p.Column), p.Value, oschema, p.pi)
@@ -3377,7 +3419,7 @@ End Class
 'End Namespace
 
 Friend Class PKDesc2
-    Inherits PKDesc
+    Inherits ColumnValue
 
     Public pi As PropertyInfo
     Public svo As IOptimizeSetValue.SetValueDelegate

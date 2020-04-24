@@ -1322,13 +1322,13 @@ l1:
 
                     Dim [from] As New QueryCmd.FromClauseDef(selOS)
 
-                    Query.Database.DbQueryExecutor.FormTypeTables(MappingEngine, ContextInfo, params, almgr, _
-                        sb, SQLGenerator, selOS, Nothing, ctx, [from], _
+                    Query.Database.DbQueryExecutor.FormTypeTables(MappingEngine, ContextInfo, params, almgr,
+                        sb, SQLGenerator, selOS, Nothing, ctx, [from],
                         True, Nothing, Nothing)
 
                     Dim prd As New Criteria.PredicateLink
 
-                    Query.Database.DbQueryExecutor.FormJoins(MappingEngine, ContextInfo, Nothing, params, _
+                    Query.Database.DbQueryExecutor.FormJoins(MappingEngine, ContextInfo, Nothing, params,
                         [from], js, almgr, sb, SQLGenerator, ctx, Nothing, prd, selOS)
 
                     c.AddFilter(prd.Filter)
@@ -1336,10 +1336,13 @@ l1:
                     selSb.Append("select ")
                     For Each lt As KeyValuePair(Of EntityUnion, LoadTypeDescriptor) In selDic
                         Dim tt As Type = lt.Key.GetRealType(MappingEngine)
-                        selSb.Append(BinaryExpressionBase.CreateFromEnumerable(lt.Value.Properties2Load).MakeStatement( _
-                             MappingEngine, Nothing, StmtGenerator, params, almgr, ContextInfo, MakeStatementMode.Select Or MakeStatementMode.AddColumnAlias, _
-                             New ExecutorCtx(tt, lt.Value.EntitySchema)))
-                        selSb.Append(",")
+                        Dim stmt = BinaryExpressionBase.CreateFromEnumerable(lt.Value.Properties2Load).MakeStatement(
+                             MappingEngine, Nothing, StmtGenerator, params, almgr, ContextInfo, MakeStatementMode.Select Or MakeStatementMode.AddColumnAlias,
+                             New ExecutorCtx(tt, lt.Value.EntitySchema))
+                        If Not String.IsNullOrEmpty(stmt) Then
+                            selSb.Append(stmt)
+                            selSb.Append(",")
+                        End If
                     Next
                     selSb.Length -= 1
                     selSb.Append(" from ")
@@ -1364,13 +1367,13 @@ l1:
                                 End If
 
                                 Dim cnt As Integer = LoadEntityAndParents(selDic, selOS, ec,
-                                    Function(_obj As Object, _
-                                        _selectList As IList(Of SelectExpression), _
-                                        _entityDictionary As IDictionary, _
+                                    Function(_obj As Object,
+                                        _selectList As IList(Of SelectExpression),
+                                        _entityDictionary As IDictionary,
                                         _modificationSync As Boolean,
-                                        ByRef _lock As IDisposable, _
+                                        ByRef _lock As IDisposable,
                                         _oschema As IEntitySchema,
-                                        _propertyMap As Collections.IndexedCollection(Of String, MapField2Column), _
+                                        _propertyMap As Collections.IndexedCollection(Of String, MapField2Column),
                                         _rownum As Integer,
                                         _baseIdx As Integer)
 
@@ -1770,8 +1773,8 @@ l1:
 
         'End Sub
 
-        Protected Friend Sub LoadMultipleObjects(ByVal createType As Type, _
-            ByVal cmd As System.Data.Common.DbCommand, _
+        Protected Friend Sub LoadMultipleObjects(ByVal createType As Type,
+            ByVal cmd As System.Data.Common.DbCommand,
             ByVal values As IList, ByVal selectList As List(Of SelectExpression))
 
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
@@ -1791,15 +1794,15 @@ l1:
 
             Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI4.MakeGenericMethod(New Type() {createType})
 
-            mi_real.Invoke(Me, flags, Nothing, _
+            mi_real.Invoke(Me, flags, Nothing,
                 New Object() {cmd, values, selectList}, Nothing)
 
         End Sub
 
-        Public Sub QueryObjects(ByVal createType As Type, _
-            ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal values As IList, ByVal selectList As Generic.List(Of SelectExpression), _
-            ByVal oschema As IEntitySchema, _
+        Public Sub QueryObjects(ByVal createType As Type,
+            ByVal cmd As System.Data.Common.DbCommand,
+            ByVal values As IList, ByVal selectList As Generic.List(Of SelectExpression),
+            ByVal oschema As IEntitySchema,
             ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
             'Dim ltg As Type = GetType(IList(Of ))
             'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
@@ -1820,7 +1823,7 @@ l1:
 
             Dim mi_real As Reflection.MethodInfo = _QueryObjectsMethodInfo.MakeGenericMethod(New Type() {createType})
 
-            mi_real.Invoke(Me, flags, Nothing, _
+            mi_real.Invoke(Me, flags, Nothing,
                 New Object() {cmd, values, selectList, oschema, fields_idx}, Nothing)
 
         End Sub
@@ -1838,9 +1841,9 @@ l1:
         '                       oschema, fields_idx)
         'End Sub
 
-        Protected Friend Sub LoadMultipleObjects(Of T As New)( _
-            ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal values As IList, _
+        Protected Friend Sub LoadMultipleObjects(Of T As New)(
+            ByVal cmd As System.Data.Common.DbCommand,
+            ByVal values As IList,
             ByVal selectList As List(Of SelectExpression))
 
             Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(GetType(T))
@@ -1849,11 +1852,11 @@ l1:
             QueryObjects(Of T)(cmd, values, selectList, oschema, fields_idx)
         End Sub
 
-        Public Sub QueryMultiTypeObjects( _
-            ByVal createType As Dictionary(Of EntityUnion, EntityUnion), _
-            ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal values As List(Of ReadOnlyCollection(Of _IEntity)), _
-            ByVal types As IDictionary(Of EntityUnion, IEntitySchema), _
+        Public Sub QueryMultiTypeObjects(
+            ByVal createType As Dictionary(Of EntityUnion, EntityUnion),
+            ByVal cmd As System.Data.Common.DbCommand,
+            ByVal values As List(Of ReadOnlyCollection(Of _IEntity)),
+            ByVal types As IDictionary(Of EntityUnion, IEntitySchema),
             ByVal selectList As IList(Of SelectExpression))
 
             If StmtGenerator.IncludeCallStack Then
@@ -1913,7 +1916,7 @@ l1:
                                              ByRef loaded As Integer)
 
             Dim odic As New Specialized.OrderedDictionary '(Of ObjectSource, _IEntity)
-            Dim dfac As New Dictionary(Of EntityUnion, List(Of Pair(Of String, IEnumerable(Of PKDesc))))
+            Dim dfac As New Dictionary(Of EntityUnion, List(Of Pair(Of String, IPKDesc)))
             Dim loadedPKs As New Dictionary(Of EntityUnion, Integer)
             Dim loadedProps As New Dictionary(Of EntityUnion, Integer)
 
@@ -1965,9 +1968,6 @@ l1:
                             odic.Add(os, p)
                         End If
 
-                        'Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
-                        Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
-
                         Dim fv As IStorageValueConverter = TryCast(obj, IStorageValueConverter)
 
                         obj.BeginLoading()
@@ -2007,7 +2007,7 @@ l1:
                             End If
 
                             If m.OptimizedSetValue Is Nothing OrElse m.OptimizedSetValue Is MapField2Column.EmptyOptimizedSetValue Then
-                                ObjectMappingEngine.SetPK(obj, {New PKDesc2(col, value, pi)}, oschema)
+                                ObjectMappingEngine.SetPK(obj, {New PKDesc2(col, value, pi)}, oschema, propertyAlias)
                             Else
                                 m.OptimizedSetValue(obj, value)
                             End If
@@ -2060,13 +2060,19 @@ l1:
                                     pk.svo(obj, pk.Value)
                                 Next
                             Else
-                                ObjectMappingEngine.SetPK(obj, pks, oschema)
+                                ObjectMappingEngine.SetPK(obj, pks, oschema, propertyAlias)
                             End If
 
                             loadedPKs(os) = m.SourceFields.Count
                         End If
 
-                        If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+                        Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
+                        If ce IsNot Nothing Then
+                            ce.PKLoaded(loadedPKs(os), oschema)
+                        Else
+                            Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
+                            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+                        End If
 
                         obj.EndLoading()
 
@@ -2075,7 +2081,7 @@ l1:
                         odic.Add(os, p)
                     End If
 
-                    Exit For
+                    'Exit For
                 End If
             Next
 
@@ -2154,9 +2160,9 @@ l1:
 
                     Dim obj As _IEntity = CType(odic(os), Pair(Of _IEntity)).Second
                     If obj IsNot Nothing AndAlso Not ex.Contains(obj) Then
-                        Dim fac As List(Of Pair(Of String, IEnumerable(Of PKDesc))) = Nothing
+                        Dim fac As List(Of Pair(Of String, IPKDesc)) = Nothing
                         If Not dfac.TryGetValue(os, fac) Then
-                            fac = New List(Of Pair(Of String, IEnumerable(Of PKDesc)))
+                            fac = New List(Of Pair(Of String, IPKDesc))
                             dfac.Add(os, fac)
                         End If
 
@@ -2176,44 +2182,45 @@ l1:
 
                         'Dim pi As Reflection.PropertyInfo = m.PropertyInfo
 
-                        Dim sv(m.SourceFields.Count - 1) As PKDesc
+                        Dim sv(m.SourceFields.Count - 1) As ColumnValue
 
                         For k As Integer = 0 To sv.Length - 1
-                                Dim value As Object = dr.GetValue(i + k)
-                                Dim fldNull = dr.IsDBNull(i + k)
+                            Dim value As Object = dr.GetValue(i + k)
+                            Dim fldNull = dr.IsDBNull(i + k)
 
-                                Dim sf = m.SourceFields(k)
+                            Dim sf = m.SourceFields(k)
 
-                                If fv IsNot Nothing Then
-                                    value = fv.CreateValue(oschema, m, propertyAlias, sf.SourceFieldExpression, value)
-                                End If
+                            If fv IsNot Nothing Then
+                                value = fv.CreateValue(oschema, m, propertyAlias, sf.SourceFieldExpression, value)
+                            End If
 
-                                Dim pi = sf.PropertyInfo
+                            Dim pi = If(sf.PropertyInfo, m.PropertyInfo)
 
-                                If pi Is Nothing Then
-                                Else
-                                    If sf.Converter Is Nothing Then
-                                        If pi.PropertyType Is value.GetType Then
-                                            sf.Converter = MapField2Column.EmptyConverter
-                                        Else
-                                            sf.Converter = Converters.GetConverter(pi.PropertyType, value.GetType)
-                                        End If
-                                    End If
-
-                                    If sf.Converter IsNot MapField2Column.EmptyConverter Then
-                                        value = sf.Converter(pi.PropertyType, value.GetType, value)
+                            If pi Is Nothing Then
+                            Else
+                                Dim cc = If(TryCast(sf, ICacheConverter), TryCast(m, ICacheConverter))
+                                If cc.Converter Is Nothing Then
+                                    If pi.PropertyType Is value.GetType Then
+                                        cc.Converter = MapField2Column.EmptyConverter
+                                    Else
+                                        cc.Converter = Converters.GetConverter(pi.PropertyType, value.GetType)
                                     End If
                                 End If
 
-                                If Not fldNull Then
-                                    sv(k) = New PKDesc(sf.SourceFieldExpression, value)
+                                If cc.Converter IsNot MapField2Column.EmptyConverter Then
+                                    value = cc.Converter(pi.PropertyType, value.GetType, value)
                                 End If
+                            End If
+
+                            If Not fldNull Then
+                                sv(k) = New ColumnValue(sf.SourceFieldExpression, value)
+                            End If
 #If TRACELOADING Then
                         If Not obj.IsLoading Then
                             Throw New OrmManagerException("object is not in loading: [STACK]" & CType(obj, Entity)._lstack & "[/STACK][ESTACK]" & CType(obj, Entity)._estack & "[/ESTACK]")
                         End If
 #End If
-                            Next
+                        Next
 
 
                         If m.OptimizedSetValue Is Nothing Then
@@ -2259,13 +2266,15 @@ l1:
                 If obj IsNot Nothing Then
 
                     Dim os As EntityUnion = CType(de.Key, EntityUnion)
-                    Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
+                    'Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
                     Dim oschema As IEntitySchema = types(os)
                     'Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
 
-                    If ll IsNot Nothing Then
-                        CheckIsAllLoaded(ll, MappingEngine, loadedProps(os) + loadedPKs(os), oschema.GetAutoLoadFields)
-                    End If
+                    'If ll IsNot Nothing Then
+                    Dim propsCnt As Integer = 0
+                    loadedProps.TryGetValue(os, propsCnt)
+                    CheckIsAllLoaded(obj, MappingEngine, propsCnt + loadedPKs(os), oschema.GetAutoLoadFields)
+                    'End If
 
                     RaiseObjectLoaded(obj)
 
@@ -2628,7 +2637,7 @@ l1:
             Dim original_type As Type = obj.GetType
             Dim fv As IStorageValueConverter = TryCast(obj, IStorageValueConverter)
             'Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
-            Dim fac As New List(Of Pair(Of String, IEnumerable(Of PKDesc)))
+            Dim fac As New List(Of Pair(Of String, IPKDesc))
             Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
             Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
             Dim svo = TryCast(oschema, IOptimizeSetValue)
@@ -2637,7 +2646,7 @@ l1:
                 Dim pk_count As Integer = 0
                 'Dim pi_cache(selectList.Count - 1) As Reflection.PropertyInfo
                 'Dim attrs(selectList.Count - 1) As Field2DbRelations
-                Dim oldpk As IEnumerable(Of PKDesc) = Nothing
+                Dim oldpk As IPKDesc = Nothing
                 If ce IsNot Nothing AndAlso modificationSync Then oldpk = ce.GetPKValues(Nothing)
                 Dim d As IDisposable = New BlankSyncHelper(Nothing)
                 If entity IsNot Nothing Then
@@ -2686,15 +2695,6 @@ l2:
                                 End If
                             End If
 
-                            If attr = Field2DbRelations.None Then
-                                attr = se.Attributes
-                            End If
-
-                            If attr = Field2DbRelations.None AndAlso m IsNot Nothing Then
-                                attr = m.Attributes
-                            End If
-                            se._realAtt = attr
-
                             If m Is Nothing Then
                                 'Dim lp As List(Of EntityPropertyAttribute) = ObjectMappingEngine.GetMappedProperties(original_type, _schema.Version, True, True)
                                 'Dim ep As EntityPropertyAttribute = lp.Find(Function(item) item.PropertyAlias = propertyAlias)
@@ -2707,6 +2707,15 @@ l2:
                             End If
                             se._m = m
                         End If
+
+                        If attr = Field2DbRelations.None Then
+                            attr = se.Attributes
+                        End If
+
+                        If attr = Field2DbRelations.None AndAlso m IsNot Nothing Then
+                            attr = m.Attributes
+                        End If
+                        se._realAtt = attr
 
                         If pk OrElse (attr And Field2DbRelations.PK) = Field2DbRelations.PK Then
                             If se.CorrectFieldIndex AndAlso TypeOf se.Expression Is TableExpression Then
@@ -2764,7 +2773,7 @@ l2:
                                 End If
 
                                 If m.OptimizedSetValue Is Nothing OrElse m.OptimizedSetValue Is MapField2Column.EmptyOptimizedSetValue Then
-                                    ObjectMappingEngine.SetPK(obj, {New PKDesc2(col, value, pi)}, oschema)
+                                    ObjectMappingEngine.SetPK(obj, {New PKDesc2(col, value, pi)}, oschema, propertyAlias)
                                 Else
                                     m.OptimizedSetValue(obj, value)
                                 End If
@@ -2833,13 +2842,13 @@ l2:
                                         pkasd.svo(obj, pkasd.Value)
                                     Next
                                 Else
-                                    ObjectMappingEngine.SetPK(obj, pks, oschema)
+                                    ObjectMappingEngine.SetPK(obj, pks, oschema, propertyAlias)
                                 End If
                             End If
 
                             If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
 
-                            Exit For
+                            'Exit For
                         End If
                     Next
                 End Using
@@ -2974,12 +2983,16 @@ l2:
                                 End If
                             End If
 
-                            Dim sv(If(m?.SourceFields.Count, 1) - 1) As PKDesc
+                            Dim sv(If(m?.SourceFields?.Count, 1) - 1) As ColumnValue
                             'Dim isNull As Boolean = True
                             For k As Integer = 0 To sv.Length - 1
                                 Dim value As Object = Nothing
                                 Dim fldNull = False
-                                Dim sf = m?.SourceFields(k)
+                                Dim sf As SourceField = Nothing
+                                If m?.SourceFields?.Count > k Then
+                                    sf = m?.SourceFields(k)
+                                End If
+
                                 If _rsThreads > 1 Then
                                     If parallel Then
                                         'SyncLock dr.LockObject
@@ -2999,25 +3012,25 @@ l2:
                                     value = fv.CreateValue(oschema, m, propertyAlias, If(sf?.SourceFieldExpression, dr.GetName(idx)), value)
                                 End If
 
-                                Dim pi = sf?.PropertyInfo
-
+                                Dim pi = If(sf?.PropertyInfo, m.PropertyInfo)
                                 If pi Is Nothing Then
                                 Else
-                                    If sf.Converter Is Nothing Then
+                                    Dim cc = If(TryCast(sf, ICacheConverter), TryCast(m, ICacheConverter))
+                                    If cc.Converter Is Nothing Then
                                         If pi.PropertyType Is value.GetType Then
-                                            sf.Converter = MapField2Column.EmptyConverter
+                                            cc.Converter = MapField2Column.EmptyConverter
                                         Else
-                                            sf.Converter = Converters.GetConverter(pi.PropertyType, value.GetType)
+                                            cc.Converter = Converters.GetConverter(pi.PropertyType, value.GetType)
                                         End If
                                     End If
 
-                                    If sf.Converter IsNot MapField2Column.EmptyConverter Then
-                                        value = sf.Converter(pi.PropertyType, value.GetType, value)
+                                    If cc.Converter IsNot MapField2Column.EmptyConverter Then
+                                        value = cc.Converter(pi.PropertyType, value.GetType, value)
                                     End If
                                 End If
 
                                 If Not fldNull Then
-                                    sv(k) = New PKDesc(If(sf?.SourceFieldExpression, dr.GetName(idx)), value)
+                                    sv(k) = New ColumnValue(If(sf?.SourceFieldExpression, dr.GetName(idx)), value)
                                 End If
 
                                 'If String.IsNullOrEmpty(propertyAlias) Then
@@ -3077,9 +3090,9 @@ l2:
                 End If
             End Try
 
-            If ll IsNot Nothing Then
-                CheckIsAllLoaded(ll, MappingEngine, selectList.Count, propertyMap)
-            End If
+            'If ll IsNot Nothing Then
+            CheckIsAllLoaded(entity, MappingEngine, selectList.Count, propertyMap)
+            'End If
 
             If entity IsNot Nothing Then RaiseObjectLoaded(entity)
             Return obj
@@ -3560,7 +3573,7 @@ l2:
         'End Function
 
 #Region " GetFilters "
-        Friend Function GetFilters(ByVal predicates As Generic.List(Of Criteria.PredicateLink), _
+        Friend Function GetFilters(ByVal predicates As Generic.List(Of Criteria.PredicateLink),
             ByVal almgr As IPrepareTable, ByVal params As ICreateParam) As Generic.IEnumerable(Of Pair(Of String, Integer))
 
             Dim sb As New StringBuilder
@@ -3584,7 +3597,7 @@ l2:
             Return l
         End Function
 
-        Friend Function GetFilters(ByVal ids As Generic.List(Of Object), ByVal f As FieldReference, _
+        Friend Function GetFilters(ByVal ids As Generic.List(Of Object), ByVal f As FieldReference,
             ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal idsSorted As Boolean) As Generic.IEnumerable(Of Pair(Of String, Integer))
 
             If f.Column IsNot Nothing Then
@@ -3594,7 +3607,7 @@ l2:
             End If
         End Function
 
-        Protected Function GetFilters(ByVal ids_ As Generic.List(Of Object), ByVal op As ObjectProperty, _
+        Protected Function GetFilters(ByVal ids_ As Generic.List(Of Object), ByVal op As ObjectProperty,
             ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal idsSorted As Boolean) As Generic.IEnumerable(Of Pair(Of String, Integer))
 
             Dim mr As MergeResult = Nothing
@@ -3682,7 +3695,7 @@ l2:
             Return l
         End Function
 
-        Protected Function GetFilters(ByVal ids_ As Generic.List(Of Object), ByVal table As SourceFragment, ByVal column As String, _
+        Protected Function GetFilters(ByVal ids_ As Generic.List(Of Object), ByVal table As SourceFragment, ByVal column As String,
             ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal idsSorted As Boolean) As Generic.IEnumerable(Of Pair(Of String, Integer))
 
             Dim mr As MergeResult = Nothing
@@ -4329,7 +4342,7 @@ l2:
             End Get
         End Property
 
-        Protected Friend Function QueryM2M(Of ReturnType As {ISinglePKEntity, New})(ByVal t As Type, _
+        Protected Friend Function QueryM2M(Of ReturnType As {ISinglePKEntity, New})(ByVal t As Type,
             ByVal cmd As System.Data.Common.DbCommand, ByVal withLoad As Boolean) As ReadonlyMatrix
 
             Dim v As New List(Of ReadOnlyCollection(Of _IEntity))
@@ -4419,9 +4432,9 @@ l2:
             Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(original_type)
 
             Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
-            Dim pks As IEnumerable(Of PKDesc) = obj.GetPKValues(oschema)
+            Dim pks As IPKDesc = obj.GetPKValues(oschema)
 
-            For Each p As PKDesc In pks
+            For Each p In pks
                 c.AddFilter(New cc.TableFilter(oschema.Table, p.Column, New ScalarValue(p.Value), Worm.Criteria.FilterOperation.Equal))
             Next
             Dim filter As IFilter = c.Condition
@@ -4590,13 +4603,13 @@ l2:
                 sb.Insert(0, selSb.ToString)
 
                 Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
-                Dim pks As IEnumerable(Of PKDesc) = obj.GetPKValues(oschema)
+                Dim pks = obj.GetPKValues(oschema)
 
                 If pks.Count = 0 Then
                     Throw New OrmManagerException(String.Format("Entity {0} has no primary key", original_type))
                 End If
 
-                For Each pk As PKDesc In pks
+                For Each pk In pks
                     c.AddFilter(New cc.TableFilter(oschema.Table, pk.Column, New ScalarValue(pk.Value), Worm.Criteria.FilterOperation.Equal))
                 Next
                 SQLGenerator.AppendWhere(MappingEngine, original_type, c.Condition, almgr, sb, ContextInfo, params)

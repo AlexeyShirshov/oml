@@ -151,7 +151,7 @@ Namespace Entities
 
     Public Interface _ICachedEntity
         Inherits ICachedEntity
-        'Overloads Sub Init(ByVal pk As IEnumerable(Of PKDesc), ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
+        'Overloads Sub Init(ByVal pk As IPKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Sub PKLoaded(ByVal pkCount As Integer, oschema As IPropertyMap)
         Sub PKLoaded(ByVal pkCount As Integer, propertyAlias As String)
         ReadOnly Property IsPKLoaded() As Boolean
@@ -172,8 +172,8 @@ Namespace Entities
     End Interface
 
     Public Interface IOptimizePK
-        Function GetPKValues() As IEnumerable(Of PKDesc)
-        Sub SetPK(ByVal pk As IEnumerable(Of PKDesc))
+        Function GetPKValues() As IPKDesc
+        Sub SetPK(ByVal pk As IPKDesc)
     End Interface
 
     Public Interface ICopyProperties
@@ -206,7 +206,6 @@ Namespace Entities
         Sub RaiseUpdated(ByVal args As EventArgs)
         Sub RaiseChangesRejected(args As EventArgs)
     End Interface
-
     Public Interface ICachedEntityEx
         Inherits ICachedEntity, System.Xml.Serialization.IXmlSerializable
 
@@ -217,8 +216,8 @@ Namespace Entities
     End Interface
 
     Public Interface IEntityFactory
-        Function CreateContainingEntity(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal values As IEnumerable(Of PKDesc)) As Object
-        Function ExtractValues(mpe As ObjectMappingEngine, oschema As IEntitySchema, ByVal propertyAlias As String) As IEnumerable(Of PKDesc)
+        Function CreateContainingEntity(ByVal mgr As OrmManager, ByVal propertyAlias As String, ByVal values As IPKDesc) As Object
+        Function ExtractValues(mpe As ObjectMappingEngine, oschema As IEntitySchema, ByVal propertyAlias As String) As IPKDesc
     End Interface
 
     Public Interface IStorageValueConverter
@@ -281,7 +280,6 @@ Namespace Entities
         'Function Find(Of T As {New, IOrmBase})() As Worm.Query.QueryCmdBase
         'Function Find(Of T As {New, IOrmBase})(ByVal key As String) As Worm.Query.QueryCmdBase
     End Interface
-
     Public Interface _ISinglePKEntity
         Inherits ISinglePKEntity
 
@@ -401,14 +399,14 @@ Namespace Entities
     Public Class PKWrapper
         Implements IKeyProvider
 
-        Private ReadOnly _id As IEnumerable(Of PKDesc)
+        Private ReadOnly _id As IPKDesc
         Private _str As String
 
         ''' <summary>
         ''' Инициализация объекта
         ''' </summary>
         ''' <param name="pk">Массив полей и значений</param>
-        Public Sub New(ByVal pk As IEnumerable(Of PKDesc))
+        Public Sub New(ByVal pk As IPKDesc)
             _id = pk
         End Sub
 
@@ -425,13 +423,13 @@ Namespace Entities
                 Return False
             End If
 
-            Dim ids As IEnumerable(Of PKDesc) = obj._id
+            Dim ids = obj._id
             If _id.Count <> ids.Count Then Return False
             For i As Integer = 0 To _id.Count - 1
-                Dim p As PKDesc = _id(i)
+                Dim p = _id(i)
                 Dim find As Boolean
                 For j As Integer = 0 To ids.Count - 1
-                    Dim p2 As PKDesc = ids(j)
+                    Dim p2 = ids(j)
                     If p.Column = p2.Column Then
                         If p.Value.GetType IsNot p2.Value.GetType Then
                             Dim o As Object = Nothing, o2 As Object = p.Value
@@ -467,7 +465,7 @@ Namespace Entities
         Public Overrides Function ToString() As String
             If String.IsNullOrEmpty(_str) Then
                 Dim sb As New StringBuilder
-                For Each pk As PKDesc In _id
+                For Each pk In _id
                     sb.Append(pk.Column).Append(" = ").Append(pk.Value)
                 Next
                 _str = sb.ToString
@@ -487,7 +485,7 @@ Namespace Entities
             End Get
         End Property
 
-        Public Function GetPKs() As IEnumerable(Of PKDesc)
+        Public Function GetPKs() As IPKDesc
             Return _id
         End Function
     End Class

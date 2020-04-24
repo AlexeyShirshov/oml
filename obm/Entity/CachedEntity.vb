@@ -96,7 +96,7 @@ Namespace Entities
                     Dim dt As Type = _dst.GetType
                     Dim mpe As ObjectMappingEngine = mgr.MappingEngine
                     Dim oschema As IEntitySchema = mpe.GetEntitySchema(dt)
-                    Dim pk As Boolean, pk_old As IEnumerable(Of PKDesc) = _dst.GetPKValues(oschema)
+                    Dim pk As Boolean, pk_old = _dst.GetPKValues(oschema)
                     For i As Integer = 0 To _srcProps.Length - 1
                         Dim srcProp As String = _srcProps(i)
                         Dim dstProp As String = _dstProps(i)
@@ -334,7 +334,7 @@ Namespace Entities
 
         Protected Overridable Function GetCacheKey() As Integer
             Dim r As Integer
-            For Each pk As PKDesc In Me.GetPKValues(Nothing)
+            For Each pk In Me.GetPKValues(Nothing)
                 r = r Xor pk.Value.GetHashCode
             Next
             Return r
@@ -748,6 +748,7 @@ Namespace Entities
 
             CType(Me, _IEntity).BeginLoading()
 
+            Dim propCnt = 0
             Using mc As IGetManager = GetMgr()
                 Dim mpe As ObjectMappingEngine = mc.Manager.MappingEngine
                 Dim oschema As IEntitySchema = GetEntitySchema(mpe)
@@ -756,11 +757,12 @@ Namespace Entities
                 With reader
 l1:
                     If .NodeType = XmlNodeType.Element AndAlso .Name = t.Name Then
-                        ReadValues(mc.Manager, reader, oschema, mpe)
+                        propCnt = ReadValues(mc.Manager, reader, oschema, mpe)
                         Do While .Read
                             Select Case .NodeType
                                 Case XmlNodeType.Element
                                     ReadValue(mc.Manager, .Name, reader, map, oschema)
+                                    propCnt += 1
                                 Case XmlNodeType.EndElement
                                     If .Name = t.Name Then Exit Do
                             End Select
@@ -779,12 +781,12 @@ l1:
 
                 CType(Me, _IEntity).EndLoading()
 
-                If mpe IsNot Nothing Then
-                    Dim ll As IPropertyLazyLoad = TryCast(Me, IPropertyLazyLoad)
-                    If ll IsNot Nothing Then
-                        OrmManager.CheckIsAllLoaded(ll, mpe, Integer.MaxValue, oschema.GetAutoLoadFields)
-                    End If
-                End If
+                'If mpe IsNot Nothing Then
+                '    Dim ll As IPropertyLazyLoad = TryCast(Me, IPropertyLazyLoad)
+                '    If ll IsNot Nothing Then
+                OrmManager.CheckIsAllLoaded(Me, mpe, propCnt, oschema.GetAutoLoadFields)
+                '    End If
+                'End If
             End Using
         End Sub
 
@@ -795,7 +797,7 @@ l1:
                 Dim oschema As IEntitySchema = GetEntitySchema(mpe)
                 Dim elems As New Generic.List(Of Pair(Of String, Object))
                 Dim xmls As New Generic.List(Of Pair(Of String, String))
-                Dim objs As New List(Of Pair(Of String, IEnumerable(Of PKDesc)))
+                Dim objs As New List(Of Pair(Of String, IPKDesc))
 
                 For Each m As MapField2Column In oschema.FieldColumnMap
                     Dim pi As Reflection.PropertyInfo = m.PropertyInfo
@@ -807,9 +809,9 @@ l1:
                             If GetType(ICachedEntity).IsAssignableFrom(tt) Then
                                 '.WriteAttributeString(c.FieldName, CType(v, ICachedEntity).Identifier.ToString)
                                 If v IsNot Nothing Then
-                                    objs.Add(New Pair(Of String, IEnumerable(Of PKDesc))(propertyAlias, CType(v, _ICachedEntity).GetPKValues(Nothing)))
+                                    objs.Add(New Pair(Of String, IPKDesc)(propertyAlias, CType(v, _ICachedEntity).GetPKValues(Nothing)))
                                 Else
-                                    objs.Add(New Pair(Of String, IEnumerable(Of PKDesc))(propertyAlias, Nothing))
+                                    objs.Add(New Pair(Of String, IPKDesc)(propertyAlias, Nothing))
                                 End If
                             ElseIf tt.IsArray Then
                                 elems.Add(New Pair(Of String, Object)(propertyAlias, pi.GetValue(Me, Nothing)))
@@ -845,10 +847,10 @@ l1:
                     .WriteEndElement()
                 Next
 
-                For Each p As Pair(Of String, IEnumerable(Of PKDesc)) In objs
+                For Each p As Pair(Of String, IPKDesc) In objs
                     .WriteStartElement(p.First)
                     If p.Second IsNot Nothing Then
-                        For Each pk As PKDesc In p.Second
+                        For Each pk In p.Second
                             .WriteStartElement("pk")
                             'Dim v As String = "xxx:nil"
                             'If pk.Second IsNot Nothing Then
@@ -883,7 +885,7 @@ l1:
                     SetLoaded(propertyAlias, True)
                 Case XmlNodeType.Element
                     Dim o As Object = Nothing
-                    Dim pk() As PKDesc = GetPKs(reader)
+                    Dim pk = GetPKs(reader)
                     If m.IsFactory Then
                         Dim f As IEntityFactory = TryCast(Me, IEntityFactory)
                         If f IsNot Nothing Then
@@ -909,31 +911,31 @@ l1:
             End Select
         End Sub
 
-        Private Function GetPKs(ByVal reader As XmlReader) As PKDesc()
-            Dim l As New List(Of PKDesc)
+        Private Function GetPKs(ByVal reader As XmlReader) As IPKDesc
+            Dim l As New PKDesc
             Do
                 If reader.NodeType = XmlNodeType.Element AndAlso reader.Name = "pk" Then
                     reader.MoveToFirstAttribute()
                     Do
                         'Dim v As String = reader.Value
                         'If v = "xxx:nil" Then v = Nothing
-                        l.Add(New PKDesc(reader.Name, reader.Value))
+                        l.Add(New ColumnValue(reader.Name, reader.Value))
                     Loop While reader.MoveToNextAttribute
                 End If
                 reader.Read()
             Loop Until reader.NodeType = XmlNodeType.EndElement
-            Return l.ToArray
+            Return l
         End Function
 
-        Protected Sub ReadValues(ByVal mgr As OrmManager, ByVal reader As XmlReader,
-            ByVal oschema As IEntitySchema, ByVal mpe As ObjectMappingEngine)
+        Protected Function ReadValues(ByVal mgr As OrmManager, ByVal reader As XmlReader, ByVal oschema As IEntitySchema, ByVal mpe As ObjectMappingEngine) As Integer
+            Dim pk_count = 0
+            Dim propCount = 0
+
             With reader
                 .MoveToFirstAttribute()
                 Dim t As Type = Me.GetType
                 Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
                 Dim fv As IStorageValueConverter = TryCast(Me, IStorageValueConverter)
-                Dim pk_count As Integer
-
                 Do
                     Dim m As MapField2Column = map(.Name)
                     Dim pi As Reflection.PropertyInfo = m.PropertyInfo
@@ -961,7 +963,7 @@ l1:
                     'Using mc As IGetManager = GetMgr()
                     Dim c As OrmCache = TryCast(mgr.Cache, OrmCache)
                     If c IsNot Nothing AndAlso c.IsDeleted(Me) Then
-                        Return
+                        Return pk_count
                     End If
 
                     If ObjectState = ObjectState.Created Then
@@ -973,7 +975,7 @@ l1:
                         'End Using
 
                         If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
-                            Return
+                            Return pk_count
                         End If
 
                         obj.BeginLoading()
@@ -1014,6 +1016,7 @@ l1:
                             If pi IsNot Nothing Then
                                 pi.SetValue(obj, v, Nothing)
                                 SetLoaded(.Name, True)
+                                propCount += 1
                                 If v IsNot Nothing Then
                                     v.SetCreateManager(CreateManager)
                                     'RaiseObjectLoaded(v)
@@ -1026,6 +1029,7 @@ l1:
                             If pi IsNot Nothing Then
                                 pi.SetValue(obj, v, Nothing)
                                 SetLoaded(.Name, True)
+                                propCount += 1
                             End If
                         End If
 
@@ -1035,7 +1039,9 @@ l1:
                     End If
                 Loop While .MoveToNextAttribute
             End With
-        End Sub
+
+            Return pk_count + propCount
+        End Function
 
 #End Region
 
@@ -1578,10 +1584,10 @@ l1:
             If Me.GetType IsNot obj.GetType Then
                 Return False
             End If
-            Dim pks As IEnumerable(Of PKDesc) = Me.GetPKValues(Nothing)
-            Dim pks2 As IEnumerable(Of PKDesc) = obj.GetPKValues(Nothing)
+            Dim pks = Me.GetPKValues(Nothing)
+            Dim pks2 = obj.GetPKValues(Nothing)
             For i As Integer = 0 To pks.Count - 1
-                Dim pk As PKDesc = pks(i)
+                Dim pk = pks(i)
                 If pk.Column <> pks2(i).Column OrElse Not Object.Equals(pk.Value, pks2(i).Value) Then
                     Return False
                 End If
@@ -1694,7 +1700,7 @@ l1:
                 If String.IsNullOrEmpty(_us) Then
                     If Not IsPKLoaded Then Throw New OrmObjectException(String.Format("Entity of type {0} has no primary key", Me.GetType))
                     Dim r As New StringBuilder
-                    For Each pk As PKDesc In Me.GetPKValues(Nothing)
+                    For Each pk In Me.GetPKValues(Nothing)
                         r.Append(pk.Column).Append(":").Append(pk.Value.ToString).Append(",")
                     Next
                     _us = r.ToString

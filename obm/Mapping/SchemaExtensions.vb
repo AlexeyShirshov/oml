@@ -6,7 +6,7 @@ Imports System.Linq
 Namespace Entities.Meta
     Public Module SchemaExtensions
         <Extension>
-        Public Function GetPKs(ByVal obj As Object, Optional mpe As ObjectMappingEngine = Nothing) As IEnumerable(Of PKDesc)
+        Public Function GetPKs(ByVal obj As Object, Optional mpe As ObjectMappingEngine = Nothing) As IPKDesc
             Dim op As IOptimizePK = TryCast(obj, IOptimizePK)
             If op IsNot Nothing Then
                 Return op.GetPKValues()
@@ -18,22 +18,24 @@ Namespace Entities.Meta
                 End If
 
                 If oschema IsNot Nothing Then
-                    Dim l As New List(Of PKDesc)
+                    Dim l As New PKDesc
 
                     Dim pk = oschema.GetPK
-
-                    For Each sf In pk.SourceFields
-                        l.Add(New PKDesc(sf.SourceFieldExpression, ObjectMappingEngine.GetPropertyValue(obj, MakePKName(pk.PropertyAlias, sf.SourceFieldExpression), oschema, sf.PropertyInfo)))
-                    Next
-
+                    If pk.SourceFields.Count > 1 Then
+                        For Each sf In pk.SourceFields
+                            l.Add(New ColumnValue(sf.SourceFieldExpression, ObjectMappingEngine.GetPropertyValue(obj, MakePKName(pk.PropertyAlias, sf.SourceFieldExpression), oschema, sf.PropertyInfo)))
+                        Next
+                    Else
+                        l.Add(New ColumnValue(pk.SourceFields(0).SourceFieldExpression, ObjectMappingEngine.GetPropertyValue(obj, pk.PropertyAlias, oschema, pk.PropertyInfo)))
+                    End If
                     Return l
                 End If
             End If
 
-            Return {}
+            Return New PKDesc From {}
         End Function
         <Extension>
-        Public Function GetPKs(ByVal oschema As IEntitySchema, ByVal obj As Object) As IEnumerable(Of PKDesc)
+        Public Function GetPKs(ByVal oschema As IEntitySchema, ByVal obj As Object) As IPKDesc
             Dim op As IOptimizePK = TryCast(obj, IOptimizePK)
             If op IsNot Nothing Then
                 Return op.GetPKValues()
@@ -42,16 +44,16 @@ Namespace Entities.Meta
                     Throw New ArgumentNullException("oschema")
                 End If
 
-                Dim l As New List(Of PKDesc)
+                Dim l As New PKDesc
 
                 Dim pk = oschema.GetPK
 
                 If pk.SourceFields.Count > 1 Then
                     For Each sf In pk.SourceFields
-                        l.Add(New PKDesc(sf.SourceFieldExpression, ObjectMappingEngine.GetPropertyValue(obj, MakePKName(pk.PropertyAlias, sf.SourceFieldExpression), oschema, sf.PropertyInfo)))
+                        l.Add(New ColumnValue(sf.SourceFieldExpression, ObjectMappingEngine.GetPropertyValue(obj, MakePKName(pk.PropertyAlias, sf.SourceFieldExpression), oschema, sf.PropertyInfo)))
                     Next
                 Else
-                    l.Add(New PKDesc(pk.SourceFields(0).SourceFieldExpression, ObjectMappingEngine.GetPropertyValue(obj, pk.PropertyAlias, oschema, pk.PropertyInfo)))
+                    l.Add(New ColumnValue(pk.SourceFields(0).SourceFieldExpression, ObjectMappingEngine.GetPropertyValue(obj, pk.PropertyAlias, oschema, pk.PropertyInfo)))
                 End If
 
                 Return l
@@ -179,7 +181,7 @@ Namespace Entities.Meta
             If GetType(ISinglePKEntity).IsAssignableFrom(ot) Then
                 Return CType(o, SinglePKEntity).Identifier
             ElseIf GetType(ICachedEntity).IsAssignableFrom(ot) Then
-                Dim pks As IEnumerable(Of PKDesc) = CType(o, ICachedEntity).GetPKValues(s)
+                Dim pks = CType(o, ICachedEntity).GetPKValues(s)
                 If pks.Count <> 1 Then
                     Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", ot))
                 End If

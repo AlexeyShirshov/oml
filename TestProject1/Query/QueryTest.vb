@@ -1454,7 +1454,7 @@ Imports Worm.Expressions2
             Sub(sender As QueryCmd, args As QueryCmd.ConnectionExceptionArgs)
                 args.Action = QueryCmd.ConnectionExceptionArgs.ActionEnum.RetryNewConnection
                 Dim cb As New System.Data.SqlClient.SqlConnectionStringBuilder(CType(args.Connection, Data.SqlClient.SqlConnection).ConnectionString)
-                cb.DataSource = ".\sqlexpress"
+                cb.DataSource = "dev01"
                 args.Context = cb.ToString
             End Sub
 

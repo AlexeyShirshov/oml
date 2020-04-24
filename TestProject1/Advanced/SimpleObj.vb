@@ -81,7 +81,7 @@ Public Class SimpleObj2
 
     Private _s As SimpleObjWithoutLazyLoad
 
-    <EntityProperty("table1_id")> _
+    <SourceField("table1_id")>
     Public Property Obj1() As SimpleObjWithoutLazyLoad
         Get
             Using Read("Obj1")
@@ -129,7 +129,7 @@ Public Class SimpleObj3
 
     Private _s As SimpleObjWithoutLazyLoad
 
-    <EntityProperty("table1_id")> _
+    <SourceField("table1_id")>
     Public Property Obj1() As SimpleObjWithoutLazyLoad
         Get
             Return _s
@@ -169,7 +169,7 @@ Public Class SimpleObj4
 
     Private _s As Pod.cls4
 
-    <EntityProperty("table1_id")>
+    <SourceField("table1_id")>
     Public Property Obj1() As Pod.cls4
         Get
             Using Read("Obj1")

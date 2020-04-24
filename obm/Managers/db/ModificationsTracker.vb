@@ -2,6 +2,7 @@
 Imports System.Collections.Generic
 Imports Worm.Cache
 Imports Worm.Entities.Meta
+Imports System.Linq
 
 Namespace Database
     Public Class ModificationsTracker
@@ -318,7 +319,7 @@ Namespace Database
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
 
-            Dim pk() As PKDesc = NewObjectManager.GetPKForNewObject(GetType(T), _mgr.MappingEngine)
+            Dim pk = NewObjectManager.GetPKForNewObject(GetType(T), _mgr.MappingEngine)
             Return CloneNewObject(Of T)(pk, entity)
         End Function
 
@@ -331,14 +332,14 @@ Namespace Database
                 Throw New ArgumentNullException(NameOf(entity))
             End If
 
-            Dim pk() As PKDesc = NewObjectManager.GetPKForNewObject(entity.GetType, _mgr.MappingEngine)
+            Dim pk = NewObjectManager.GetPKForNewObject(entity.GetType, _mgr.MappingEngine)
 
             Dim o = entity.Clone(pk, Nothing)
             NewObjectManager.AddNew(o)
             Add(o)
             Return o
         End Function
-        Public Function CloneNewObject(Of T As {_ICachedEntity, New})(pk() As PKDesc, entity As T) As T
+        Public Function CloneNewObject(Of T As {_ICachedEntity, New})(pk As IPKDesc, entity As T) As T
             Dim o = entity.Clone(pk, Nothing)
             NewObjectManager.AddNew(o)
             Add(o)
@@ -359,11 +360,11 @@ Namespace Database
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
 
-            Dim pk() As PKDesc = NewObjectManager.GetPKForNewObject(GetType(T), _mgr.MappingEngine)
+            Dim pk = NewObjectManager.GetPKForNewObject(GetType(T), _mgr.MappingEngine)
             Return CreateNewObject(Of T)(pk)
         End Function
 
-        Public Overridable Function CreateNewObject(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc) As T
+        Public Overridable Function CreateNewObject(Of T As {_ICachedEntity, New})(ByVal pk As IPKDesc) As T
             If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If

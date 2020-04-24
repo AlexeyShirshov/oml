@@ -256,7 +256,7 @@ Namespace Xml
             Dim orm As _ICachedEntity = TryCast(obj, _ICachedEntity)
             Using obj.AcquareLock()
                 obj.BeginLoading()
-                Dim pk As IEnumerable(Of PKDesc) = orm.GetPKValues(oschema)
+                Dim pk = orm.GetPKValues(oschema)
                 If LoadPK(oschema, node, orm) Then
                     obj = CType(NormalizeObject(orm, dic, True, True, oschema), T)
                     If obj.ObjectState = ObjectState.Created Then
@@ -347,7 +347,7 @@ Namespace Xml
                     pkasd.svo(obj, pkasd.Value)
                 Next
             Else
-                ObjectMappingEngine.SetPK(obj, pks, oschema)
+                ObjectMappingEngine.SetPK(obj, pks, oschema, pk.PropertyAlias)
             End If
 
 
@@ -363,7 +363,7 @@ Namespace Xml
             Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
             For Each m As MapField2Column In map
                 If Not m.IsPK Then
-                    Dim l As New List(Of PKDesc)
+                    Dim l As New List(Of ColumnValue)
                     For Each sf In m.SourceFields
                         Dim attr As String = sf.SourceFieldExpression
                         Dim n As XPathNavigator = node.Clone
@@ -374,7 +374,7 @@ Namespace Xml
                                 Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                             End If
 
-                            l.Add(New PKDesc(sf.SourceFieldExpression, nodes.Current.Value))
+                            l.Add(New ColumnValue(sf.SourceFieldExpression, nodes.Current.Value))
 
                             'ObjectMappingEngine.SetPropertyValue(obj, m.PropertyAlias, nodes.Current.Value, oschema, m.PropertyInfo)
                             'If orm IsNot Nothing Then orm.SetLoaded(m.PropertyAlias, True, True, map, MappingEngine)
@@ -389,9 +389,9 @@ Namespace Xml
                 End If
             Next
 
-            If ll IsNot Nothing Then
-                Return CheckIsAllLoaded(ll, MappingEngine, cnt, map)
-            End If
+            'If ll IsNot Nothing Then
+            Return CheckIsAllLoaded(obj, MappingEngine, cnt, map)
+            'End If
 
             Return False
         End Function

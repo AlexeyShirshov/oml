@@ -77,7 +77,7 @@ Public Class TestManagerRS
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\wormtest.mdf"))
         Return New OrmReadOnlyDBManager("Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", schema, stmt, cache)
 #Else
-        Return New OrmReadOnlyDBManager("Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest", schema, stmt, cache)
+        Return New OrmReadOnlyDBManager("Server=dev01;Integrated security=true;Initial catalog=wormtest", schema, stmt, cache)
 #End If
     End Function
 
@@ -86,7 +86,7 @@ Public Class TestManagerRS
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\wormtest.mdf"))
         Return New OrmReadOnlyDBManager("Data Source=.\sqlexpressS;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", schema, stmt, cache)
 #Else
-        Return New OrmReadOnlyDBManager("Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest", schema, stmt, cache)
+        Return New OrmReadOnlyDBManager("Server=dev01;Integrated security=true;Initial catalog=wormtest", schema, stmt, cache)
 #End If
     End Function
 
@@ -95,7 +95,7 @@ Public Class TestManagerRS
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\wormtest.mdf"))
         Return New OrmDBManager("Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", schema, New SQL2000Generator, cache)
 #Else
-        Return New OrmDBManager("Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest", schema, New SQL2000Generator, cache)
+        Return New OrmDBManager("Server=dev01;Integrated security=true;Initial catalog=wormtest", schema, New SQL2000Generator, cache)
 #End If
     End Function
 
@@ -110,7 +110,7 @@ Public Class TestManagerRS
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\wormtest.mdf"))
         Dim mgr As New OrmReadOnlyDBManager("Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", schema, New SQL2000Generator, GetCache)
 #Else
-        Dim mgr As New OrmReadOnlyDBManager("Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest", schema, New SQL2000Generator, GetCache)
+        Dim mgr As New OrmReadOnlyDBManager("Server=dev01;Integrated security=true;Initial catalog=wormtest", schema, New SQL2000Generator, GetCache)
 #End If
         mgr.Cache.NewObjectManager = Me
         Return mgr
@@ -121,7 +121,7 @@ Public Class TestManagerRS
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\wormtest.mdf"))
         Dim mgr As New OrmDBManager("Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", schema, New SQL2000Generator, GetRWCache)
 #Else
-        Dim mgr As New OrmDBManager("Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest", schema, New SQL2000Generator, GetRWCache)
+        Dim mgr As New OrmDBManager("Server=dev01;Integrated security=true;Initial catalog=wormtest", schema, New SQL2000Generator, GetRWCache)
 #End If
         mgr.Cache.NewObjectManager = Me
         Return mgr
@@ -1345,23 +1345,23 @@ Public Class TestManagerRS
         _new_objects.Add(CInt(CType(obj, ISinglePKEntity).Identifier), CType(obj, SinglePKEntity))
     End Sub
 
-    Public Function GetIdentity(ByVal type As Type, ByVal mpe As Worm.ObjectMappingEngine) As PKDesc() Implements INewObjectsStore.GetPKForNewObject
+    Public Function GetIdentity(ByVal type As Type, ByVal mpe As Worm.ObjectMappingEngine) As IPKDesc Implements INewObjectsStore.GetPKForNewObject
         Dim i As Integer = _id
         _id += -1
-        Return New PKDesc() {New PKDesc("id", _id)}
+        Return New PKDesc() From {New ColumnValue("id", _id)}
     End Function
 
     Public Function GetIdentity() As Integer
         Return CInt(GetIdentity(Nothing, Nothing)(0).Value)
     End Function
 
-    Public Function GetNew(ByVal t As System.Type, ByVal id As IEnumerable(Of Meta.PKDesc)) As _ICachedEntity Implements INewObjectsStore.GetNew
+    Public Function GetNew(ByVal t As System.Type, ByVal id As IPKDesc) As _ICachedEntity Implements INewObjectsStore.GetNew
         Dim o As SinglePKEntity = Nothing
         _new_objects.TryGetValue(CInt(id(0).Value), o)
         Return o
     End Function
 
-    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As IEnumerable(Of Meta.PKDesc)) Implements INewObjectsStore.RemoveNew
+    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As IPKDesc) Implements INewObjectsStore.RemoveNew
         _new_objects.Remove(CInt(id(0).Value))
     End Sub
 

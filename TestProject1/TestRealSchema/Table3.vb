@@ -189,12 +189,12 @@ Public Class Table3
         End Using
     End Sub
 
-    Public Function CreateContainingEntity(ByVal mgr As Worm.OrmManager, ByVal propertyAlias As String, ByVal value As IEnumerable(Of PKDesc)) As Object Implements Worm.Entities.IEntityFactory.CreateContainingEntity
+    Public Function CreateContainingEntity(ByVal mgr As Worm.OrmManager, ByVal propertyAlias As String, ByVal value As IPKDesc) As Object Implements Worm.Entities.IEntityFactory.CreateContainingEntity
         _obj = mgr.GetKeyEntityFromCacheOrCreate(value(0).Value, GetObjectType())
         Return _obj
     End Function
 
-    Public Function ExtractValues(mpe As ObjectMappingEngine, oschema As IEntitySchema, propertyAlias As String) As IEnumerable(Of PKDesc) Implements IEntityFactory.ExtractValues
+    Public Function ExtractValues(mpe As ObjectMappingEngine, oschema As IEntitySchema, propertyAlias As String) As IPKDesc Implements IEntityFactory.ExtractValues
         Return _obj.GetPKs(mpe)
     End Function
 End Class

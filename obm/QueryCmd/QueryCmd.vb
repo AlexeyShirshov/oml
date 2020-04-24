@@ -775,7 +775,7 @@ Namespace Query
                     Throw New QueryCmdException("OrmManager required", Me)
                 End If
 
-                need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, gm.Manager.Cache)
+                need2Load = PrepareLoad2Load(Of T)(entityList, start, length, l, gm.Manager.Cache, gm.Manager.MappingEngine)
             End Using
 
             If need2Load Then
@@ -829,37 +829,34 @@ Namespace Query
             End If
         End Function
 
-        Private Function PrepareLoad2Load(Of T As ICachedEntity)(ByVal entityList As Worm.ReadOnlyEntityList(Of T), ByVal start As Integer, _
-            ByVal length As Integer, ByVal properties As List(Of EntityExpression), ByVal cache As CacheBase) As Boolean
+        Private Function PrepareLoad2Load(Of T As ICachedEntity)(ByVal entityList As Worm.ReadOnlyEntityList(Of T), ByVal start As Integer,
+                                                                 ByVal length As Integer, ByVal properties As List(Of EntityExpression),
+                                                                 ByVal cache As CacheBase, mpe As ObjectMappingEngine) As Boolean
 
             If properties Is Nothing OrElse properties.Count = 0 Then
-                Return PrepareLoad2Load(OrmManager.FormPKValues(cache, entityList, start, length), entityList.RealType)
+                Return PrepareLoad2Load(OrmManager.FormPKValues(cache, entityList, start, length), entityList.RealType, mpe)
             Else
-                Return PrepareLoad2Load(OrmManager.FormPKValues(cache, entityList, start, length, False, properties), entityList.RealType)
+                Return PrepareLoad2Load(OrmManager.FormPKValues(cache, entityList, start, length, False, properties), entityList.RealType, mpe)
             End If
         End Function
 
-        Private Function PrepareLoad2Load(Of T As ICachedEntity)(ByVal entityList As Worm.ReadOnlyEntityList(Of T), ByVal start As Integer, _
-            ByVal length As Integer, ByVal mgr As OrmManager) As Boolean
+        Private Function PrepareLoad2Load(Of T As ICachedEntity)(ByVal entityList As Worm.ReadOnlyEntityList(Of T), ByVal start As Integer,
+                                                                 ByVal length As Integer, ByVal mgr As OrmManager) As Boolean
 
-            Dim cache As CacheBase = Nothing
-            If mgr IsNot Nothing Then
-                cache = mgr.Cache
-            End If
-
-            Return PrepareLoad2Load(OrmManager.FormPKValues(cache, entityList, start, length), entityList.RealType)
+            Return PrepareLoad2Load(OrmManager.FormPKValues(mgr?.Cache, entityList, start, length), entityList.RealType, mgr?.MappingEngine)
         End Function
 
-        Private Function PrepareLoad2Load(ByVal e2load As IEnumerable(Of ICachedEntity), ByVal realType As Type) As Boolean
+        Private Function PrepareLoad2Load(ByVal e2load As IEnumerable(Of ICachedEntity), ByVal realType As Type, mpe As ObjectMappingEngine) As Boolean
 
             If e2load.Count = 0 Then Return False
 
             Dim pa As String = Nothing
             Dim ids As New List(Of Object)
-            Dim pks As New List(Of IEnumerable(Of PKDesc))
-
+            Dim pks As New List(Of IPKDesc)
+            Dim oschema = mpe.GetEntitySchema(realType)
+            Dim tbl = oschema.GetPK.Table
             For Each o As ICachedEntity In e2load
-                Dim pk As IEnumerable(Of PKDesc) = o.GetPKValues(Nothing)
+                Dim pk = o.GetPKValues(Nothing)
                 If pk.Count = 1 Then
                     pa = pk(0).Column
                     ids.Add(pk(0).Value)
@@ -869,16 +866,16 @@ Namespace Query
             Next
 
             If ids.Count > 0 Then
-                OptimizeInFilter(Ctor.prop(realType, pa).in(ids).Filter)
+                OptimizeInFilter(Ctor.column(tbl, pa).in(ids).Filter)
             ElseIf pks.Count > 0 Then
                 Dim gpp As New List(Of Criteria.PredicateLink)
-                For Each pk As PKDesc() In pks
+                For Each pk In pks
                     Dim pp As Criteria.PredicateLink = Nothing
-                    For Each p As PKDesc In pk
+                    For Each p In pk
                         If pp Is Nothing Then
-                            pp = Ctor.prop(realType, p.Column).eq(p.Value)
+                            pp = Ctor.column(tbl, p.Column).eq(p.Value)
                         Else
-                            pp = pp.and(realType, p.Column).eq(p.Value)
+                            pp = pp.and(tbl, p.Column).eq(p.Value)
                         End If
                     Next
                     gpp.Add(pp)
@@ -4320,11 +4317,11 @@ l1:
                 End If
                 'pi.SetValue(ro, v, Nothing)
 
-                Dim vals() As PKDesc = Nothing
+                Dim vals As IPKDesc = Nothing
                 'If ObjectMappingEngine.IsEntityType(pit, mpe) Then
                 '    vals = mpe.GetPKs(v, GetEntitySchema(mpe, pit))
                 'Else
-                vals = New PKDesc() {New PKDesc(pa, v)}
+                vals = New PKDesc(New ColumnValue(pa, v))
                 'End If
 
                 'v = ObjectMappingEngine.AssignValue2Property(pit, mpe, cache, vals, ro, map, m.PropertyAlias, TryCast(ro, IPropertyLazyLoad), m, oschema, Nothing, CreateManager)

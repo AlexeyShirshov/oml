@@ -3,6 +3,7 @@ Imports Worm.Query
 Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports System.Linq
+Imports System.Runtime.CompilerServices
 
 Namespace Expressions2
     Module Helper
@@ -123,8 +124,8 @@ Namespace Expressions2
             End Select
         End Function
 
-        Public Function Test(ByVal filterValue As Object, ByVal evaluatedValue As Object, _
-                             ByVal oper As BinaryOperationType, ByVal [case] As Boolean, _
+        Public Function Test(ByVal filterValue As Object, ByVal evaluatedValue As Object,
+                             ByVal oper As BinaryOperationType, ByVal [case] As Boolean,
                              ByVal mpe As ObjectMappingEngine) As IParameterExpression.EvalResult
 
             Dim r As IParameterExpression.EvalResult = IParameterExpression.EvalResult.NotFound
@@ -132,8 +133,8 @@ Namespace Expressions2
             If filterValue IsNot Nothing AndAlso evaluatedValue IsNot Nothing Then
                 Dim vt As Type = evaluatedValue.GetType()
                 Dim valt As Type = filterValue.GetType
-                If Not vt.IsAssignableFrom(valt) AndAlso ( _
-                    (vt.IsPrimitive AndAlso valt.IsPrimitive) OrElse _
+                If Not vt.IsAssignableFrom(valt) AndAlso (
+                    (vt.IsPrimitive AndAlso valt.IsPrimitive) OrElse
                     (vt.IsValueType AndAlso valt.IsValueType)) Then
                     filterValue = Convert.ChangeType(filterValue, evaluatedValue.GetType)
                 ElseIf vt.IsArray <> valt.IsArray Then
@@ -152,7 +153,7 @@ Namespace Expressions2
                                 r = IParameterExpression.EvalResult.Found
                             End If
                         ElseIf GetType(ICachedEntity).IsAssignableFrom(vt) Then
-                            Dim pks As IEnumerable(Of PKDesc) = CType(evaluatedValue, ICachedEntity).GetPKValues(Nothing)
+                            Dim pks = CType(evaluatedValue, ICachedEntity).GetPKValues(Nothing)
                             If pks.Count <> 1 Then
                                 Throw New ObjectMappingException(String.Format("Type {0} has complex primary key", vt))
                             End If
@@ -287,8 +288,8 @@ Namespace Expressions2
             Return r
         End Function
 
-        Public Function Eval(ByVal filterValue As Object, ByVal evaluatedValue As Object, _
-                             ByVal oper As BinaryOperationType, _
+        Public Function Eval(ByVal filterValue As Object, ByVal evaluatedValue As Object,
+                             ByVal oper As BinaryOperationType,
                              ByVal mpe As ObjectMappingEngine, ByRef v As Object) As Boolean
 
             Select Case oper
@@ -351,7 +352,7 @@ Namespace Expressions2
             Return False
         End Function
 
-        Public Function GetValue(ByVal mpe As ObjectMappingEngine, _
+        Public Function GetValue(ByVal mpe As ObjectMappingEngine,
             ByVal obj As _IEntity, ByVal oschema As IEntitySchema, ByVal exp As IExpression, ByRef v As Object) As Boolean
 
             Dim eexp As IEntityPropertyExpression = TryCast(exp, IEntityPropertyExpression)
@@ -394,6 +395,11 @@ Namespace Expressions2
                     Return l IsNot Nothing AndAlso l.CanEval(mpe)
                 End If
             End If
+        End Function
+        <Extension>
+        Public Function RequireSourceFields(exp As IExpression) As Boolean
+            If exp Is Nothing Then Return True
+            Return exp.GetType.IsSubclassOf(GetType(CustomExpression))
         End Function
     End Module
 End Namespace

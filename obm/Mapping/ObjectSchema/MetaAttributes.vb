@@ -167,7 +167,7 @@ Namespace Entities.Meta
         Public Sub New(ByVal behavior As Field2DbRelations, ByVal propertyAlias As String, column As String)
             _propertyAlias = propertyAlias
             _behavior = behavior
-            _sf = {New SourceFieldAttribute() With {.ColumnExpression = column}}
+            _sf = {New SourceFieldAttribute(column)}
         End Sub
         'Friend Sub New(ByVal propertAlias As String, ByVal columnExpression As String)
         '    _propertyAlias = propertAlias

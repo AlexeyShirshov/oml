@@ -49,8 +49,12 @@ Namespace Entities.Meta
             Return String.IsNullOrEmpty(Type)
         End Function
     End Structure
-
+    Friend Interface ICacheConverter
+        Property Converter As MapField2Column.ConverterDelegate
+    End Interface
     Public Class SourceField
+        Implements ICacheConverter
+
         Private _dbType As DBType
         Private _columnName As String
         Private _exp As String
@@ -95,13 +99,13 @@ Namespace Entities.Meta
         'End Property
         Public Property PropertyInfo As Reflection.PropertyInfo
 #Region " cache "
-        Friend Converter As MapField2Column.ConverterDelegate
+        Friend Property Converter As MapField2Column.ConverterDelegate Implements ICacheConverter.Converter
         Friend OptimizedSetValue As IOptimizeSetValue.SetValueDelegate
 #End Region
     End Class
 
     Public Class MapField2Column
-        Implements ICloneable
+        Implements ICloneable, ICacheConverter
         ''' <summary>
         ''' Default property alias for primary key
         ''' </summary>
@@ -119,7 +123,7 @@ Namespace Entities.Meta
         Friend PropertyInfo As Reflection.PropertyInfo
         Friend Index As Integer = -1
         Friend Schema As IEntitySchema
-        Friend Converter As ConverterDelegate
+        Friend Property Converter As ConverterDelegate Implements ICacheConverter.Converter
         Friend Shared EmptyConverter As New ConverterDelegate(Function(i, j, k) 1)
         Friend Delegate Function ConverterDelegate(ByVal propType As Type, dbType As Type, value As Object) As Object
         Friend OptimizedSetValue As IOptimizeSetValue.SetValueDelegate

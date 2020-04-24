@@ -606,7 +606,7 @@ Namespace Database
                     Dim params As New ParamMgr(Me, "p")
                     Dim deleted_tables As New Generic.Dictionary(Of SourceFragment, IFilter)
                     Dim pk = oschema.GetPK
-                    For Each p As PKDesc In obj.GetPKValues(oschema)
+                    For Each p In obj.GetPKValues(oschema)
                         Dim dbt As String = "int"
                         'Dim c As EntityPropertyAttribute = mpe.GetColumnByPropertyAlias(type, p.PropertyAlias, oschema)
                         'If c Is Nothing Then
@@ -1087,7 +1087,7 @@ l1:
                                                          Nothing, True, Nothing, Nothing, syncUpdateProps, esch, contextInfo))
 
                             Dim cn As New Condition.ConditionConstructor
-                            For Each p As PKDesc In obj.GetPKValues(oschema)
+                            For Each p In obj.GetPKValues(oschema)
                                 cn.AddFilter(New dc.TableFilter(esch.Table, p.Column, New ScalarValue(p.Value), FilterOperation.Equal))
                             Next
                             AppendWhere(mpe, rt, esch, cn.Condition, newAlMgr, sel_sb, contextInfo, params)

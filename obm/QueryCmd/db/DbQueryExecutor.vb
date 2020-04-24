@@ -976,12 +976,12 @@ l1:
             Return pk
         End Function
 
-        Public Shared Sub FormJoins(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As IDictionary, ByVal query As QueryCmd, _
-            ByVal params As ICreateParam, ByVal from As FromClauseDef, _
-            ByVal joins As List(Of Worm.Criteria.Joins.QueryJoin), ByVal almgr As IPrepareTable, _
-            ByVal sb As StringBuilder, ByVal s As DbGenerator, ByVal execCtx As IExecutionContext, _
-            ByVal pk As Pair(Of SourceFragment, String), _
-            ByVal predi As Criteria.PredicateLink, ByVal selOS As EntityUnion)
+        Public Shared Sub FormJoins(ByVal mpe As ObjectMappingEngine, ByVal filterInfo As IDictionary, ByVal query As QueryCmd,
+                                    ByVal params As ICreateParam, ByVal from As FromClauseDef,
+                                    ByVal joins As List(Of Worm.Criteria.Joins.QueryJoin), ByVal almgr As IPrepareTable,
+                                    ByVal sb As StringBuilder, ByVal s As DbGenerator, ByVal execCtx As IExecutionContext,
+                                    ByVal pk As Pair(Of SourceFragment, String),
+                                    ByVal predi As Criteria.PredicateLink, ByVal selOS As EntityUnion)
 
             Dim selectOS As EntityUnion = Nothing
             Dim selectedType As Type = Nothing
@@ -1224,7 +1224,7 @@ l1:
                                             Else
                                                 Dim jf As JoinFilter = TryCast(fl, JoinFilter)
                                                 If jf IsNot Nothing Then
-                                                    If (jf.Left.Column IsNot Nothing AndAlso jf.Left.Column.First Is sf) OrElse _
+                                                    If (jf.Left.Column IsNot Nothing AndAlso jf.Left.Column.First Is sf) OrElse
                                                         (jf.Right.Column IsNot Nothing AndAlso jf.Right.Column.First Is sf) Then
                                                         query._f = query._f.RemoveFilter(fl)
                                                     End If

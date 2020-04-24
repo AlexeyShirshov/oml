@@ -1,13 +1,32 @@
 ﻿Imports Worm.Query
 Imports System.Linq
+Imports System.Collections.Generic
 
 Namespace Entities.Meta
+    Public Interface IPKDesc
+        Inherits IEnumerable(Of ColumnValue)
+        Property PKName As String
+    End Interface
+    <Serializable()>
+    Public Class PKDesc
+        Inherits List(Of ColumnValue)
+        Implements IPKDesc
+        Public Sub New()
 
+        End Sub
+        Public Sub New(cv As ColumnValue)
+            Add(cv)
+        End Sub
+        Public Sub New(cv As IEnumerable(Of ColumnValue))
+            MyBase.New(cv)
+        End Sub
+        Property PKName As String Implements IPKDesc.PKName
+    End Class
     ''' <summary>
     ''' Поле и его значение 
     ''' </summary>
-    <Serializable()> _
-    Public Class PKDesc
+    <Serializable()>
+    Public Class ColumnValue
         '''' <summary>
         '''' Имя поля
         '''' </summary>
@@ -32,9 +51,9 @@ Namespace Entities.Meta
         ''' <param name="column">Имя поля</param>
         ''' <param name="value">Значение поля</param>
         Public Sub New(ByVal column As String, ByVal value As Object)
-            If String.IsNullOrEmpty(column) Then
-                Throw New ArgumentNullException(NameOf(column))
-            End If
+            'If String.IsNullOrEmpty(column) Then
+            '    Throw New ArgumentNullException(NameOf(column))
+            'End If
 
             If value Is Nothing Then
                 Throw New ArgumentNullException(NameOf(value))
@@ -45,7 +64,7 @@ Namespace Entities.Meta
         End Sub
     End Class
 
-    <Serializable()> _
+    <Serializable()>
     Public Class SourceFragment
         Implements ICloneable
 
@@ -174,7 +193,7 @@ Namespace Entities.Meta
             _f = New FtsDefaultFormatter(searchString, Nothing)
         End Sub
 
-        Public Sub New(ByVal searchString As String, ByVal searchType As SearchType, _
+        Public Sub New(ByVal searchString As String, ByVal searchType As SearchType,
                        ByVal top As Integer, ByVal queryFields() As String)
             _top = top
             _searchString = searchString
@@ -183,7 +202,7 @@ Namespace Entities.Meta
             _f = New FtsDefaultFormatter(searchString, Nothing)
         End Sub
 
-        Public Sub New(ByVal searchString As String, ByVal searchType As SearchType, _
+        Public Sub New(ByVal searchString As String, ByVal searchType As SearchType,
                        ByVal queryFields() As String)
             _searchString = searchString
             _st = searchType
@@ -205,7 +224,7 @@ Namespace Entities.Meta
             _f = New FtsDefaultFormatter(searchString, Nothing)
         End Sub
 
-        Public Sub New(ByVal searchType As Type, ByVal searchString As String, _
+        Public Sub New(ByVal searchType As Type, ByVal searchString As String,
                        ByVal search As SearchType)
             _eu = New EntityUnion(searchType)
             _searchString = searchString
@@ -213,7 +232,7 @@ Namespace Entities.Meta
             _f = New FtsDefaultFormatter(searchString, Nothing)
         End Sub
 
-        Public Sub New(ByVal eu As EntityUnion, ByVal searchString As String, _
+        Public Sub New(ByVal eu As EntityUnion, ByVal searchString As String,
                        ByVal search As SearchType)
             _eu = eu
             _searchString = searchString
@@ -221,7 +240,7 @@ Namespace Entities.Meta
             _f = New FtsDefaultFormatter(searchString, Nothing)
         End Sub
 
-        Public Sub New(ByVal searchType As Type, ByVal searchString As String, _
+        Public Sub New(ByVal searchType As Type, ByVal searchString As String,
                        ByVal search As SearchType, ByVal top As Integer)
             _eu = New EntityUnion(searchType)
             _searchString = searchString
@@ -230,7 +249,7 @@ Namespace Entities.Meta
             _f = New FtsDefaultFormatter(searchString, Nothing)
         End Sub
 
-        Public Sub New(ByVal eu As EntityUnion, ByVal searchString As String, _
+        Public Sub New(ByVal eu As EntityUnion, ByVal searchString As String,
                        ByVal search As SearchType, ByVal top As Integer)
             _eu = eu
             _searchString = searchString
@@ -239,7 +258,7 @@ Namespace Entities.Meta
             _f = New FtsDefaultFormatter(searchString, Nothing)
         End Sub
 
-        Public Sub New(ByVal searchType As Type, ByVal searchString As String, _
+        Public Sub New(ByVal searchType As Type, ByVal searchString As String,
                        ByVal queryFields() As String)
             _eu = New EntityUnion(searchType)
             _searchString = searchString
@@ -247,7 +266,7 @@ Namespace Entities.Meta
             _f = New FtsDefaultFormatter(searchString, Nothing)
         End Sub
 
-        Public Sub New(ByVal eu As EntityUnion, ByVal searchString As String, _
+        Public Sub New(ByVal eu As EntityUnion, ByVal searchString As String,
                        ByVal queryFields() As String)
             _eu = eu
             _searchString = searchString
@@ -255,7 +274,7 @@ Namespace Entities.Meta
             _f = New FtsDefaultFormatter(searchString, Nothing)
         End Sub
 
-        Public Sub New(ByVal searchType As Type, ByVal searchString As String, _
+        Public Sub New(ByVal searchType As Type, ByVal searchString As String,
                        ByVal search As SearchType, ByVal queryFields() As String)
             _eu = New EntityUnion(searchType)
             _searchString = searchString
@@ -264,7 +283,7 @@ Namespace Entities.Meta
             _f = New FtsDefaultFormatter(searchString, Nothing)
         End Sub
 
-        Public Sub New(ByVal eu As EntityUnion, ByVal searchString As String, _
+        Public Sub New(ByVal eu As EntityUnion, ByVal searchString As String,
                        ByVal search As SearchType, ByVal queryFields() As String)
             _eu = eu
             _searchString = searchString
@@ -273,8 +292,8 @@ Namespace Entities.Meta
             _f = New FtsDefaultFormatter(searchString, Nothing)
         End Sub
 
-        Public Sub New(ByVal searchType As Type, ByVal searchString As String, _
-                       ByVal search As SearchType, ByVal queryFields() As String, _
+        Public Sub New(ByVal searchType As Type, ByVal searchString As String,
+                       ByVal search As SearchType, ByVal queryFields() As String,
                        ByVal top As Integer)
             _eu = New EntityUnion(searchType)
             _searchString = searchString
@@ -284,8 +303,8 @@ Namespace Entities.Meta
             _f = New FtsDefaultFormatter(searchString, Nothing)
         End Sub
 
-        Public Sub New(ByVal eu As EntityUnion, ByVal searchString As String, _
-                       ByVal search As SearchType, ByVal queryFields() As String, _
+        Public Sub New(ByVal eu As EntityUnion, ByVal searchString As String,
+                       ByVal search As SearchType, ByVal queryFields() As String,
                        ByVal top As Integer)
             _eu = eu
             _searchString = searchString
@@ -301,7 +320,7 @@ Namespace Entities.Meta
             _f = New FtsDefaultFormatter(searchString, Nothing)
         End Sub
 
-        Public Sub New(ByVal searchString As String, _
+        Public Sub New(ByVal searchString As String,
                        ByVal queryField As String)
             _searchString = searchString
             _queryFields = New String() {queryField}
@@ -512,7 +531,7 @@ Namespace Entities.Meta
                 _t = t
             End Sub
 
-            Public Function GetValue(ByVal tokens() As String, ByVal sectionName As String, _
+            Public Function GetValue(ByVal tokens() As String, ByVal sectionName As String,
                 ByVal f As IFullTextSupport) As String
                 Return Configuration.SearchSection.GetValueForFreeText(_t, tokens, sectionName)
             End Function
@@ -532,7 +551,7 @@ Namespace Entities.Meta
             _del = del
         End Sub
 
-        Public Function GetFtsString(ByVal section As String, _
+        Public Function GetFtsString(ByVal section As String,
             ByVal f As IFullTextSupport, ByVal type2search As Type, ByVal ftsString As String) As String Implements IFtsStringFormatter.GetFtsString
             If _del Is Nothing Then
                 If ftsString = "freetexttable" Then

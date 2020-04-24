@@ -73,7 +73,7 @@ Imports CoreFramework.cfStructures
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\test.mdf"))
         Return New CustomMgr(cache, schema, gen, "Server=.\sqlexpressS;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
-        Return New CustomMgr(cache, schema, gen, "Server=dev01;Integrated security=true;Initial catalog=test")
+        Return New CustomMgr(cache, schema, gen, "Server=dev01x;Integrated security=true;Initial catalog=test")
 #End If
     End Function
 
@@ -278,7 +278,9 @@ Imports CoreFramework.cfStructures
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = New QueryCmd().GetByID(Of Entity)(2, mgr)
 
-            Dim j As Object = New QueryCmd().GetByID(Of Entity4)(12, mgr).EnsureLoaded()
+            Dim loaded = TryCast(New QueryCmd().GetByID(Of Entity4)(12, mgr).EnsureLoaded(), Entity4)
+            Assert.IsNotNull(loaded)
+            Assert.IsTrue(loaded.InternalProperties.IsLoaded)
 
             Dim c As ICollection(Of Entity4) = e.GetCmd(GetType(Entity4)).Where(New Ctor(GetType(Entity4)).prop("Title").not_eq("bt")).OrderBy(SCtor.prop(GetType(Entity4), "Title").asc).ToList(Of Entity4)(mgr)
             Assert.AreEqual(10, c.Count)
@@ -674,13 +676,13 @@ Imports CoreFramework.cfStructures
         Return CInt(GetIdentity(Nothing, Nothing)(0).Value)
     End Function
 
-    Private Function GetIdentity(ByVal t As Type, ByVal mpe As ObjectMappingEngine) As Meta.PKDesc() Implements INewObjectsStore.GetPKForNewObject
+    Private Function GetIdentity(ByVal t As Type, ByVal mpe As ObjectMappingEngine) As IPKDesc Implements INewObjectsStore.GetPKForNewObject
         Dim i As Integer = _id
         _id += -1
-        Return New PKDesc() {New PKDesc("id", _id)}
+        Return New PKDesc() From {New ColumnValue("id", _id)}
     End Function
 
-    Private Function GetNew(ByVal t As Type, ByVal id As IEnumerable(Of Meta.PKDesc)) As _ICachedEntity Implements INewObjectsStore.GetNew
+    Private Function GetNew(ByVal t As Type, ByVal id As IPKDesc) As _ICachedEntity Implements INewObjectsStore.GetNew
         Dim o As SinglePKEntity = Nothing
         _l.TryGetValue(CInt(id(0).Value), o)
         Return o
@@ -1195,7 +1197,7 @@ Imports CoreFramework.cfStructures
     <TestMethod()> _
     Public Sub TestLoadM2M()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim col As ICollection(Of Entity) = New QueryCmd().GetByIds(Of Entity)(New Object() {1, 2}, mgr)
+            Dim col = New QueryCmd().GetByIds(Of Entity)({1, 2}, mgr)
 
             Dim rel As Meta.M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(GetType(Entity), GetType(Entity4), True)
 
@@ -1421,7 +1423,7 @@ Imports CoreFramework.cfStructures
                 Sub(sender As OrmReadOnlyDBManager, args As OrmReadOnlyDBManager.ConnectionExceptionArgs)
                     Assert.IsTrue(TypeOf args.Exception Is System.Data.SqlClient.SqlException)
                     Dim cb As New System.Data.SqlClient.SqlConnectionStringBuilder(args.Connection.ConnectionString)
-                    cb.DataSource = ".\sqlexpress"
+                    cb.DataSource = "dev01"
                     args.Context = cb.ToString
                     If handle Then
                         args.Action = OrmReadOnlyDBManager.ConnectionExceptionArgs.ActionEnum.Rethrow
@@ -1466,7 +1468,7 @@ Imports CoreFramework.cfStructures
             Try
                 Dim e As Entity2 = New QueryCmd().GetByID(Of Entity2)(10, mgr)
             Catch ex As Data.SqlClient.SqlException
-                Assert.IsTrue(ex.StackTrace.Contains("line 1461"), ex.StackTrace)
+                Assert.IsTrue(ex.StackTrace.Contains("line 1469"), ex.StackTrace)
             End Try
         End Using
 
@@ -1531,7 +1533,7 @@ Imports CoreFramework.cfStructures
         End Property
     End Class
 
-    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As IEnumerable(Of Meta.PKDesc)) Implements INewObjectsStore.RemoveNew
+    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As IPKDesc) Implements INewObjectsStore.RemoveNew
 
     End Sub
 

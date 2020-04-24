@@ -1,6 +1,7 @@
 ﻿Imports Worm.Entities.Meta
 Imports Worm.Entities
 Imports System.Collections.Generic
+Imports System.Linq
 
 Namespace Cache
     ''' <summary>
@@ -16,7 +17,7 @@ Namespace Cache
         ''' <param name="mpe">Движок маппинга</param>
         ''' <returns>Набор полей и значений первичного ключа</returns>
         ''' <exception cref="ArgumentNullException">Если t или mpe пустая ссылка</exception>
-        Function GetPKForNewObject(ByVal t As Type, ByVal mpe As ObjectMappingEngine) As PKDesc()
+        Function GetPKForNewObject(ByVal t As Type, ByVal mpe As ObjectMappingEngine) As IPKDesc
         ''' <summary>
         ''' Возвращает экземпляр нового объекта данного типа по первичному ключу
         ''' </summary>
@@ -25,7 +26,7 @@ Namespace Cache
         ''' <returns>Экземпляр нового объекта данного типа по первичному ключу или Nothing, 
         ''' если не найден</returns>
         ''' <exception cref="ArgumentNullException">Если t или pk пустая ссылка</exception>
-        Function GetNew(ByVal t As Type, ByVal pk As IEnumerable(Of PKDesc)) As _ICachedEntity
+        Function GetNew(ByVal t As Type, ByVal pk As IPKDesc) As _ICachedEntity
         ''' <summary>
         ''' Добавляет объект в хранилище новых объектов
         ''' </summary>
@@ -45,7 +46,7 @@ Namespace Cache
         ''' <param name="t">Тип объекта</param>
         ''' <param name="pk">Набор полей и значений первичного ключа</param>
         ''' <exception cref="ArgumentNullException">Если t или pk пустая ссылка</exception>
-        Sub RemoveNew(ByVal t As Type, ByVal pk As IEnumerable(Of PKDesc))
+        Sub RemoveNew(ByVal t As Type, ByVal pk As IPKDesc)
     End Interface
 
     Public Interface INewObjectsStoreEx
@@ -93,7 +94,7 @@ Namespace Cache
             GetDic(obj.GetType).Add(pk, obj)
         End Sub
 
-        Public Overloads Function GetNew(ByVal t As System.Type, ByVal pk As IEnumerable(Of Entities.Meta.PKDesc)) As Entities._ICachedEntity Implements INewObjectsStore.GetNew
+        Public Overloads Function GetNew(ByVal t As System.Type, ByVal pk As IPKDesc) As Entities._ICachedEntity Implements INewObjectsStore.GetNew
             Dim pks As New PKWrapper(pk)
             Dim o As _ICachedEntity = Nothing
             GetDic(t).TryGetValue(pks, o)
@@ -107,18 +108,23 @@ Namespace Cache
         ''' <param name="mpe">Движок маппинга</param>
         ''' <returns>Набор полей и значений первичного ключа</returns>
         ''' <exception cref="ArgumentNullException">Если t или mpe пустая ссылка</exception>
-        Public Function GetPKForNewObject(ByVal t As System.Type, ByVal mpe As ObjectMappingEngine) As Entities.Meta.PKDesc() Implements INewObjectsStore.GetPKForNewObject
+        Public Function GetPKForNewObject(ByVal t As System.Type, ByVal mpe As ObjectMappingEngine) As IPKDesc Implements INewObjectsStore.GetPKForNewObject
             If mpe Is Nothing Then
                 Throw New ArgumentNullException("mpe")
             End If
 
-            Dim l As New List(Of PKDesc)
+            Dim l As New PKDesc
             Dim pk = mpe.GetEntitySchema(t).GetPK
-            For Each sf In pk.SourceFields
-                Dim id As Object = GetPKValue(t, pk.PropertyAlias, sf.PropertyInfo.PropertyType, sf.PropertyInfo.DeclaringType)
-                l.Add(New PKDesc(sf.SourceFieldExpression, id))
-            Next
-            Return l.ToArray
+            If pk.SourceFields.Count = 1 Then
+                Dim id As Object = GetPKValue(t, pk.PropertyAlias, pk.PropertyType, pk.PropertyInfo.DeclaringType)
+                l.Add(New ColumnValue(pk.SourceFields(0).SourceFieldExpression, id))
+            Else
+                For Each sf In pk.SourceFields
+                    Dim id As Object = GetPKValue(t, pk.PropertyAlias, sf.PropertyInfo.PropertyType, sf.PropertyInfo.DeclaringType)
+                    l.Add(New ColumnValue(sf.SourceFieldExpression, id))
+                Next
+            End If
+            Return l
         End Function
 
         Protected Overridable Function GetPKValue(ByVal objectType As Type, ByVal propertyAlias As String, _
@@ -145,7 +151,7 @@ Namespace Cache
             End If
         End Function
 
-        Public Sub RemoveNew(ByVal t As System.Type, ByVal pk As IEnumerable(Of Entities.Meta.PKDesc)) Implements INewObjectsStore.RemoveNew
+        Public Sub RemoveNew(ByVal t As System.Type, ByVal pk As IPKDesc) Implements INewObjectsStore.RemoveNew
             GetDic(t).Remove(New PKWrapper(pk))
         End Sub
 

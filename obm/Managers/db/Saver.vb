@@ -610,8 +610,8 @@ Namespace Database
                                     RaiseEvent ObjectPostponed(Me, savingObj)
                                     need2save.Add(savingObj)
                                     Return False
-                                Case Else
-                                    Throw New NotImplementedException(args.FurtherAction.ToString)
+                                    'Case Else
+                                    '    Throw New NotImplementedException(args.FurtherAction.ToString)
                             End Select
                         End If
                     End If

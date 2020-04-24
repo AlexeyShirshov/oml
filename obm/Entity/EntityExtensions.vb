@@ -56,7 +56,7 @@ Namespace Entities
             Return False
         End Function
         <Extension>
-        Public Function GetPKValues(ByVal e As IEntity, ByVal oschema As IEntitySchema) As IEnumerable(Of PKDesc)
+        Public Function GetPKValues(ByVal e As IEntity, ByVal oschema As IEntitySchema) As IPKDesc
             Dim op As IOptimizePK = TryCast(e, IOptimizePK)
             If op IsNot Nothing Then
                 Return op.GetPKValues()
@@ -90,7 +90,7 @@ Namespace Entities
         End Function
 
         <Extension>
-        Public Function Clone(ByVal e As _ICachedEntity, pk As IEnumerable(Of PKDesc), ByVal oschema As IEntitySchema) As _ICachedEntity
+        Public Function Clone(ByVal e As _ICachedEntity, pk As IPKDesc, ByVal oschema As IEntitySchema) As _ICachedEntity
             If e Is Nothing Then
                 Throw New ArgumentNullException(NameOf(e))
             End If
@@ -115,7 +115,7 @@ Namespace Entities
         End Function
 
         <Extension>
-        Public Function Clone(Of T As {New, _ICachedEntity})(ByVal e As T, pk As IEnumerable(Of PKDesc), ByVal oschema As IEntitySchema) As T
+        Public Function Clone(Of T As {New, _ICachedEntity})(ByVal e As T, pk As IPKDesc, ByVal oschema As IEntitySchema) As T
             If e Is Nothing Then
                 Throw New ArgumentNullException(NameOf(e))
             End If
