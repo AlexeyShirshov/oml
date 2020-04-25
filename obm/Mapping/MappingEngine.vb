@@ -3070,11 +3070,13 @@ l1:
                 Dim o As Object = Entity.CreateObject(New PKDesc(sv), type_created, Me)
                 Dim cce As ICachedEntity = TryCast(o, ICachedEntity)
                 Dim pkw As PKWrapper = Nothing
-
+                Dim wasCreated = True
                 If cce IsNot Nothing Then
                     pkw = New CacheKey(CType(o, ICachedEntity))
                     Dim cb As ICacheBehavior = TryCast(GetEntitySchema(type_created), ICacheBehavior)
-                    o = cache.FindObjectInCache(type_created, o, pkw, cb, cache.GetOrmDictionary(type_created, cb), True, True)
+                    Dim o2 = cache.FindObjectInCache(type_created, o, pkw, cb, cache.GetOrmDictionary(type_created, cb), True, True)
+                    wasCreated = o2 Is o
+                    o = o2
                     'Else
                     '    pkw = New PKWrapper(sv)
                 End If
@@ -3087,6 +3089,7 @@ l1:
                     ElseIf crMan IsNot Nothing Then
                         e.SetCreateManager(crMan)
                     End If
+                    e.CorrectStateAfterLoading(wasCreated)
                 End If
 
                 If m.OptimizedSetValue IsNot Nothing AndAlso m.OptimizedSetValue IsNot MapField2Column.EmptyOptimizedSetValue Then

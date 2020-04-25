@@ -4121,8 +4121,8 @@ l1:
     End Function
 
     Protected Function LoadEntityFromStorage(ByVal ce As _ICachedEntity, ByVal obj As _IEntity, ByVal load As Boolean, ByVal modificationSync As Boolean,
-        ByVal ec As OrmCache, ByVal loader As LoadObjectFromStorageDelegate, ByVal dic As IDictionary, ByVal selectList As IList(Of SelectExpression),
-        ByVal baseIdx As Integer) As _IEntity
+                                             ByVal ec As OrmCache, ByVal loader As LoadObjectFromStorageDelegate, ByVal dic As IDictionary, ByVal selectList As IList(Of SelectExpression),
+                                             ByVal baseIdx As Integer) As _IEntity
 
         Dim loadLock As IDisposable = Nothing
         If ce IsNot Nothing Then

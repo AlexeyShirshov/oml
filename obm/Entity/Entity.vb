@@ -551,7 +551,7 @@ Namespace Entities
                 m.OptimizedSetValue(o, value)
             End If
 
-            o.SetObjectStateClear(ObjectState.NotLoaded)
+            'o.SetObjectStateClear(ObjectState.NotLoaded)
         End Sub
 
         Public Shared Function CreateKeyEntity(Of T As {ISinglePKEntity, New})(ByVal id As Object, ByVal mpe As ObjectMappingEngine) As T
@@ -711,10 +711,10 @@ Namespace Entities
                 If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
             End If
 
-            Dim ie = TryCast(e, _IEntity)
-            If ie IsNot Nothing Then
-                ie.SetObjectStateClear(ObjectState.NotLoaded)
-            End If
+            'Dim ie = TryCast(e, _IEntity)
+            'If ie IsNot Nothing Then
+            '    ie.SetObjectStateClear(ObjectState.NotLoaded)
+            'End If
         End Sub
 
         Public Shared Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk As IPKDesc, ByVal mpe As ObjectMappingEngine) As T
