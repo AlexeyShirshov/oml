@@ -4415,6 +4415,10 @@ l1:
                         End If
 
                         CheckIsAllLoaded(e, MappingEngine, map.Count, map)
+
+                        If e.IsLoaded Then
+                            e.SetObjectState(Entities.ObjectState.None)
+                        End If
                     Else
                         Load(robj, oschema)
                         GoTo l1
@@ -4436,9 +4440,15 @@ l1:
                 End If
             Else
                 LoadObject(e, propertyAlias)
+                If e.IsLoaded Then
+                    e.SetObjectState(Entities.ObjectState.None)
+                End If
             End If
         Else
             LoadObject(e, propertyAlias)
+            If e.IsLoaded Then
+                e.SetObjectState(Entities.ObjectState.None)
+            End If
         End If
 
         Dim uc As IUndoChanges = TryCast(e, IUndoChanges)
@@ -4447,7 +4457,7 @@ l1:
         ElseIf e.IsLoaded Then
 #If DEBUG Then
             If e.ObjectState <> ObjectState.None Then
-                Throw New OrmObjectException
+                Throw New OrmObjectException($"Invalid entity state {e.ObjectState}")
             End If
 #End If
             'e.SetObjectState(Entities.ObjectState.None)
@@ -4734,17 +4744,23 @@ l1:
     End Sub
 
     Friend Shared Function RemoveVersionData(ByVal e As _ICachedEntity, ByVal cache As CacheBase,
-        ByVal mpe As ObjectMappingEngine, ByVal setState As Boolean) As _ICachedEntity
+                                             ByVal mpe As ObjectMappingEngine, ByVal setState As Boolean) As _ICachedEntity
 
         Dim mo As _ICachedEntity = Nothing
 
         'unreg = unreg OrElse _state <> Orm.ObjectState.Created
         If setState Then
-            e.SetObjectStateClear(Entities.ObjectState.None)
-            'Debug.Assert(IsLoaded, ObjName & "Cannot set state None while object is not loaded")
+            Dim oldState = e.ObjectState
             If Not e.IsLoaded Then
-                Throw New OrmObjectException(e.ObjName & "Cannot set state None while object is not loaded")
+                If oldState = ObjectState.Modified OrElse oldState = ObjectState.Created Then
+                    e.SetObjectStateClear(Entities.ObjectState.NotLoaded)
+                Else
+                    Throw New OrmObjectException(e.ObjName & "Cannot set state None while object is not loaded in state " & oldState.ToString)
+                End If
+            Else
+                e.SetObjectStateClear(Entities.ObjectState.None)
             End If
+            'Debug.Assert(IsLoaded, ObjName & "Cannot set state None while object is not loaded")
         End If
 
         Dim uc As IUndoChanges = TryCast(e, IUndoChanges)
@@ -5136,10 +5152,10 @@ l1:
         End If
     End Sub
     Public Shared Sub CopyProperties(ByVal [from] As Object, ByVal [to] As Object,
-        ByVal oschema As IEntitySchema, ParamArray properties As String())
+                                     ByVal oschema As IEntitySchema, ParamArray properties As String())
 
         Dim cp As ICopyProperties = TryCast([from], ICopyProperties)
-        If cp IsNot Nothing AndAlso properties Is Nothing Then
+        If cp IsNot Nothing AndAlso Not properties?.Any Then
             cp.CopyTo([to])
         Else
             If oschema Is Nothing Then

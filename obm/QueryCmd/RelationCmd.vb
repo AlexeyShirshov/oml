@@ -397,9 +397,9 @@ Namespace Query
             AddHandler ModifyResult, AddressOf _ModifyResult
         End Sub
 
-        Protected Overrides Sub _Prepare(ByVal executor As IExecutor, _
-            ByVal mpe As ObjectMappingEngine, ByVal filterInfo As IDictionary, _
-            ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal xxx As EntityUnion, ByVal isAnonym As Boolean)
+        Protected Overrides Sub _Prepare(ByVal executor As IExecutor,
+                                         ByVal mpe As ObjectMappingEngine, ByVal filterInfo As IDictionary,
+                                         ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal xxx As EntityUnion, ByVal isAnonym As Boolean)
 
             Dim m2mObject As ISinglePKEntity = _rel.Host
             Dim m2mKey As String = _rel.Key
@@ -507,10 +507,10 @@ l1:
                                 Dim pka As String = mpe.GetPrimaryKey(m2mType, oschema)
                                 Dim te As New TableExpression(table, selected_r.Column)
                                 te.SetEntity(ideu)
-                                _sl.Add(New SelectExpression(te) With { _
-                                    .Attributes = Field2DbRelations.PK, _
-                                    .IntoPropertyAlias = pka, _
-                                    .Into = m2mEU _
+                                _sl.Add(New SelectExpression(te) With {
+                                    .Attributes = Field2DbRelations.PK,
+                                    .IntoPropertyAlias = pka,
+                                    .Into = m2mEU
                                 })
                             End If
                         End If
@@ -527,7 +527,7 @@ l1:
                     '    Next
                     'End If
 
-                    addf = New TableFilter(table, filtered_r.Column, _
+                    addf = New TableFilter(table, filtered_r.Column,
                         New Worm.Criteria.Values.ScalarValue(m2mObject.Identifier), _fo)
 
                     If selected_r.Constants IsNot Nothing Then
@@ -587,7 +587,7 @@ l1:
                         PrepareSelectList(executor, stmt, isAnonym, mpe, f, filterInfo)
                     End If
 
-                    addf = New EntityFilter(rel.Entity, rel.Column, _
+                    addf = New EntityFilter(rel.Entity, rel.Column,
                            New Worm.Criteria.Values.ScalarValue(m2mObject.Identifier), _fo)
 
                     If _from Is Nothing Then _from = New FromClauseDef(m2mEU)
@@ -615,8 +615,8 @@ l1:
             Return PrepareRel(Nothing, Nothing, Nothing)
         End Function
 
-        Protected Function PrepareRel(ByVal schema As ObjectMappingEngine, _
-            ByVal selectOS As EntityUnion, ByVal selectedType As Type) As RelationDesc
+        Protected Function PrepareRel(ByVal schema As ObjectMappingEngine,
+                                      ByVal selectOS As EntityUnion, ByVal selectedType As Type) As RelationDesc
 
             Dim selRel As RelationDesc = _rel.Relation
 

@@ -1,6 +1,7 @@
 ﻿Imports Worm.Entities.Meta
 Imports System.Runtime.CompilerServices
 Imports System.Collections.Generic
+Imports System.Linq
 
 Namespace Entities
     Public Module EntityExtensions
@@ -137,6 +138,18 @@ Namespace Entities
                 Return target
             End Using
 
+        End Function
+        <Extension>
+        Public Function Equals(e As IEntity, obj As IEntity) As Boolean
+            Dim pks = e.GetPKValues(Nothing)
+            Dim pks2 = obj.GetPKValues(Nothing)
+            For i As Integer = 0 To pks.Count - 1
+                Dim pk = pks(i)
+                If pk.Column <> pks2(i).Column OrElse Not Object.Equals(pk.Value, pks2(i).Value) Then
+                    Return False
+                End If
+            Next
+            Return True
         End Function
     End Module
 End Namespace

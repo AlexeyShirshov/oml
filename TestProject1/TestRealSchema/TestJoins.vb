@@ -120,28 +120,46 @@ Public Class TestJoinsRS
         End Using
     End Sub
 
-    <TestMethod()> _
-    Public Sub TestJoinEval()
+    <TestMethod(), ExpectedException(GetType(Worm.Query.QueryCmdException))>
+    Public Sub TestJoinEvalWrong()
         Dim tm As New TestManagerRS
         Using mgr As Worm.OrmManager = tm.CreateManager(tm.GetSchema("1"))
             Dim t As Type = GetType(Table2)
             Dim c As IEntityFilter = CType(New Ctor(GetType(Table1)).prop("Title").eq("first").Filter(), IEntityFilter)
             Dim t2 As New Table2(1)
             Assert.AreEqual(IEvaluableValue.EvalResult.Unknown, c.EvalObj(mgr.MappingEngine, t2, mgr.MappingEngine.GetEntitySchema(t), Nothing, Nothing))
+        End Using
+    End Sub
+    <TestMethod()>
+    Public Sub TestJoinEval()
+        Dim tm As New TestManagerRS
+        Using mgr As Worm.OrmManager = tm.CreateManager(tm.GetSchema("1"))
+            Dim t As Type = GetType(Table2)
+            Dim c As IEntityFilter = CType(New Ctor(GetType(Table1)).prop("Title").eq("first").Filter(), IEntityFilter)
+            Dim t2 As New Table2(1)
 
             t2 = New QueryCmd().GetByID(Of Table2)(1, mgr)
             Assert.AreEqual(IEvaluableValue.EvalResult.Found, c.EvalObj(mgr.MappingEngine, t2, mgr.MappingEngine.GetEntitySchema(t), Nothing, Nothing))
         End Using
     End Sub
-
-    <TestMethod()> _
-    Public Sub TestJoinEval2()
+    <TestMethod(), ExpectedException(GetType(Worm.Query.QueryCmdException))>
+    Public Sub TestJoinEval2Wrong()
         Dim tm As New TestManagerRS
         Using mgr As Worm.OrmManager = tm.CreateManager(tm.GetSchema("1"))
             Dim t As Type = GetType(Table2)
             Dim c As EntityFilter = CType(New Ctor(GetType(Table1)).prop("Title").eq("first").Filter(), EntityFilter)
             Dim t2 As New Table2(1)
             Assert.AreEqual(IEvaluableValue.EvalResult.Unknown, c.Eval(mgr.MappingEngine, t2, mgr.MappingEngine.GetEntitySchema(t), Nothing, Nothing))
+
+        End Using
+    End Sub
+    <TestMethod()>
+    Public Sub TestJoinEval2()
+        Dim tm As New TestManagerRS
+        Using mgr As Worm.OrmManager = tm.CreateManager(tm.GetSchema("1"))
+            Dim t As Type = GetType(Table2)
+            Dim c As EntityFilter = CType(New Ctor(GetType(Table1)).prop("Title").eq("first").Filter(), EntityFilter)
+            Dim t2 As New Table2(1)
 
             Dim joins() As QueryJoin = JCtor.join(GetType(Table1)).on(GetType(Table1), "ID").eq(GetType(Table2), "Table1").
                 and(Ctor.prop(GetType(Table1), "Code").eq(100))
@@ -151,7 +169,6 @@ Public Class TestJoinsRS
                                                                          joins, GetType(Table2)))
         End Using
     End Sub
-
     <TestMethod()> _
     Public Sub TestJoinUpdateCache()
         Dim tm As New TestManagerRS

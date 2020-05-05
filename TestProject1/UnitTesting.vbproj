@@ -159,7 +159,7 @@
     <Compile Include="Relations\TestModify.vb" />
     <Compile Include="Relations\TestRel.vb" />
     <Compile Include="TestCriteria.vb" />
-    <Compile Include="TestRealSchema\Table1to1.vb" />
+    <Compile Include="TestRealSchema\Entities\Table1to1.vb" />
     <Compile Include="TestRealSchema\TestExFilter.vb" />
     <Compile Include="TestRealSchema\TestHidden.vb" />
     <Compile Include="TestRealSchema\TestListManager.vb" />
@@ -171,12 +171,12 @@
     <Compile Include="TestMerge.vb" />
     <Compile Include="TestPmgr.vb" />
     <Compile Include="TestJoins.vb" />
-    <Compile Include="TestRealSchema\Table1.vb" />
-    <Compile Include="TestRealSchema\Table10.vb" />
-    <Compile Include="TestRealSchema\Table2.vb" />
-    <Compile Include="TestRealSchema\Table3.vb" />
-    <Compile Include="TestRealSchema\Table4.vb" />
-    <Compile Include="TestRealSchema\Tables1to3.vb" />
+    <Compile Include="TestRealSchema\Entities\Table1.vb" />
+    <Compile Include="TestRealSchema\Entities\Table10.vb" />
+    <Compile Include="TestRealSchema\Entities\Table2.vb" />
+    <Compile Include="TestRealSchema\Entities\Table3.vb" />
+    <Compile Include="TestRealSchema\Entities\Table4.vb" />
+    <Compile Include="TestRealSchema\Entities\Tables1to3.vb" />
     <Compile Include="TestRealSchema\TestDic.vb" />
     <Compile Include="TestRealSchema\TestDistinct.vb" />
     <Compile Include="TestRealSchema\TestJoins.vb">

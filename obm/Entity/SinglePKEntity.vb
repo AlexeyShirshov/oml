@@ -583,7 +583,7 @@ Namespace Entities
         Public Overloads Overrides Function Equals(ByVal obj As Object) As System.Boolean
             If obj Is Nothing Then Return False
             If Me.GetType.IsAssignableFrom(obj.GetType) Then
-                Return Equals(CType(obj, SinglePKEntity))
+                Return Equals(CType(obj, SinglePKEntityBase))
             Else
                 Return False 'Identifier.Equals(obj)
             End If

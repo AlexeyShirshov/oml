@@ -1,0 +1,7 @@
+<Playlist Version="1.0">
+  <Add Test="TestProject1.TestCache.StressTest" />
+  <Add Test="TestProject1.TestCache.TestCache" />
+  <Add Test="TestProject1.TestCache.TestExpire" />
+  <Add Test="TestProject1.TestCache.TestObjects" />
+  <Add Test="TestProject1.TestCache.TestWebCache" />
+</Playlist>

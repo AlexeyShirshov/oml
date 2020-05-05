@@ -332,9 +332,9 @@ Namespace Query.Database
             End Try
         End Function
 
-        Protected Overrides Function _Exec(Of ReturnType)(ByVal mgr As OrmManager, _
-            ByVal query As QueryCmd, ByVal cacheItemProvoder As GetCacheItemProvoderDelegate, _
-            ByVal cachedItem As GetCachedItemDelegate, ByVal resultFromCachedItem As GetListFromCachedItemDelegate(Of ReturnType)) As ReturnType
+        Protected Overrides Function _Exec(Of ReturnType)(ByVal mgr As OrmManager,
+                                                          ByVal query As QueryCmd, ByVal cacheItemProvoder As GetCacheItemProvoderDelegate,
+                                                          ByVal cachedItem As GetCachedItemDelegate, ByVal resultFromCachedItem As GetListFromCachedItemDelegate(Of ReturnType)) As ReturnType
 
             Dim dbm As OrmReadOnlyDBManager = CType(mgr, OrmReadOnlyDBManager)
 

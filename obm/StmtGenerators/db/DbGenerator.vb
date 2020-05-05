@@ -670,7 +670,7 @@ Namespace Database
         End Function
 
         Protected Sub GetDeletedConditions(ByVal mpe As ObjectMappingEngine, ByVal deleted_tables As IDictionary(Of SourceFragment, IFilter), ByVal filterInfo As Object,
-            ByVal type As Type, ByVal obj As ICachedEntity, ByVal oschema As IEntitySchema, ByVal relSchema As IMultiTableObjectSchema)
+                                           ByVal type As Type, ByVal obj As ICachedEntity, ByVal oschema As IEntitySchema, ByVal relSchema As IMultiTableObjectSchema)
             'Dim oschema As IOrmObjectSchema = GetObjectSchema(type)
             Dim tables() As SourceFragment = oschema.GetTables()
             Dim pkTable As SourceFragment = oschema.GetPKTable(type)
@@ -734,7 +734,7 @@ Namespace Database
 
         Public Function Insert(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal contextInfo As IDictionary,
                                ByRef dbparams As ICollection(Of System.Data.Common.DbParameter),
-                               ByRef selectedProperties As List(Of SelectExpression)) As String
+                               ByRef selectedProperties As List(Of SelectExpression), ByRef insertedColumns As Integer) As String
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException(NameOf(obj))
@@ -808,6 +808,7 @@ l1:
                                     End If
                                 End If
                                 f = New dc.EntityFilter(real_t, propertyAlias, New ScalarValue(v), FilterOperation.Equal)
+                                insertedColumns += 1
                             End If
 
                             If f IsNot Nothing Then

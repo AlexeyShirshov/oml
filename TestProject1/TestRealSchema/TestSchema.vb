@@ -18,7 +18,7 @@ Public Class TestSchema
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\TestProject1\Databases\wormtest.mdf"))
         Return New OrmReadOnlyDBManager("Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;", schema, New SQL2000Generator, New OrmCache)
 #Else
-        Return New OrmDBManager("Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest", schema, New SQL2000Generator, New OrmCache)
+        Return New OrmDBManager("Server=dev01;Integrated security=true;Initial catalog=wormtest", schema, New SQL2000Generator, New OrmCache)
 #End If
     End Function
 

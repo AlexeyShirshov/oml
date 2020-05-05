@@ -18,6 +18,7 @@ Imports System.Threading
 Imports System.Linq
 Imports System.Text.RegularExpressions
 Imports CoreFramework.CFDebugging
+Imports System.Web.Management
 
 Namespace Database
     Partial Public Class OrmReadOnlyDBManager
@@ -72,7 +73,7 @@ Namespace Database
 
                             Dim b As ConnAction = mgr.TestConn(cmd)
                             Try
-                                mgr.LoadSingleObject(cmd, cols, obj, True, False, False)
+                                mgr.LoadSingleObject(cmd, cols, obj, True, False, upd.Count)
 
                                 inv = True
                             Finally
@@ -120,7 +121,7 @@ Namespace Database
                                     Dim b As ConnAction = mgr.TestConn(cmd)
                                     Try
                                         If sel Then
-                                            mgr.LoadSingleObject(cmd, cols, obj, True, False, False)
+                                            mgr.LoadSingleObject(cmd, cols, obj, True, False, upd.Count)
                                         Else
                                             Dim r As Integer = cmd.ExecuteNonQuery()
                                             If r = 0 Then
@@ -186,8 +187,9 @@ Namespace Database
                     Dim cols As Generic.List(Of SelectExpression) = Nothing
                     Using obj.AcquareLock()
                         Dim cmdtext As String = Nothing
+                        Dim insertedColumns = 0
                         Try
-                            cmdtext = mgr.SQLGenerator.Insert(mgr.MappingEngine, obj, mgr.ContextInfo, params, cols)
+                            cmdtext = mgr.SQLGenerator.Insert(mgr.MappingEngine, obj, mgr.ContextInfo, params, cols, insertedColumns)
                         Catch ex As ObjectMappingException When ex.Message.Contains("Cannot save object while it has reference to new object")
                             Return False
                         End Try
@@ -208,7 +210,7 @@ Namespace Database
 
                                         Dim b As ConnAction = mgr.TestConn(cmd)
                                         Try
-                                            mgr.LoadSingleObject(cmd, cols, obj, True, False, True)
+                                            mgr.LoadSingleObject(cmd, cols, obj, True, False, insertedColumns)
                                             If Not obj.IsPKLoaded Then
                                                 Dim props = mgr.MappingEngine.GetEntitySchema(obj.GetType)
                                                 obj.PKLoaded(1, props)
@@ -244,7 +246,7 @@ Namespace Database
                                             Dim b As ConnAction = mgr.TestConn(cmd)
                                             Try
                                                 If sel Then
-                                                    mgr.LoadSingleObject(cmd, cols, obj, True, False, True)
+                                                    mgr.LoadSingleObject(cmd, cols, obj, True, False, insertedColumns)
                                                 Else
                                                     cmd.ExecuteNonQuery()
                                                 End If
@@ -1377,7 +1379,7 @@ l1:
                                         _rownum As Integer,
                                         _baseIdx As Integer)
 
-                                        Return LoadObjectFromDataReader(_obj, New DataReaderAbstraction(dr, _rownum, dr), _selectList, False,
+                                        Return LoadObjectFromDataReader(_obj, New DataReaderAbstraction(dr, _rownum, dr), _selectList, 0, False,
                                             _entityDictionary, _modificationSync, _lock, _oschema,
                                             _propertyMap, _rownum, _baseIdx)
 
@@ -1509,7 +1511,7 @@ l1:
                                         _rownum As Integer,
                                         _baseIdx As Integer)
 
-                                        Return LoadObjectFromDataReader(_obj, New DataReaderAbstraction(dr, _rownum, dr), _selectList, False,
+                                        Return LoadObjectFromDataReader(_obj, New DataReaderAbstraction(dr, _rownum, dr), _selectList, 0, False,
                                             _entityDictionary, _modificationSync, _lock, _oschema,
                                             _propertyMap, _rownum, _baseIdx)
 
@@ -1551,17 +1553,17 @@ l1:
         Protected Sub LoadSingleObject(ByVal cmd As System.Data.Common.DbCommand,
                                        ByVal selectList As IList(Of SelectExpression), ByVal obj As _IEntity,
                                        ByVal modificationSync As Boolean, ByVal load As Boolean,
-                                       ByVal modifiedloaded As Boolean)
+                                       insertedColumns As Integer)
             Invariant()
 
             Dim dic As IDictionary = GetDictionary(obj.GetType, TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior))
 
-            LoadSingleObject(cmd, selectList, obj, modificationSync, load, modifiedloaded, dic)
+            LoadSingleObject(cmd, selectList, obj, modificationSync, load, insertedColumns, dic)
         End Sub
 
         Protected Sub LoadSingleObject(ByVal cmd As System.Data.Common.DbCommand,
                                        ByVal selectList As IList(Of SelectExpression), ByVal obj As _IEntity, ByVal modificationSync As Boolean,
-                                       ByVal load As Boolean, ByVal modifiedloaded As Boolean,
+                                       ByVal load As Boolean, insertedColumns As Integer,
                                        ByVal dic As IDictionary)
 
             Invariant()
@@ -1592,7 +1594,7 @@ l1:
                                 _rownum As Integer,
                                 _baseIdx As Integer)
 
-                                Return LoadObjectFromDataReader(_obj, New DataReaderAbstraction(dr, _rownum, dr), _selectList, False,
+                                Return LoadObjectFromDataReader(_obj, New DataReaderAbstraction(dr, _rownum, dr), _selectList, insertedColumns, False,
                                     _entityDictionary, _modificationSync, _lock, _oschema,
                                     _propertyMap, _rownum, _baseIdx)
 
@@ -2199,7 +2201,7 @@ l1:
                             If pi Is Nothing Then
                             Else
                                 Dim cc = If(TryCast(sf, ICacheConverter), TryCast(m, ICacheConverter))
-                                If cc.Converter Is Nothing Then
+                                If cc.Converter Is Nothing AndAlso Not fldNull Then
                                     If pi.PropertyType Is value.GetType Then
                                         cc.Converter = MapField2Column.EmptyConverter
                                     Else
@@ -2207,7 +2209,7 @@ l1:
                                     End If
                                 End If
 
-                                If cc.Converter IsNot MapField2Column.EmptyConverter Then
+                                If cc.Converter IsNot Nothing AndAlso cc.Converter IsNot MapField2Column.EmptyConverter Then
                                     value = cc.Converter(pi.PropertyType, value.GetType, value)
                                 End If
                             End If
@@ -2534,7 +2536,7 @@ l1:
                     RaiseObjectCreated(entity)
                     entity.SetMgrString(IdentityString)
                 End If
-                Dim ro As Object = LoadObjectFromDataReader(obj, dr, selectList, True, entityDictionary, False, lock, oschema, fields_idx, rownum)
+                Dim ro As Object = LoadObjectFromDataReader(obj, dr, selectList, 0, True, entityDictionary, False, lock, oschema, fields_idx, rownum)
                 If entity IsNot Nothing Then
                     AfterLoadingProcess(entity, CType(ro, _IEntity))
                 End If
@@ -2602,11 +2604,13 @@ l1:
         ''' 3. Если первчиный ключ не загружен, но это загрузка объекта при модификации, сохраняем копию старого объекта
         ''' </remarks>
         Protected Function LoadObjectFromDataReader(ByVal obj As Object, ByVal dr As IDataReaderAbstraction,
-                                                    ByVal selectList As IList(Of SelectExpression), parallel As Boolean,
+                                                    ByVal selectList As IList(Of SelectExpression), insertedColumns As Integer,
+                                                    parallel As Boolean,
                                                     ByVal entityDictionary As IDictionary, ByVal modificationSync As Boolean, ByRef lock As IDisposable,
                                                     ByVal oschema As IEntitySchema,
                                                     ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column),
-                                                    ByVal rownum As Integer, Optional ByVal baseIdx As Integer = 0) As Object
+                                                    ByVal rownum As Integer,
+                                                    Optional ByVal baseIdx As Integer = 0) As Object
 
             Dim fldCount = 0
             If _rsThreads > 1 Then
@@ -3016,7 +3020,7 @@ l2:
                                 If pi Is Nothing Then
                                 Else
                                     Dim cc = If(TryCast(sf, ICacheConverter), TryCast(m, ICacheConverter))
-                                    If cc.Converter Is Nothing Then
+                                    If cc.Converter Is Nothing AndAlso Not fldNull Then
                                         If pi.PropertyType Is value.GetType Then
                                             cc.Converter = MapField2Column.EmptyConverter
                                         Else
@@ -3024,7 +3028,7 @@ l2:
                                         End If
                                     End If
 
-                                    If cc.Converter IsNot MapField2Column.EmptyConverter Then
+                                    If cc.Converter IsNot Nothing AndAlso cc.Converter IsNot MapField2Column.EmptyConverter Then
                                         value = cc.Converter(pi.PropertyType, value.GetType, value)
                                     End If
                                 End If
@@ -3091,7 +3095,7 @@ l2:
             End Try
 
             'If ll IsNot Nothing Then
-            CheckIsAllLoaded(entity, MappingEngine, selectList.Count, propertyMap)
+            CheckIsAllLoaded(entity, MappingEngine, selectList.Count + insertedColumns, propertyMap)
             'End If
 
             If entity IsNot Nothing Then RaiseObjectLoaded(entity)

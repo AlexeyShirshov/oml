@@ -3363,8 +3363,13 @@ l1:
         Dim ll As IPropertyLazyLoad = TryCast(clone, IPropertyLazyLoad)
         If ll IsNot Nothing Then
             ll.LazyLoadDisabled = True
+            For Each m In oschema.FieldColumnMap
+                ll.IsPropertyLoaded(m.PropertyAlias) = CType(e, IPropertyLazyLoad).IsPropertyLoaded(m.PropertyAlias)
+            Next
         End If
         clone.SetObjectStateClear(e.ObjectState)
+        clone.IsLoaded = e.IsLoaded
+
         Return clone
     End Function
 

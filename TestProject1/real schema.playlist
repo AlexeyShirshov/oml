@@ -1,0 +1,8 @@
+<Playlist Version="1.0">
+  <Add Test="TestProject1.TestDic.TestBuild" />
+  <Add Test="TestProject1.TestDic.TestBuildComplex" />
+  <Add Test="TestProject1.TestDic.TestBuildComplex2" />
+  <Add Test="TestProject1.TestDic.TestBuildComplexWithSort" />
+  <Add Test="TestProject1.TestDic.TestBuildWithSort" />
+  <Add Test="TestProject1.TestDic.TestLike" />
+</Playlist>

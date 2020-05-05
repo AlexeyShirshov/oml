@@ -101,7 +101,7 @@ Imports Worm.Expressions2
             "select @rcount = @@rowcount, @pk_id = scope_identity()" & vbCrLf &
             "if @rcount > 0 select t1.id from dbo.ent1 t1 where t1.id = @pk_id"
 
-        Assert.AreEqual(expected, gen.Insert(schemaV1, o, Nothing, params, sel))
+        Assert.AreEqual(expected, gen.Insert(schemaV1, o, Nothing, params, sel, 0))
 
         Assert.IsNotNull(params)
         Assert.IsNotNull(sel)
@@ -128,7 +128,7 @@ Imports Worm.Expressions2
             "if @err = 0 insert into dbo.t1 (s,i)  values(@p1,@pk_id)" & vbCrLf &
             "if @rcount > 0 select t1.id from dbo.ent1 t1 where t1.id = @pk_id"
 
-        Assert.AreEqual(expected, gen.Insert(schemaV1, o, Nothing, params, sel))
+        Assert.AreEqual(expected, gen.Insert(schemaV1, o, Nothing, params, sel, 0))
 
         Assert.IsNotNull(params)
         Assert.IsNotNull(sel)

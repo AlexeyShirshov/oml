@@ -103,8 +103,8 @@ Public Class TestProcs
             Dim l = p.GetResult(mgr)
 
             Assert.AreEqual(1, l.Count)
-            Assert.AreEqual(Date.Parse("2007-01-30 15:28:18.477"), l(0).name)
-            Assert.AreEqual(Of Decimal)(2, CDec(l(0).Value))
+            Assert.AreEqual(Date.Parse("2007-01-30 15:28:18.477"), l(0).First)
+            Assert.AreEqual(Of Decimal)(2, CDec(l(0).Second))
         End Using
     End Sub
 
@@ -422,7 +422,7 @@ Public Class P3Proc
     End Function
 
     Protected Overrides Function InitResult() As Object
-        Return New List(Of ParamValue)
+        Return New List(Of Pair(Of Date, Decimal))
     End Function
 
     Protected Overrides Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
@@ -432,8 +432,8 @@ Public Class P3Proc
         l.Add(New Pair(Of Date, Decimal)(dt, m))
     End Sub
 
-    Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As List(Of ParamValue)
-        Return CType(MyBase.GetResult(mgr), Global.System.Collections.Generic.List(Of ParamValue))
+    Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As List(Of Pair(Of Date, Decimal))
+        Return CType(MyBase.GetResult(mgr), Global.System.Collections.Generic.List(Of Pair(Of Date, Decimal)))
     End Function
 End Class
 

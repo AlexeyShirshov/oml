@@ -1659,9 +1659,9 @@ l1:
         Friend _prepared As Boolean
         Friend _cancel As Boolean
 
-        Public Sub Prepare(ByVal executor As IExecutor, _
-            ByVal schema As ObjectMappingEngine, ByVal filterInfo As IDictionary, _
-            ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Worm.Criteria.Values.IQueryElement.Prepare
+        Public Sub Prepare(ByVal executor As IExecutor,
+                           ByVal schema As ObjectMappingEngine, ByVal filterInfo As IDictionary,
+                           ByVal stmt As StmtGenerator, ByVal isAnonym As Boolean) Implements Worm.Criteria.Values.IQueryElement.Prepare
 
             _sl = New List(Of SelectExpression)
             _types = New Dictionary(Of EntityUnion, IEntitySchema)
@@ -1939,8 +1939,8 @@ l1:
             Return False
         End Function
 
-        Protected Sub AddTypeFields(ByVal mpe As ObjectMappingEngine, ByVal cl As List(Of SelectExpression), _
-            ByVal tp As Pair(Of EntityUnion, Boolean?), ByVal pref As String, ByVal isAnonym As Boolean, ByVal stmt As StmtGenerator)
+        Protected Sub AddTypeFields(ByVal mpe As ObjectMappingEngine, ByVal cl As List(Of SelectExpression),
+                                    ByVal tp As Pair(Of EntityUnion, Boolean?), ByVal pref As String, ByVal isAnonym As Boolean, ByVal stmt As StmtGenerator)
             Dim t As Type = tp.First.GetRealType(mpe)
 
 #If nlog Then
@@ -1967,10 +1967,10 @@ l1:
                     '    } _
                     '))
                     For Each mp As MapField2Column In oschema.GetAutoLoadFields
-                        l.Add(New SelectExpression(New PropertyAliasExpression(mp.PropertyAlias)) With { _
-                            .Into = tp.First, _
-                            .Attributes = mp.Attributes, _
-                            .IntoPropertyAlias = mp.PropertyAlias _
+                        l.Add(New SelectExpression(New PropertyAliasExpression(mp.PropertyAlias)) With {
+                            .Into = tp.First,
+                            .Attributes = mp.Attributes,
+                            .IntoPropertyAlias = mp.PropertyAlias
                         })
                     Next
                 Else
@@ -2021,11 +2021,11 @@ l1:
                 If FromClause IsNot Nothing AndAlso FromClause.QueryEU IsNot Nothing AndAlso FromClause.QueryEU.IsQuery Then
                     'For Each c As MapField2Column In oschema.GetPKs
                     Dim c = oschema.GetPK
-                    Dim se As New SelectExpression(New PropertyAliasExpression(c.PropertyAlias)) With { _
-                                .Into = tp.First, .IntoPropertyAlias = c.PropertyAlias _
+                    Dim se As New SelectExpression(New PropertyAliasExpression(c.PropertyAlias)) With {
+                                .Into = tp.First, .IntoPropertyAlias = c.PropertyAlias
                             }
-                        se.Attributes = c.Attributes
-                        cl.Add(se)
+                    se.Attributes = c.Attributes
+                    cl.Add(se)
                     'Next
                 Else
                     If IsFTS Then
@@ -3755,7 +3755,13 @@ l1:
                 t = Me.GetType.GetMethod("ToPOCOList", New Type() {GetType(OrmManager)})
             End If
             t = t.MakeGenericMethod(New Type() {st})
-            Return CType(t.Invoke(Me, New Object() {mgr}), System.Collections.IList)
+
+            Try
+                Return CType(t.Invoke(Me, New Object() {mgr}), System.Collections.IList)
+            Catch ex As TargetInvocationException
+                CoreFramework.CFDebugging.Stack.PreserveStackTrace(ex.InnerException)
+                Throw ex.InnerException
+            End Try
         End Function
 
         Public Function ToList(ByVal getMgr As ICreateManager) As IList

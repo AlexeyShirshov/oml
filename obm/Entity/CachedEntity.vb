@@ -1573,27 +1573,27 @@ l1:
         '    Return _members_load_state(idx, map, mpe)
         'End Function
 
-        Public Overrides Function Equals(ByVal obj As Object) As Boolean
-            Return Equals(TryCast(obj, CachedEntity))
-        End Function
+        'Public Overrides Function Equals(ByVal obj As Object) As Boolean
+        '    Return Equals(TryCast(obj, CachedEntity))
+        'End Function
 
-        Public Overloads Function Equals(ByVal obj As CachedEntity) As Boolean
-            If obj Is Nothing Then
-                Return False
-            End If
-            If Me.GetType IsNot obj.GetType Then
-                Return False
-            End If
-            Dim pks = Me.GetPKValues(Nothing)
-            Dim pks2 = obj.GetPKValues(Nothing)
-            For i As Integer = 0 To pks.Count - 1
-                Dim pk = pks(i)
-                If pk.Column <> pks2(i).Column OrElse Not Object.Equals(pk.Value, pks2(i).Value) Then
-                    Return False
-                End If
-            Next
-            Return True
-        End Function
+        'Public Overloads Function Equals(ByVal obj As CachedEntity) As Boolean
+        '    If obj Is Nothing Then
+        '        Return False
+        '    End If
+        '    If Me.GetType IsNot obj.GetType Then
+        '        Return False
+        '    End If
+        '    Dim pks = Me.GetPKValues(Nothing)
+        '    Dim pks2 = obj.GetPKValues(Nothing)
+        '    For i As Integer = 0 To pks.Count - 1
+        '        Dim pk = pks(i)
+        '        If pk.Column <> pks2(i).Column OrElse Not Object.Equals(pk.Value, pks2(i).Value) Then
+        '            Return False
+        '        End If
+        '    Next
+        '    Return True
+        'End Function
 
         Public Overrides Function GetHashCode() As Integer
             Return GetCacheKey()

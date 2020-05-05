@@ -219,11 +219,11 @@ Imports Worm.Criteria
     Public Sub TestRawObjectCreate2()
         Dim t As New RawObj
 
-        Assert.AreEqual("RawObj - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=0;): ", t.InternalProperties.ObjName)
+        Assert.AreEqual("RawObj - Created (Code=0;Identifier=00000000-0000-0000-0000-000000000000;): ", t.InternalProperties.ObjName)
 
         t.Code = 100
 
-        Assert.AreEqual("RawObj - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=100;): ", t.InternalProperties.ObjName)
+        Assert.AreEqual("RawObj - Created (Code=100;Identifier=00000000-0000-0000-0000-000000000000;): ", t.InternalProperties.ObjName)
 
         'Dim t2 As RawObj = CType(t.Clone, RawObj)
 
@@ -234,11 +234,11 @@ Imports Worm.Criteria
     Public Sub TestRawObjectCreate3()
         Dim t As New RawObj2
 
-        Assert.AreEqual("RawObj2 - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=0;): ", t.InternalProperties.ObjName)
+        Assert.AreEqual("RawObj2 - Created (Code=0;Identifier=00000000-0000-0000-0000-000000000000;): ", t.InternalProperties.ObjName)
 
         t.Code = 100
 
-        Assert.AreEqual("RawObj2 - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=100;): ", t.InternalProperties.ObjName)
+        Assert.AreEqual("RawObj2 - Created (Code=100;Identifier=00000000-0000-0000-0000-000000000000;): ", t.InternalProperties.ObjName)
 
         'Dim t2 As RawObj2 = CType(t.Clone, RawObj2)
 

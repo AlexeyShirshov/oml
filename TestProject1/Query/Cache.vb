@@ -540,8 +540,8 @@ Imports System.Collections.ObjectModel
         For Each r As ReadOnlyCollection(Of _IEntity) In l
             Assert.IsInstanceOfType(r(0), GetType(Table1))
             Assert.IsFalse(r(0).IsLoaded)
-            Dim ll As IPropertyLazyLoad = TryCast(r(0), IPropertyLazyLoad)
-            Assert.IsNull(ll)
+            'Dim ll As IPropertyLazyLoad = TryCast(r(0), IPropertyLazyLoad)
+            'Assert.IsNull(ll)
             Using mc As IGetManager = r(0).GetMgr
                 Assert.IsNotNull(mc)
                 Dim oschema As IEntitySchema = r(0).GetEntitySchema(mc.Manager.MappingEngine)
@@ -552,8 +552,8 @@ Imports System.Collections.ObjectModel
 
             Assert.IsInstanceOfType(r(1), GetType(Table2))
             Assert.IsFalse(r(1).IsLoaded)
-            ll = TryCast(r(1), IPropertyLazyLoad)
-            Assert.IsNull(ll)
+            'll = TryCast(r(1), IPropertyLazyLoad)
+            'Assert.IsNull(ll)
             Using mc As IGetManager = r(1).GetMgr
                 Assert.IsNotNull(mc)
                 Dim oschema As IEntitySchema = r(1).GetEntitySchema(mc.Manager.MappingEngine)
@@ -571,8 +571,8 @@ Imports System.Collections.ObjectModel
         For Each r As ReadOnlyCollection(Of _IEntity) In l
             Assert.IsInstanceOfType(r(1), GetType(Table1))
             Assert.IsFalse(r(1).IsLoaded)
-            Dim ll As IPropertyLazyLoad = TryCast(r(0), IPropertyLazyLoad)
-            Assert.IsNull(ll)
+            'Dim ll As IPropertyLazyLoad = TryCast(r(0), IPropertyLazyLoad)
+            'Assert.IsNull(ll)
             Using mc As IGetManager = r(1).GetMgr
                 Assert.IsNotNull(mc)
                 Dim oschema As IEntitySchema = r(1).GetEntitySchema(mc.Manager.MappingEngine)
@@ -583,8 +583,8 @@ Imports System.Collections.ObjectModel
 
             Assert.IsInstanceOfType(r(0), GetType(Table2))
             Assert.IsFalse(r(0).IsLoaded)
-            ll = TryCast(r(0), IPropertyLazyLoad)
-            Assert.IsNull(ll)
+            'll = TryCast(r(0), IPropertyLazyLoad)
+            'Assert.IsNull(ll)
             Using mc As IGetManager = r(0).GetMgr
                 Assert.IsNotNull(mc)
                 Dim oschema As IEntitySchema = r(0).GetEntitySchema(mc.Manager.MappingEngine)

@@ -140,6 +140,12 @@ Namespace Entities
                             'Else
                             '    SetObjectState(ObjectState.NotFoundInSource)
                         End If
+                        'ElseIf ObjectState = ObjectState.Modified Then 'after insert or update
+                        '    If IsLoaded Then
+                        '        SetObjectState(ObjectState.None)
+                        '    Else
+                        '        SetObjectState(ObjectState.NotLoaded)
+                        '    End If
                     End If
                 End If
             End Using
@@ -839,7 +845,20 @@ Namespace Entities
         'End Property
 
         'Public Property Context As Object Implements IDataContext.Context
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            Return Equals(TryCast(obj, Entity))
+        End Function
 
+        Public Overloads Function Equals(ByVal obj As Entity) As Boolean
+            If obj Is Nothing Then
+                Return False
+            End If
+            If Me.GetType IsNot obj.GetType Then
+                Return False
+            End If
+
+            Return EntityExtensions.Equals(Me, obj)
+        End Function
     End Class
 
     'Public Class EntityLazyLoad
