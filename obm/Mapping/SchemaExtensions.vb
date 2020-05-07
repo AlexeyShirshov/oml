@@ -18,9 +18,10 @@ Namespace Entities.Meta
                 End If
 
                 If oschema IsNot Nothing Then
-                    Dim l As New PKDesc
-
                     Dim pk = oschema.GetPK
+
+                    Dim l As New PKDesc With {.PKName = pk.PropertyAlias}
+
                     If pk.SourceFields.Count > 1 Then
                         For Each sf In pk.SourceFields
                             l.Add(New ColumnValue(sf.SourceFieldExpression, ObjectMappingEngine.GetPropertyValue(obj, MakePKName(pk.PropertyAlias, sf.SourceFieldExpression), oschema, sf.PropertyInfo)))
@@ -28,6 +29,7 @@ Namespace Entities.Meta
                     Else
                         l.Add(New ColumnValue(pk.SourceFields(0).SourceFieldExpression, ObjectMappingEngine.GetPropertyValue(obj, pk.PropertyAlias, oschema, pk.PropertyInfo)))
                     End If
+
                     Return l
                 End If
             End If
@@ -44,9 +46,9 @@ Namespace Entities.Meta
                     Throw New ArgumentNullException("oschema")
                 End If
 
-                Dim l As New PKDesc
-
                 Dim pk = oschema.GetPK
+
+                Dim l As New PKDesc With {.PKName = pk.PropertyAlias}
 
                 If pk.SourceFields.Count > 1 Then
                     For Each sf In pk.SourceFields

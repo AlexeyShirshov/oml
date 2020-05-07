@@ -16,7 +16,7 @@ Public Class Table4
 
     Public Sub New(ByVal id As Integer)
         _id = id
-        PKLoaded(1, "ID")
+        PKLoaded("ID")
     End Sub
 
     Private _id As Integer
@@ -40,13 +40,20 @@ Public Class Table4
         End Set
     End Property
 
-    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
-        With Me
-            CType([to], Table4)._col = ._col
-            CType([to], Table4)._g = ._g
-            CType([to], Table4)._id = ._id
-        End With
-    End Sub
+    Protected Function CopyProperties(ByVal [to] As Object) As Boolean Implements ICopyProperties.CopyTo
+        Dim dst = TryCast([to], Table4)
+        If dst IsNot Nothing Then
+            With Me
+                dst._col = ._col
+                dst._g = ._g
+                dst._id = ._id
+            End With
+
+            Return True
+        End If
+
+        Return False
+    End Function
 
     Public Overridable Function SetValueOptimized(ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) As Boolean Implements IOptimizedValues.SetValueOptimized
         Select Case fieldName

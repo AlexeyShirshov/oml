@@ -1174,21 +1174,21 @@ Imports Worm.Expressions2
         'Assert.AreEqual(0, q.ExecCount)
     End Sub
 
-    <TestMethod()> _
-    Public Sub TestGetByIdPerf()
-        Dim c As New ReadonlyCache
+    '<TestMethod()> _
+    'Public Sub TestGetByIdPerf()
+    '    Dim c As New ReadonlyCache
 
-        Dim q As New QueryCmd(Function() _
-            TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
+    '    Dim q As New QueryCmd(Function() _
+    '        TestManagerRS.CreateManagerShared(New ObjectMappingEngine("1"), c))
 
-        For i = 0 To 10000
-            Dim t As Table1 = q.GetByID(Of Table1)(New Random().Next, GetByIDOptions.EnsureExistsInStore)
+    '    For i = 0 To 10000
+    '        Dim t As Table1 = q.GetByID(Of Table1)(New Random().Next, GetByIDOptions.EnsureExistsInStore)
 
-            Assert.IsNull(t)
-        Next
-        't = q.GetByID(Of Table1)(1)
-        'Assert.AreEqual(0, q.ExecCount)
-    End Sub
+    '        Assert.IsNull(t)
+    '    Next
+    '    't = q.GetByID(Of Table1)(1)
+    '    'Assert.AreEqual(0, q.ExecCount)
+    'End Sub
 
     <TestMethod()> _
     Public Sub TestGetByIds1()

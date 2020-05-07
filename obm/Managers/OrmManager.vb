@@ -4285,9 +4285,9 @@ l1:
     End Function
 
     Private Function FindObjectsToLoad(ByVal t As Type, ByVal oschema As IEntitySchema,
-        ByVal selOS As EntityUnion, ByVal c As Condition.ConditionConstructor, ByVal eudic As Dictionary(Of String, EntityUnion),
-        ByVal joins As List(Of QueryJoin), ByVal selDic As Dictionary(Of EntityUnion, LoadTypeDescriptor),
-        ByVal propertyAlias As String) As LoadTypeDescriptor
+                                       ByVal selOS As EntityUnion, ByVal c As Condition.ConditionConstructor, ByVal eudic As Dictionary(Of String, EntityUnion),
+                                       ByVal joins As List(Of QueryJoin), ByVal selDic As Dictionary(Of EntityUnion, LoadTypeDescriptor),
+                                       ByVal propertyAlias As String) As LoadTypeDescriptor
 
         Dim p As LoadTypeDescriptor = GetSelList(t, oschema, propertyAlias, selOS)
         selDic.Add(selOS, p)
@@ -4296,7 +4296,8 @@ l1:
             Dim pi As Reflection.PropertyInfo = m.PropertyInfo
             Dim mPropertyAlias As String = m.PropertyAlias
             If p.Properties2Load.Exists(Function(se As EntityExpression) se.ObjectProperty.PropertyAlias = mPropertyAlias) Then
-                Dim pit As Type = pi.PropertyType
+                Dim pit As Type = pi?.PropertyType
+
                 If ObjectMappingEngine.IsEntityType(pit) _
                     AndAlso Not GetType(IPropertyLazyLoad).IsAssignableFrom(pit) Then
                     Dim eu As EntityUnion = Nothing
@@ -4775,9 +4776,9 @@ l1:
 
     Private Sub CreateClone4Edit(ByVal e As IUndoChanges, ByVal oschema As IEntitySchema)
         If e.OriginalCopy Is Nothing Then
-            Dim clone As IEntity = MappingEngine.CloneFullEntity(e, oschema)
+            Dim clone = MappingEngine.CloneFullEntity(e, oschema)
             e.SetObjectState(Entities.ObjectState.Modified)
-            e.OriginalCopy = CType(clone, CachedEntity)
+            e.OriginalCopy = CType(clone, ICachedEntity)
             'Using mc As IGetManager = GetMgr()
 
             'OrmCache.RegisterModification(modified).Reason = ModifiedObject.ReasonEnum.Edit
@@ -4791,7 +4792,7 @@ l1:
     End Sub
 
     Protected Shared Sub StartUpdate(ByVal e As IUndoChanges)
-        If Not e.IsLoading Then 'AndAlso ObjectState <> Orm.ObjectState.Deleted Then
+        If Not e.IsLoading AndAlso e.IsPKLoaded Then 'AndAlso ObjectState <> Orm.ObjectState.Deleted Then
             'If e.ObjectState = Entities.ObjectState.Clone Then
             '    Throw New OrmObjectException(e.ObjName & ": Altering clone is not allowed")
             'End If
@@ -4908,7 +4909,7 @@ l1:
         Dim ll As IPropertyLazyLoad = TryCast(e, IPropertyLazyLoad)
         If ll Is Nothing OrElse Not ll.LazyLoadDisabled Then
 
-            If Not e.IsLoaded AndAlso (e.ObjectState = Entities.ObjectState.NotLoaded OrElse e.ObjectState = Entities.ObjectState.None) Then
+            If e.IsPKLoaded AndAlso Not e.IsLoaded AndAlso (e.ObjectState = Entities.ObjectState.NotLoaded OrElse e.ObjectState = Entities.ObjectState.None) Then
                 If String.IsNullOrEmpty(propertyAlias) Then
                     Using mc As IGetManager = e.GetMgr
                         If mc IsNot Nothing Then
@@ -5088,27 +5089,29 @@ l1:
 #End Region
 
     Public Shared Sub SetPK(ByVal e As Object, ByVal pk As IPKDesc, ByVal oschema As IEntitySchema, ByVal mpe As ObjectMappingEngine)
-        Dim op As IOptimizePK = TryCast(e, IOptimizePK)
-        Dim ll As IPropertyLazyLoad = TryCast(e, IPropertyLazyLoad)
-        If op IsNot Nothing Then
-            op.SetPK(pk)
-        Else
-            Dim m = oschema.GetPK
-            Using New LoadingWrapper(e)
-                If pk.Count = 1 Then
-                    ObjectMappingEngine.SetPropertyValue(e, m.PropertyAlias, pk(0).Value, oschema, m.PropertyInfo)
-                Else
-                    For Each p In pk
-                        Dim sf = m.SourceFields.FirstOrDefault(Function(it) it.SourceFieldExpression = p.Column)
-                        ObjectMappingEngine.SetPropertyValue(e, MakePKName(Nothing, p.Column), p.Value, oschema, sf?.PropertyInfo)
-                    Next
-                End If
-            End Using
-        End If
+        'Using New LoadingWrapper(e)
+        '    Dim op As IOptimizePK = TryCast(e, IOptimizePK)
+        '    If op IsNot Nothing Then
+        '        op.SetPK(pk)
+        '    Else
+        '        Dim m = oschema.GetPK
+        '        If pk.Count = 1 Then
+        '            ObjectMappingEngine.SetPropertyValue(e, m.PropertyAlias, pk(0).Value, oschema, m.PropertyInfo)
+        '        Else
+        '            For Each p In pk
+        '                Dim sf = m.SourceFields.FirstOrDefault(Function(it) it.SourceFieldExpression = p.Column)
+        '                ObjectMappingEngine.SetPropertyValue(e, MakePKName(Nothing, p.Column), p.Value, oschema, sf?.PropertyInfo)
+        '            Next
+        '        End If
+        '    End If
+        'End Using
 
-        If ll IsNot Nothing Then
-            ll.IsPropertyLoaded(oschema.GetPK.PropertyAlias) = True
-        End If
+        'Dim ll As IPropertyLazyLoad = TryCast(e, IPropertyLazyLoad)
+        'If ll IsNot Nothing Then
+        '    ll.IsPropertyLoaded(oschema.GetPK.PropertyAlias) = True
+        'End If
+        'Dim spk = TryCast(e, ISinglePKEntity)
+        Entity.InitPK(pk, e.GetType, mpe, e)
     End Sub
 
     Public Shared Sub SetPK(ByVal o As Object, ByVal pk As IPKDesc, ByVal mpe As ObjectMappingEngine)
@@ -5156,8 +5159,11 @@ l1:
 
         Dim cp As ICopyProperties = TryCast([from], ICopyProperties)
         If cp IsNot Nothing AndAlso Not properties?.Any Then
-            cp.CopyTo([to])
+            If Not cp.CopyTo([to]) Then
+                GoTo l1
+            End If
         Else
+l1:
             If oschema Is Nothing Then
                 Throw New ArgumentNullException(NameOf(oschema))
             End If
@@ -5165,8 +5171,13 @@ l1:
             Dim map As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
             For Each m As MapField2Column In map
                 If properties Is Nothing OrElse Not properties.Any OrElse properties.Contains(m.PropertyAlias) Then
-                    ObjectMappingEngine.SetPropertyValue([to], m.PropertyAlias,
-                                                     ObjectMappingEngine.GetPropertyValue([from], m.PropertyAlias, oschema, m.PropertyInfo), oschema, m.PropertyInfo)
+                    If m.IsPK AndAlso m.PropertyInfo Is Nothing Then
+                        For Each sf In m.SourceFields
+                            ObjectMappingEngine.SetPropertyValue([to], m.PropertyAlias, ObjectMappingEngine.GetPropertyValue([from], m.PropertyAlias, oschema, sf.PropertyInfo), oschema, sf.PropertyInfo)
+                        Next
+                    Else
+                        ObjectMappingEngine.SetPropertyValue([to], m.PropertyAlias, ObjectMappingEngine.GetPropertyValue([from], m.PropertyAlias, oschema, m.PropertyInfo), oschema, m.PropertyInfo)
+                    End If
                 End If
             Next
         End If

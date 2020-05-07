@@ -1,6 +1,7 @@
 ﻿Imports Worm.Query
 Imports System.Linq
 Imports System.Collections.Generic
+Imports System.Runtime.CompilerServices
 
 Namespace Entities.Meta
     Public Interface IPKDesc
@@ -571,5 +572,18 @@ Namespace Entities.Meta
         End Function
     End Class
 
-
+    Public Module PKDescModule
+        <Extension>
+        Public Function CalcHashCode(pk As IPKDesc) As Integer
+            If pk.Count = 1 Then
+                Return pk(0).Value.GetHashCode
+            Else
+                Dim k As Integer
+                For Each p In pk
+                    k = k Xor p.Value.GetHashCode
+                Next
+                Return k
+            End If
+        End Function
+    End Module
 End Namespace

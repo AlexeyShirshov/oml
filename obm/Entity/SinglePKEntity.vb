@@ -695,12 +695,12 @@ Namespace Entities
         '    End If
         'End Sub
 
-        Protected Overrides Sub PKLoaded(ByVal pkCount As Integer, props As IPropertyMap)
-            If pkCount <> 1 Then
-                Throw New OrmObjectException(String.Format("SinglePKEntity derived class must have only one PK. The value is {0}", pkCount))
-            End If
-            MyBase.PKLoaded(pkCount, props)
-        End Sub
+        'Protected Overrides Sub PKLoaded(ByVal pkCount As Integer, props As IPropertyMap)
+        '    If pkCount <> 1 Then
+        '        Throw New OrmObjectException(String.Format("SinglePKEntity derived class must have only one PK. The value is {0}", pkCount))
+        '    End If
+        '    MyBase.PKLoaded(pkCount, props)
+        'End Sub
 
 
         Public Overrides ReadOnly Property UniqueString() As String

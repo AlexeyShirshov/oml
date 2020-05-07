@@ -15,7 +15,7 @@ Public Class Table10
 
     Public Sub New(ByVal id As Integer)
         _id = id
-        PKLoaded(1, "ID")
+        PKLoaded("ID")
     End Sub
 
     Private _id As Integer
@@ -39,10 +39,16 @@ Public Class Table10
         End Set
     End Property
 
-    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
-        CType([to], Table10)._tbl1 = _tbl1
-        CType([to], Table10)._id = _id
-    End Sub
+    Protected Function CopyProperties(ByVal [to] As Object) As Boolean Implements ICopyProperties.CopyTo
+        Dim dst = TryCast([to], Table10)
+        If dst IsNot Nothing Then
+            dst._tbl1 = _tbl1
+            dst._id = _id
+            Return True
+        End If
+
+        Return False
+    End Function
 
     Public Overridable Function SetValueOptimized(
         ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) As Boolean Implements IOptimizedValues.SetValueOptimized
@@ -73,7 +79,7 @@ Public Class Table10
         Return Nothing
     End Function
 
-    <EntityPropertyAttribute(PropertyAlias:="Table1")> _
+    <EntityPropertyAttribute(PropertyAlias:="Table1")>
     Public Property Tbl() As Table1
         Get
             Using Read("Table1")

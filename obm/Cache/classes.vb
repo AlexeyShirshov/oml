@@ -224,7 +224,7 @@ Namespace Cache
 
         Public Sub New(ByVal o As ICachedEntity)
             MyBase.New(o.GetPKValues(Nothing))
-            _key = o.Key
+            _key = o.Key.GetHashCode
         End Sub
 
         Public Overrides Function GetHashCode() As Integer

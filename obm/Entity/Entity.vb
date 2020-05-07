@@ -512,52 +512,55 @@ Namespace Entities
             Return o
         End Function
 
-        Private Shared Sub InitSinglePK(id As Object, o As ISinglePKEntity, oschema As IEntitySchema)
-            Dim m = oschema.GetPK
-            Dim col = m.SourceFields(0).SourceFieldExpression
-            Dim propertyAlias = m.PropertyAlias
-            Dim value = id
-            Dim fv = TryCast(o, IStorageValueConverter)
-            If fv IsNot Nothing Then
-                value = fv.CreateValue(oschema, m, propertyAlias, col, id)
-            End If
+        Friend Shared Sub InitSinglePK(id As Object, o As ISinglePKEntity, oschema As IEntitySchema)
+            Using New LoadingWrapper(o)
+                Dim m = oschema.GetPK
+                Dim col = m.SourceFields(0).SourceFieldExpression
+                Dim propertyAlias = m.PropertyAlias
+                Dim value = id
+                Dim fv = TryCast(o, IStorageValueConverter)
+                If fv IsNot Nothing Then
+                    value = fv.CreateValue(oschema, m, propertyAlias, col, id)
+                End If
 
-            Dim pi = m.PropertyInfo
+                Dim pi = m.PropertyInfo
 
-            If pi Is Nothing Then
-            Else
-                If m.Converter Is Nothing Then
-                    If pi.PropertyType Is value.GetType Then
-                        m.Converter = MapField2Column.EmptyConverter
-                    Else
-                        m.Converter = Converters.GetConverter(pi.PropertyType, value.GetType)
+                If pi Is Nothing Then
+                Else
+                    If m.Converter Is Nothing Then
+                        If pi.PropertyType Is value.GetType Then
+                            m.Converter = MapField2Column.EmptyConverter
+                        Else
+                            m.Converter = Converters.GetConverter(pi.PropertyType, value.GetType)
+                        End If
+                    End If
+
+                    If m.Converter IsNot MapField2Column.EmptyConverter Then
+                        value = m.Converter(pi.PropertyType, value.GetType, value)
                     End If
                 End If
 
-                If m.Converter IsNot MapField2Column.EmptyConverter Then
-                    value = m.Converter(pi.PropertyType, value.GetType, value)
+                Dim svo = TryCast(oschema, IOptimizeSetValue)
+                If m.OptimizedSetValue Is Nothing Then
+                    If svo IsNot Nothing Then
+                        m.OptimizedSetValue = svo.GetOptimizedDelegate(col)
+                    Else
+                        m.OptimizedSetValue = MapField2Column.EmptyOptimizedSetValue
+                    End If
                 End If
-            End If
 
-            Dim svo = TryCast(oschema, IOptimizeSetValue)
-            If m.OptimizedSetValue Is Nothing Then
-                If svo IsNot Nothing Then
-                    m.OptimizedSetValue = svo.GetOptimizedDelegate(col)
+                If m.OptimizedSetValue Is Nothing OrElse m.OptimizedSetValue Is MapField2Column.EmptyOptimizedSetValue Then
+
+                    o.Identifier = id
+
                 Else
-                    m.OptimizedSetValue = MapField2Column.EmptyOptimizedSetValue
+                    m.OptimizedSetValue(o, value)
                 End If
-            End If
 
-            If m.OptimizedSetValue Is Nothing OrElse m.OptimizedSetValue Is MapField2Column.EmptyOptimizedSetValue Then
+                o.PKLoaded(propertyAlias)
+                'o.SetObjectStateClear(ObjectState.NotLoaded)
 
-                o.Identifier = id
-                o.PKLoaded(1, StringExtensions.Coalesce(propertyAlias, MapField2Column.PK))
-
-            Else
-                m.OptimizedSetValue(o, value)
-            End If
-
-            'o.SetObjectStateClear(ObjectState.NotLoaded)
+            End Using
         End Sub
 
         Public Shared Function CreateKeyEntity(Of T As {ISinglePKEntity, New})(ByVal id As Object, ByVal mpe As ObjectMappingEngine) As T
@@ -603,124 +606,130 @@ Namespace Entities
             End If
         End Function
 
-        Private Shared Sub InitPK(pk As IPKDesc, type As Type, mpe As ObjectMappingEngine, e As Object)
-            Dim oschema As IEntitySchema = mpe.GetEntitySchema(type)
-            Dim fv = TryCast(e, IStorageValueConverter)
-            Dim m = oschema.GetPK
-            Dim propertyAlias = m.PropertyAlias
-            Dim svo = TryCast(oschema, IOptimizeSetValue)
+        Friend Shared Sub InitPK(pk As IPKDesc, type As Type, mpe As ObjectMappingEngine, e As Object)
+            'If GetType(AnonymousCachedEntity).IsAssignableFrom(type) Then
+            '    CType(e, IOptimizePK).SetPK(pk)
+            'End If
+            Using New LoadingWrapper(e)
+                Dim oschema As IEntitySchema = mpe.GetEntitySchema(type, False)
+                Dim fv = TryCast(e, IStorageValueConverter)
+                Dim m = oschema?.GetPK
+                Dim propertyAlias = StringExtensions.Coalesce(m?.PropertyAlias, pk.PKName)
+                Dim svo = TryCast(oschema, IOptimizeSetValue)
 
-            If pk.Count = 1 Then
-                If pk(0).Column <> m.SourceFields(0).SourceFieldExpression Then
-                    'Throw New ObjectMappingException($"PK has field {pk(0).Column} different to pk field {m.SourceFields(0).SourceFieldExpression}")
-                End If
-
-                Dim col = m.SourceFields(0).SourceFieldExpression 'pk(0).Column
-                Dim value As Object = pk(0).Value
-
-                If fv IsNot Nothing Then
-                    value = fv.CreateValue(oschema, m, propertyAlias, col, value)
-                End If
-
-                Dim pi = m.PropertyInfo
-
-                If pi Is Nothing Then
-                Else
-                    If m.Converter Is Nothing Then
-                        If pi.PropertyType Is value.GetType Then
-                            m.Converter = MapField2Column.EmptyConverter
-                        Else
-                            m.Converter = Converters.GetConverter(pi.PropertyType, value.GetType)
-                        End If
+                If pk.Count = 1 Then
+                    If pk(0).Column <> m?.SourceFields(0).SourceFieldExpression Then
+                        'Throw New ObjectMappingException($"PK has field {pk(0).Column} different to pk field {m.SourceFields(0).SourceFieldExpression}")
                     End If
 
-                    If m.Converter IsNot MapField2Column.EmptyConverter Then
-                        value = m.Converter(pi.PropertyType, value.GetType, value)
-                    End If
-                End If
-
-                If m.OptimizedSetValue Is Nothing Then
-                    If svo IsNot Nothing Then
-                        m.OptimizedSetValue = svo.GetOptimizedDelegate(col)
-                    Else
-                        m.OptimizedSetValue = MapField2Column.EmptyOptimizedSetValue
-                    End If
-                End If
-
-                If m.OptimizedSetValue Is Nothing OrElse m.OptimizedSetValue Is MapField2Column.EmptyOptimizedSetValue Then
-                    ObjectMappingEngine.SetPK(e, {New PKDesc2(col, value, pi)}, oschema, propertyAlias)
-                Else
-                    m.OptimizedSetValue(e, value)
-                End If
-
-            Else
-                Dim pks As New List(Of PKDesc2)
-
-                For j = 0 To m.SourceFields.Count - 1
-                    Dim sf = m.SourceFields(j)
-                    Dim colName As String = sf.SourceFieldExpression
-                    Dim pkf = pk(j)
-                    'Dim pkf = pk.FirstOrDefault(Function(it) it.Column = colName)
-                    'If pkf Is Nothing Then
-                    '    Throw New ObjectMappingException($"PK doesnot contain field {colName}")
-                    'End If
-
-                    Dim value As Object = pkf.Value
+                    Dim col = If(m?.SourceFields(0).SourceFieldExpression, pk(0).Column)
+                    Dim value As Object = pk(0).Value
 
                     If fv IsNot Nothing Then
-                        value = fv.CreateValue(oschema, m, propertyAlias, colName, value)
+                        value = fv.CreateValue(oschema, m, propertyAlias, col, value)
                     End If
 
-                    Dim pi = sf.PropertyInfo
+                    Dim pi = m?.PropertyInfo
 
                     If pi Is Nothing Then
                     Else
-                        If sf.Converter Is Nothing Then
+                        If m.Converter Is Nothing Then
                             If pi.PropertyType Is value.GetType Then
-                                sf.Converter = MapField2Column.EmptyConverter
+                                m.Converter = MapField2Column.EmptyConverter
                             Else
-                                sf.Converter = Converters.GetConverter(pi.PropertyType, value.GetType)
+                                m.Converter = Converters.GetConverter(pi.PropertyType, value.GetType)
                             End If
                         End If
 
-                        If sf.Converter IsNot MapField2Column.EmptyConverter Then
-                            value = sf.Converter(pi.PropertyType, value.GetType, value)
+                        If m.Converter IsNot MapField2Column.EmptyConverter Then
+                            value = m.Converter(pi.PropertyType, value.GetType, value)
                         End If
                     End If
 
-                    If sf.OptimizedSetValue Is Nothing Then
+                    If m IsNot Nothing AndAlso m.OptimizedSetValue Is Nothing Then
                         If svo IsNot Nothing Then
-                            sf.OptimizedSetValue = svo.GetOptimizedDelegate(colName)
+                            m.OptimizedSetValue = svo.GetOptimizedDelegate(col)
                         Else
-                            sf.OptimizedSetValue = MapField2Column.EmptyOptimizedSetValue
+                            m.OptimizedSetValue = MapField2Column.EmptyOptimizedSetValue
                         End If
                     End If
 
-                    pks.Add(New PKDesc2(colName, value, sf.PropertyInfo, sf.OptimizedSetValue))
+                    If m Is Nothing OrElse m.OptimizedSetValue Is Nothing OrElse m.OptimizedSetValue Is MapField2Column.EmptyOptimizedSetValue Then
+                        ObjectMappingEngine.SetPK(e, {New PKDesc2(col, value, pi)}, oschema, propertyAlias)
+                    Else
+                        m.OptimizedSetValue(e, value)
+                    End If
 
-                Next
-
-                If pks.All(Function(it) it.svo IsNot Nothing AndAlso it.svo IsNot MapField2Column.EmptyOptimizedSetValue) Then
-                    For Each pkasd In pks
-                        pkasd.svo(e, pkasd.Value)
-                    Next
                 Else
-                    ObjectMappingEngine.SetPK(e, pks, oschema, propertyAlias)
+                    Dim pks As New List(Of PKDesc2)
+
+                    For j = 0 To pk.Count - 1
+                        Dim pkf = pk(j)
+                        Dim sf = m?.SourceFields(j)
+                        Dim colName As String = If(sf?.SourceFieldExpression, pkf.Column)
+
+                        'Dim pkf = pk.FirstOrDefault(Function(it) it.Column = colName)
+                        'If pkf Is Nothing Then
+                        '    Throw New ObjectMappingException($"PK doesnot contain field {colName}")
+                        'End If
+
+                        Dim value As Object = pkf.Value
+
+                        If fv IsNot Nothing Then
+                            value = fv.CreateValue(oschema, m, propertyAlias, colName, value)
+                        End If
+
+                        Dim pi = sf?.PropertyInfo
+
+                        If pi Is Nothing Then
+                        Else
+                            If sf.Converter Is Nothing Then
+                                If pi.PropertyType Is value.GetType Then
+                                    sf.Converter = MapField2Column.EmptyConverter
+                                Else
+                                    sf.Converter = Converters.GetConverter(pi.PropertyType, value.GetType)
+                                End If
+                            End If
+
+                            If sf.Converter IsNot MapField2Column.EmptyConverter Then
+                                value = sf.Converter(pi.PropertyType, value.GetType, value)
+                            End If
+                        End If
+
+                        If sf IsNot Nothing AndAlso sf.OptimizedSetValue Is Nothing Then
+                            If svo IsNot Nothing Then
+                                sf.OptimizedSetValue = svo.GetOptimizedDelegate(colName)
+                            Else
+                                sf.OptimizedSetValue = MapField2Column.EmptyOptimizedSetValue
+                            End If
+                        End If
+
+                        pks.Add(New PKDesc2(colName, value, sf?.PropertyInfo, sf?.OptimizedSetValue))
+
+                    Next
+
+                    If pks.All(Function(it) it.svo IsNot Nothing AndAlso it.svo IsNot MapField2Column.EmptyOptimizedSetValue) Then
+                        For Each pkasd In pks
+                            pkasd.svo(e, pkasd.Value)
+                        Next
+                    Else
+                        ObjectMappingEngine.SetPK(e, pks, oschema, propertyAlias)
+                    End If
                 End If
-            End If
 
-            Dim ce = TryCast(e, _ICachedEntity)
-            If ce IsNot Nothing Then
-                ce.PKLoaded(pk.Count, oschema)
-            Else
-                Dim ll = TryCast(e, IPropertyLazyLoad)
-                If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
-            End If
+                Dim ce = TryCast(e, _ICachedEntity)
+                If ce IsNot Nothing Then
+                    ce.PKLoaded(propertyAlias)
+                Else
+                    Dim ll = TryCast(e, IPropertyLazyLoad)
+                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+                End If
 
-            'Dim ie = TryCast(e, _IEntity)
-            'If ie IsNot Nothing Then
-            '    ie.SetObjectStateClear(ObjectState.NotLoaded)
-            'End If
+                'Dim ie = TryCast(e, _IEntity)
+                'If ie IsNot Nothing Then
+                '    ie.SetObjectStateClear(ObjectState.NotLoaded)
+                'End If
+            End Using
         End Sub
 
         Public Shared Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk As IPKDesc, ByVal mpe As ObjectMappingEngine) As T

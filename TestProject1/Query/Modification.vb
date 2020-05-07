@@ -8,6 +8,7 @@ Imports Worm.Entities
 Imports Worm.Entities.Meta
 Imports Worm
 Imports Worm.Criteria
+Imports Worm.Cache
 
 <TestClass()> Public Class Modification
 
@@ -81,7 +82,7 @@ Imports Worm.Criteria
         End Using
     End Sub
 
-    <Entity("1", Tablename:="dbo.guid_table")> _
+    <Entity("1", TableName:="dbo.guid_table")>
     Public Class RawObj
         Inherits SinglePKEntityBase
 
@@ -111,8 +112,8 @@ Imports Worm.Criteria
 
     End Class
 
-    <Entity("1", Tablename:="dbo.guid_table")> _
-   Public Class RawObj2
+    <Entity("1", TableName:="dbo.guid_table")>
+    Public Class RawObj2
         Inherits CachedLazyLoad
 
         Private _id As Guid
@@ -145,7 +146,7 @@ Imports Worm.Criteria
         End Function
     End Class
 
-    <TestMethod()> _
+    <TestMethod()>
     Public Sub TestRawObjectUpdate()
         'Dim q As New QueryCmd(Function() _
         '   TestManager.CreateWriteManager(New ObjectMappingEngine("1")))
@@ -192,7 +193,7 @@ Imports Worm.Criteria
         'End Using
     End Sub
 
-    <TestMethod()> _
+    <TestMethod()>
     Public Sub TestRawObjectCreate()
         Dim t As New RawObj
         t.Code = 100
@@ -215,7 +216,7 @@ Imports Worm.Criteria
         End Using
     End Sub
 
-    <TestMethod()> _
+    <TestMethod()>
     Public Sub TestRawObjectCreate2()
         Dim t As New RawObj
 
@@ -230,7 +231,7 @@ Imports Worm.Criteria
         'Assert.AreEqual("RawObj - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=100;): ", t2.InternalProperties.ObjName)
     End Sub
 
-    <TestMethod()> _
+    <TestMethod()>
     Public Sub TestRawObjectCreate3()
         Dim t As New RawObj2
 
@@ -245,7 +246,7 @@ Imports Worm.Criteria
         'Assert.AreEqual("RawObj2 - Created (Identifier=00000000-0000-0000-0000-000000000000;Code=100;): ", t2.InternalProperties.ObjName)
     End Sub
 
-    <TestMethod()> _
+    <TestMethod()>
     Public Sub TestRawObjectDelete()
         Dim q As New QueryCmd(Function() _
            TestManager.CreateWriteManager(New ObjectMappingEngine("1")))
@@ -261,34 +262,48 @@ Imports Worm.Criteria
         Assert.AreEqual(ObjectState.Deleted, t.InternalProperties.ObjectState)
     End Sub
 
-    <TestMethod()> _
+    <TestMethod()>
     Public Sub TestModifyPOCO()
         Dim t As New SourceFragment("dbo", "table1")
         Dim c As New Cache.OrmCache
 
         Dim mpe As ObjectMappingEngine = New ObjectMappingEngine("1")
 
-        Dim q As New QueryCmd(New CreateManager(Function() _
-            TestManagerRS.CreateManagerShared(mpe, c)))
+        Dim q As New QueryCmd(New CreateManager(Function() TestManagerRS.CreateManagerShared(mpe, c)))
+        Dim pocoType As Type = GetType(Pod.cls)
 
-        q.Select(FCtor.column(t, "code").into("Code").column(t, "name").into("Title").column(t, "id").into("ID", Field2DbRelations.PK)). _
-            OrderBy(SCtor.prop(GetType(Pod.cls), "Code")).From(t)
+        q.Select(FCtor.column(t, "code").into("Code").column(t, "name").into("Title").column(t, "id").into("ID", Field2DbRelations.PK)).
+            OrderBy(SCtor.prop(pocoType, "Code")).From(t)
 
         Dim l As IList(Of Pod.cls) = q.ToPOCOList(Of Pod.cls)()
 
-        Dim ce As IUndoChanges = CType(c.GetPOCO(mpe, q.GetEntitySchema(mpe, GetType(Pod.cls)), l(0)), IUndoChanges)
-
         Dim o As Pod.cls = l(0)
 
-        Assert.AreEqual(ObjectState.None, ce.ObjectState)
-        Assert.IsNull(ce.OriginalCopy)
+        Assert.AreEqual(1, o.ID)
+        Assert.AreEqual(2, o.Code)
+
+        Dim pocoSchema = q.GetEntitySchema(mpe, pocoType)
+
+        Dim shadow = c.GetPOCO(mpe, pocoSchema, o)
+        Dim undo As IUndoChanges = CType(shadow, IUndoChanges)
+        Dim ce = TryCast(shadow, AnonymousEntity)
+
+        Assert.AreEqual(o.ID, shadow.Key)
+        Assert.AreEqual(o.ID, shadow.GetPKs.CalcHashCode)
+        Assert.AreEqual(o.ID, New CacheKey(shadow).GetHashCode)
+        Assert.AreEqual(o.ID, New PKWrapper(shadow.GetPKs).GetHashCode)
+        Assert.AreEqual(o.Code, ce("Code"))
+
+        Assert.AreEqual(ObjectState.None, undo.ObjectState)
+        Assert.IsNull(undo.OriginalCopy)
 
         o.Code = o.Code + 100
 
-        c.SyncPOCO(mpe, q.GetEntitySchema(mpe, GetType(Pod.cls)), l(0), Nothing)
+        'c.SyncPOCO(mpe, pocoSchema, o, Nothing)
+        c.SyncPOCO(shadow, mpe, pocoSchema, o)
 
-        Assert.AreEqual(ObjectState.Modified, ce.ObjectState)
-        Assert.IsNotNull(ce.OriginalCopy)
+        Assert.AreEqual(ObjectState.Modified, undo.ObjectState)
+        Assert.IsNotNull(undo.OriginalCopy)
 
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(mpe, c)
             mgr.BeginTransaction()
@@ -298,8 +313,8 @@ Imports Worm.Criteria
                     mt.AcceptModifications()
                 End Using
 
-                Assert.AreEqual(ObjectState.None, ce.ObjectState)
-                Assert.IsNull(ce.OriginalCopy)
+                Assert.AreEqual(ObjectState.None, undo.ObjectState)
+                Assert.IsNull(undo.OriginalCopy)
 
                 l = q.ToPOCOList(Of Pod.cls)()
                 Assert.IsTrue(q.LastExecutionResult.CacheHit)

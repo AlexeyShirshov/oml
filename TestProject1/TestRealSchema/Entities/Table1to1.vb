@@ -17,7 +17,7 @@ Public Class Tables1to1
 
     Public Sub New(ByVal id As Integer)
         _id = id
-        PKLoaded(1, "ID")
+        PKLoaded("ID")
     End Sub
 
     Private _id As Integer
@@ -41,14 +41,21 @@ Public Class Tables1to1
         End Set
     End Property
 
-    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
-        With Me
-            CType([to], Tables1to1)._id = ._id
-            CType([to], Tables1to1)._table1 = ._table1
-            CType([to], Tables1to1)._table1back = ._table1back
-            CType([to], Tables1to1)._k = ._k
-        End With
-    End Sub
+    Protected Function CopyProperties(ByVal [to] As Object) As Boolean Implements ICopyProperties.CopyTo
+        Dim dst = TryCast([to], Tables1to1)
+        If dst IsNot Nothing Then
+            With Me
+                dst._id = ._id
+                dst._table1 = ._table1
+                dst._table1back = ._table1back
+                dst._k = ._k
+            End With
+
+            Return True
+        End If
+
+        Return False
+    End Function
 
     Public Overridable Function SetValueOptimized(ByVal fieldName As String, ByVal oschema As IEntitySchema, ByVal value As Object) As Boolean Implements IOptimizedValues.SetValueOptimized
         Select Case fieldName

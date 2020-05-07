@@ -19,6 +19,7 @@ Imports System.Linq
 Imports System.Text.RegularExpressions
 Imports CoreFramework.CFDebugging
 Imports System.Web.Management
+Imports System.Reflection
 
 Namespace Database
     Partial Public Class OrmReadOnlyDBManager
@@ -211,10 +212,13 @@ Namespace Database
                                         Dim b As ConnAction = mgr.TestConn(cmd)
                                         Try
                                             mgr.LoadSingleObject(cmd, cols, obj, True, False, insertedColumns)
+#If DEBUG OrElse Not TurnOffStrictChecks Then
                                             If Not obj.IsPKLoaded Then
-                                                Dim props = mgr.MappingEngine.GetEntitySchema(obj.GetType)
-                                                obj.PKLoaded(1, props)
+                                                Throw New InvalidOperationException
+                                                'Dim props = mgr.MappingEngine.GetEntitySchema(obj.GetType)
+                                                'obj.PKLoaded(1, props)
                                             End If
+#End If
                                         Finally
                                             mgr.CloseConn(b)
                                         End Try
@@ -1776,8 +1780,8 @@ l1:
         'End Sub
 
         Protected Friend Sub LoadMultipleObjects(ByVal createType As Type,
-            ByVal cmd As System.Data.Common.DbCommand,
-            ByVal values As IList, ByVal selectList As List(Of SelectExpression))
+                                                 ByVal cmd As System.Data.Common.DbCommand,
+                                                 ByVal values As IList, ByVal selectList As List(Of SelectExpression))
 
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
 
@@ -1795,17 +1799,20 @@ l1:
             End If
 
             Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI4.MakeGenericMethod(New Type() {createType})
-
-            mi_real.Invoke(Me, flags, Nothing,
+            Try
+                mi_real.Invoke(Me, flags, Nothing,
                 New Object() {cmd, values, selectList}, Nothing)
-
+            Catch ex As TargetInvocationException
+                CoreFramework.CFDebugging.Stack.PreserveStackTrace(ex.InnerException)
+                Throw ex.InnerException
+            End Try
         End Sub
 
         Public Sub QueryObjects(ByVal createType As Type,
-            ByVal cmd As System.Data.Common.DbCommand,
-            ByVal values As IList, ByVal selectList As Generic.List(Of SelectExpression),
-            ByVal oschema As IEntitySchema,
-            ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
+                                ByVal cmd As System.Data.Common.DbCommand,
+                                ByVal values As IList, ByVal selectList As Generic.List(Of SelectExpression),
+                                ByVal oschema As IEntitySchema,
+                                ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
             'Dim ltg As Type = GetType(IList(Of ))
             'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Public Or Reflection.BindingFlags.Instance
@@ -1824,10 +1831,13 @@ l1:
             End If
 
             Dim mi_real As Reflection.MethodInfo = _QueryObjectsMethodInfo.MakeGenericMethod(New Type() {createType})
-
-            mi_real.Invoke(Me, flags, Nothing,
+            Try
+                mi_real.Invoke(Me, flags, Nothing,
                 New Object() {cmd, values, selectList, oschema, fields_idx}, Nothing)
-
+            Catch ex As TargetInvocationException
+                CoreFramework.CFDebugging.Stack.PreserveStackTrace(ex.InnerException)
+                Throw ex.InnerException
+            End Try
         End Sub
 
         'Protected Friend Sub LoadMultipleObjectsClm(Of T As {_IEntity, New})( _
@@ -1844,9 +1854,9 @@ l1:
         'End Sub
 
         Protected Friend Sub LoadMultipleObjects(Of T As New)(
-            ByVal cmd As System.Data.Common.DbCommand,
-            ByVal values As IList,
-            ByVal selectList As List(Of SelectExpression))
+                                                             ByVal cmd As System.Data.Common.DbCommand,
+                                                             ByVal values As IList,
+                                                             ByVal selectList As List(Of SelectExpression))
 
             Dim oschema As IEntitySchema = MappingEngine.GetEntitySchema(GetType(T))
             Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
@@ -1854,12 +1864,11 @@ l1:
             QueryObjects(Of T)(cmd, values, selectList, oschema, fields_idx)
         End Sub
 
-        Public Sub QueryMultiTypeObjects(
-            ByVal createType As Dictionary(Of EntityUnion, EntityUnion),
-            ByVal cmd As System.Data.Common.DbCommand,
-            ByVal values As List(Of ReadOnlyCollection(Of _IEntity)),
-            ByVal types As IDictionary(Of EntityUnion, IEntitySchema),
-            ByVal selectList As IList(Of SelectExpression))
+        Public Sub QueryMultiTypeObjects(ByVal createType As Dictionary(Of EntityUnion, EntityUnion),
+                                         ByVal cmd As System.Data.Common.DbCommand,
+                                         ByVal values As List(Of ReadOnlyCollection(Of _IEntity)),
+                                         ByVal types As IDictionary(Of EntityUnion, IEntitySchema),
+                                         ByVal selectList As IList(Of SelectExpression))
 
             If StmtGenerator.IncludeCallStack Then
                 cmd.CommandText = StmtGenerator.Comment(Environment.StackTrace) & cmd.CommandText
@@ -2070,7 +2079,7 @@ l1:
 
                         Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
                         If ce IsNot Nothing Then
-                            ce.PKLoaded(loadedPKs(os), oschema)
+                            ce.PKLoaded(propertyAlias)
                         Else
                             Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
                             If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
@@ -2098,7 +2107,7 @@ l1:
                 Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
 
                 If pk_count > 0 AndAlso ce IsNot Nothing Then
-                    ce.PKLoaded(pk_count, types(os))
+                    'ce.PKLoaded(pk_count, types(os))
 
                     If c IsNot Nothing AndAlso c.IsDeleted(ce) Then
                         ex.Add(obj)
@@ -2643,7 +2652,6 @@ l1:
             'Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
             Dim fac As New List(Of Pair(Of String, IPKDesc))
             Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
-            Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
             Dim svo = TryCast(oschema, IOptimizeSetValue)
             'Dim existing As Boolean
             Try
@@ -2656,6 +2664,7 @@ l1:
                 If entity IsNot Nothing Then
                     d = entity.AcquareLock
                 End If
+                Dim pkName = String.Empty
                 Using d
                     If entity IsNot Nothing Then entity.BeginLoading()
                     For idx As Integer = baseIdx To baseIdx + selectList.Count - 1
@@ -2850,9 +2859,15 @@ l2:
                                 End If
                             End If
 
-                            If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
+                            'If ll IsNot Nothing Then OrmManager.SetLoaded(ll, propertyAlias, True)
 
                             'Exit For
+
+                            If String.IsNullOrEmpty(pkName) Then
+                                pkName = propertyAlias
+                            Else
+                                pkname = MapField2Column.PK
+                            End If
                         End If
                     Next
                 End Using
@@ -2864,7 +2879,8 @@ l2:
                             CreateCopyForSaveNewEntry(ce, oschema, Nothing)
                         End If
                     Else
-                        ce.PKLoaded(pk_count, oschema)
+                        'ce.PKLoaded(pk_count, oschema)
+                        ce.PKLoaded(pkName)
 
                         Dim c As OrmCache = TryCast(_cache, OrmCache)
                         If c IsNot Nothing AndAlso c.IsDeleted(ce) Then
@@ -2886,7 +2902,12 @@ l2:
 
                                     If robj IsNot Nothing Then
                                         ce = CType(robj, _ICachedEntity)
-                                        If Not ce.IsPKLoaded Then ce.PKLoaded(pk_count, oschema)
+#If DEBUG OrElse Not TurnOffStrictChecks Then
+                                        If Not ce.IsPKLoaded Then
+                                            Throw New InvalidOperationException
+                                            'ce.PKLoaded(pk_count, oschema)
+                                        End If
+#End If
                                     Else
                                         robj = ce
                                     End If
@@ -2928,6 +2949,9 @@ l2:
                             End If
                         End If
                     End If
+                Else
+                    Dim ll As IPropertyLazyLoad = TryCast(obj, IPropertyLazyLoad)
+                    If ll IsNot Nothing Then OrmManager.SetLoaded(ll, pkName, True)
                 End If
 
                 If robj IsNot Nothing Then
@@ -2935,9 +2959,7 @@ l2:
                     obj = robj
                 End If
 
-                ll = TryCast(ce, IPropertyLazyLoad)
-
-                If pk_count < selectList.Count Then
+                If pk_count < dr.FieldCount Then
 
                     If entity IsNot Nothing Then lock = entity.AcquareLock
 #If TRACELOADING Then
@@ -2952,6 +2974,8 @@ l2:
                             Return entity
                         End If
                     End If
+
+                    Dim ll = TryCast(ce, IPropertyLazyLoad)
 
                     For idx As Integer = baseIdx To baseIdx + selectList.Count - 1
                         Dim se As SelectExpression = selectList(idx - baseIdx)
@@ -3067,6 +3091,7 @@ l2:
 
                     Dim f As IEntityFactory = TryCast(obj, IEntityFactory)
                     If f IsNot Nothing Then
+
                         For Each p In fac
                             Dim e As _IEntity = TryCast(f.CreateContainingEntity(Me, p.First, p.Second), _IEntity)
                             If ll IsNot Nothing Then SetLoaded(ll, p.First, True)

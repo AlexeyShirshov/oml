@@ -165,21 +165,27 @@ Public Class MyUser
         End Set
     End Property
 
-    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
-        With Me
-            CType([to], MyUser)._id = ._id
-            CType([to], MyUser)._lastActivity = ._lastActivity
-            CType([to], MyUser)._field = ._field
-            CType([to], MyUser)._isAnonymous = ._isAnonymous
-            CType([to], MyUser)._username = ._username
-            CType([to], MyUser)._psw = ._psw
-            CType([to], MyUser)._email = ._email
-            CType([to], MyUser)._failcnt = ._failcnt
-            CType([to], MyUser)._faildt = ._faildt
-            CType([to], MyUser)._islocked = ._islocked
-            CType([to], MyUser)._lastlocked = ._lastlocked
-        End With
-    End Sub
+    Protected Function CopyProperties(ByVal [to] As Object) As Boolean Implements ICopyProperties.CopyTo
+        Dim dst = TryCast([to], MyUser)
+        If dst IsNot Nothing Then
+            With Me
+                dst._id = ._id
+                dst._lastActivity = ._lastActivity
+                dst._field = ._field
+                dst._isAnonymous = ._isAnonymous
+                dst._username = ._username
+                dst._psw = ._psw
+                dst._email = ._email
+                dst._failcnt = ._failcnt
+                dst._faildt = ._faildt
+                dst._islocked = ._islocked
+                dst._lastlocked = ._lastlocked
+            End With
+            Return True
+        End If
+
+        Return False
+    End Function
 
     <EntityPropertyAttribute(PropertyAlias:="LastActivity")> _
     Public Property LastActivity() As Date
@@ -402,10 +408,16 @@ Public Class MyRole
         End Set
     End Property
 
-    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
-        CType([to], MyRole)._role = _role
-        CType([to], MyRole)._id = _id
-    End Sub
+    Protected Function CopyProperties(ByVal [to] As Object) As Boolean Implements ICopyProperties.CopyTo
+        Dim dst = TryCast([to], MyRole)
+        If dst IsNot Nothing Then
+            dst._role = _role
+            dst._id = _id
+            Return True
+        End If
+
+        Return False
+    End Function
 
     <EntityPropertyAttribute(PropertyAlias:="Name")> _
     Public Property RoleName() As String

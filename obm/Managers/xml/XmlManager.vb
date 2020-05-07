@@ -351,7 +351,7 @@ Namespace Xml
             End If
 
 
-            obj.PKLoaded(cnt, oschema)
+            obj.PKLoaded(pk.PropertyAlias)
             Return cnt > 0
         End Function
 

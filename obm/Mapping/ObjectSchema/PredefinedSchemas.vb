@@ -41,7 +41,7 @@ Namespace Entities.Meta
         Private _cols As Collections.IndexedCollection(Of String, MapField2Column) = New OrmObjectIndex
         Private _tables() As SourceFragment
         Private _baseSchema As IEntitySchema
-        Private _ownTable As SourceFragment
+        'Private _ownTable As SourceFragment
         Private _ownPK As MapField2Column
         Private _basePK As MapField2Column
         Private _joins() As JoinAttribute
@@ -53,7 +53,7 @@ Namespace Entities.Meta
 
             _baseSchema = baseSchema
             _t = type
-            _ownTable = ownTable
+            '_ownTable = ownTable
 
             Dim tables As New List(Of SourceFragment)
             Dim qj As New List(Of QueryJoin)
@@ -93,9 +93,11 @@ Namespace Entities.Meta
 
                 Dim mt As IMultiTableObjectSchema = TryCast(baseSchema, IMultiTableObjectSchema)
                 If mt IsNot Nothing Then
-                    tables.InsertRange(0, mt.GetTables)
+                    'tables.InsertRange(0, mt.GetTables)
+                    tables.AddRange(mt.GetTables)
                 Else
-                    tables.Insert(0, baseSchema.Table)
+                    'tables.Insert(0, baseSchema.Table)
+                    tables.Add(baseSchema.Table)
                 End If
 
                 For Each m As MapField2Column In baseSchema.FieldColumnMap
@@ -136,7 +138,7 @@ Namespace Entities.Meta
         Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Criteria.Joins.QueryJoin Implements IMultiTableObjectSchema.GetJoins
             If _basePK IsNot Nothing Then
                 Dim tbl As SourceFragment = Nothing
-                If left Is Table AndAlso right Is _ownTable Then
+                If left Is Table Then
                     tbl = right
                     'If _basePKs.Length = 1 Then
                     '    Return j.on(right, _baseSchema.FieldColumnMap(_basePKs(0).PropertyAlias).SourceFieldExpression).eq(left, FieldColumnMap(_ownPKs(0).PropertyAlias).SourceFieldExpression)
@@ -171,7 +173,7 @@ Namespace Entities.Meta
 
                     '    Return jl
                     'End If
-                ElseIf right Is Table AndAlso left Is _ownTable Then
+                ElseIf right Is Table Then
                     tbl = left
                 Else
                     Dim mt As IMultiTableObjectSchema = TryCast(_baseSchema, IMultiTableObjectSchema)
@@ -184,12 +186,13 @@ Namespace Entities.Meta
                 Dim jl As JoinLink = Nothing
                 For i As Integer = 0 To _ownPK.SourceFields.Count - 1
                     If jl Is Nothing Then
-                        jl = j.on(tbl, _ownPK.SourceFields(i).SourceFieldExpression).eq(Table, _basePK.SourceFields(i).SourceFieldExpression)
+                        jl = j.on(Table, _ownPK.SourceFields(i).SourceFieldExpression).eq(tbl, _basePK.SourceFields(i).SourceFieldExpression)
                     Else
-                        jl = jl.and(tbl, _ownPK.SourceFields(i).SourceFieldExpression).eq(Table, _basePK.SourceFields(i).SourceFieldExpression)
+                        jl = jl.and(Table, _ownPK.SourceFields(i).SourceFieldExpression).eq(tbl, _basePK.SourceFields(i).SourceFieldExpression)
                     End If
                 Next
 
+                Return jl
             End If
             Return Nothing
         End Function

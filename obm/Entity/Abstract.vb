@@ -152,8 +152,8 @@ Namespace Entities
     Public Interface _ICachedEntity
         Inherits ICachedEntity
         'Overloads Sub Init(ByVal pk As IPKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
-        Sub PKLoaded(ByVal pkCount As Integer, oschema As IPropertyMap)
-        Sub PKLoaded(ByVal pkCount As Integer, propertyAlias As String)
+        'Sub PKLoaded(ByVal pkCount As Integer, oschema As IPropertyMap)
+        Sub PKLoaded(propertyAlias As String)
         ReadOnly Property IsPKLoaded() As Boolean
         Property UpdateCtx() As UpdateCtx
         Function ForseUpdate(ByVal propertyAlias As String) As Boolean
@@ -177,7 +177,7 @@ Namespace Entities
     End Interface
 
     Public Interface ICopyProperties
-        Sub CopyTo(ByVal dst As Object)
+        Function CopyTo(ByVal dst As Object) As Boolean
     End Interface
 
     Public Interface ICachedEntity
@@ -400,8 +400,10 @@ Namespace Entities
         Implements IKeyProvider
 
         Private ReadOnly _id As IPKDesc
+#Region " Cache "
+        Private _k As Integer?
         Private _str As String
-
+#End Region
         ''' <summary>
         ''' Инициализация объекта
         ''' </summary>
@@ -411,7 +413,11 @@ Namespace Entities
         End Sub
 
         Public Overrides Function GetHashCode() As Integer
-            Return ToString.GetHashCode
+            If Not _k.HasValue Then
+                _k = _id.CalcHashCode
+            End If
+
+            Return _k.value
         End Function
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean

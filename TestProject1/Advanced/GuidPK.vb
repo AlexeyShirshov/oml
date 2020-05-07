@@ -60,14 +60,14 @@ Public Class ComplexPK
     <SourceField("code")>
     Public Property Code() As String
         Get
-            Using Read("Code")
-                Return _code
-            End Using
+            'Using Read("Code")
+            Return _code
+            'End Using
         End Get
         Set(ByVal value As String)
-            Using Write("Code")
-                _code = value
-            End Using
+            'Using Write("Code")
+            _code = value
+            'End Using
         End Set
     End Property
 
@@ -75,14 +75,14 @@ Public Class ComplexPK
     <SourceField("i")>
     Public Property Int() As Integer
         Get
-            Using Read("Int")
-                Return _i
-            End Using
+            'Using Read("Int")
+            Return _i
+            'End Using
         End Get
         Set(ByVal value As Integer)
-            Using Write("Int")
-                _i = value
-            End Using
+            'Using Write("Int")
+            _i = value
+            'End Using
         End Set
     End Property
 

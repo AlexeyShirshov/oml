@@ -119,7 +119,7 @@ l2:
 
             Public Sub ObjectCreated(ByVal sender As OrmManager, ByVal o As IEntity)
                 Dim a As AnonymousCachedEntity = CType(o, AnonymousCachedEntity)
-                a._pk = _pkFields
+                a._pkColumns = _pkFields
                 a._myschema = _oschema
             End Sub
 

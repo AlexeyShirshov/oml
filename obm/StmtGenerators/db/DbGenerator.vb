@@ -1137,9 +1137,9 @@ l1:
         End Function
 
         Protected Function GetChangedFields(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity,
-            ByVal oschema As IPropertyMap, ByVal tables As IDictionary(Of SourceFragment, TableUpdate),
-            ByVal selectedProperties As List(Of EntityExpression),
-            ByVal originalCopy As ICachedEntity) As ExecutorCtx
+                                            ByVal oschema As IPropertyMap, ByVal tables As IDictionary(Of SourceFragment, TableUpdate),
+                                            ByVal selectedProperties As List(Of EntityExpression),
+                                            ByVal originalCopy As ICachedEntity) As ExecutorCtx
 
             Dim rt As Type = obj.GetType
             Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.FieldColumnMap
@@ -1291,7 +1291,7 @@ l2:
         End Function
 
         Protected Sub GetUpdateConditions(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity, ByVal oschema As IEntitySchema,
-    ByVal updated_tables As IDictionary(Of SourceFragment, TableUpdate), ByVal filterInfo As Object)
+                                          ByVal updated_tables As IDictionary(Of SourceFragment, TableUpdate), ByVal filterInfo As Object)
 
             Dim rt As Type = obj.GetType
 
@@ -1299,6 +1299,8 @@ l2:
             'If ie.Count = 0 AndAlso GetType(AnonymousCachedEntity).IsAssignableFrom(rt) Then
             '    ie = oschema.GetFieldColumnMap
             'End If
+
+            Dim pkSet = False
 
             For Each m As MapField2Column In oschema.FieldColumnMap
                 'Dim c As EntityPropertyAttribute = Nothing
@@ -1314,10 +1316,13 @@ l2:
                 'End If
                 Dim pa As String = m.PropertyAlias
                 Dim att As Field2DbRelations = m.Attributes
-                If (att And Field2DbRelations.PK) = Field2DbRelations.PK OrElse
-                 (att And Field2DbRelations.RV) = Field2DbRelations.RV Then
+                If (att And Field2DbRelations.PK) = Field2DbRelations.PK OrElse (att And Field2DbRelations.RV) = Field2DbRelations.RV Then
 
                     Dim original As Object = ObjectMappingEngine.GetPropertyValue(obj, pa, TryCast(oschema, IEntitySchema), pi)
+
+                    If original Is Nothing Then
+                        Continue For
+                    End If
 
                     Dim tb As SourceFragment = mpe.GetPropertyTable(oschema, pa)
 
@@ -1332,6 +1337,7 @@ l2:
                                 End If
                             End If
                             de_table.Value._where4update.AddFilter(New dc.EntityFilter(rt, pa, New ScalarValue(original), FilterOperation.Equal))
+                            pkSet = (att And Field2DbRelations.PK) = Field2DbRelations.PK OrElse pkSet
                         Else
                             Dim joinableSchema As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
                             If joinableSchema IsNot Nothing Then
@@ -1354,6 +1360,16 @@ l2:
                     Next
                 End If
             Next
+
+            If Not pkSet Then
+                Dim tbl = updated_tables.FirstOrDefault(Function(it) it.Key Is oschema.Table)
+                If tbl.Key IsNot Nothing Then
+
+                    For Each pk In obj.GetPKValues(oschema)
+                        tbl.Value._where4update.AddFilter(New dc.TableFilter(tbl.Key, pk.Column, New ScalarValue(pk.Value), FilterOperation.Equal))
+                    Next
+                End If
+            End If
         End Sub
 
         Protected Function HasUpdateColumns(ByVal sel_columns As Generic.IList(Of EntityPropertyAttribute),

@@ -32,7 +32,7 @@ Public Class Entity
 
     Public Sub New(ByVal id As Integer)
         _id = id
-        PKLoaded(1, "ID")
+        PKLoaded("ID")
     End Sub
 
     Private _id As Integer
@@ -392,7 +392,7 @@ Public Class Entity4
 
     Public Sub New(ByVal id As Integer)
         _id = id
-        PKLoaded(1, "ID")
+        PKLoaded("ID")
     End Sub
 
     Private _id As Integer
@@ -415,12 +415,20 @@ Public Class Entity4
         End Set
     End Property
 
-    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
-        With Me
-            CType([to], Entity4)._name = ._name
-            CType([to], Entity4)._id = ._id
-        End With
-    End Sub
+    Protected Function CopyProperties(ByVal [to] As Object) As Boolean Implements ICopyProperties.CopyTo
+        Dim dst = TryCast([to], Entity4)
+        If dst IsNot Nothing Then
+
+            With Me
+                dst._name = ._name
+                dst._id = ._id
+            End With
+
+            Return True
+        End If
+
+        Return False
+    End Function
 
     <EntityPropertyAttribute(PropertyAlias:="Title")> _
     Public Property Title() As String
@@ -621,7 +629,7 @@ Public Class Entity5
 
     Public Sub New(ByVal id As Integer)
         _id = id
-        PKLoaded(1, "ID")
+        PKLoaded("ID")
     End Sub
 
     <EntityProperty(Field2DbRelations.PrimaryKey)> _
@@ -643,13 +651,21 @@ Public Class Entity5
         End Set
     End Property
 
-    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
-        With Me
-            CType([to], Entity5)._name = ._name
-            CType([to], Entity5)._mark = ._mark
-            CType([to], Entity5)._id = ._id
-        End With
-    End Sub
+    Protected Function CopyProperties(ByVal [to] As Object) As Boolean Implements ICopyProperties.CopyTo
+        Dim dst = TryCast([to], Entity5)
+        If dst IsNot Nothing Then
+
+            With Me
+                dst._name = ._name
+                dst._mark = ._mark
+                dst._id = ._id
+            End With
+
+            Return True
+        End If
+
+        Return False
+    End Function
 
     <EntityPropertyAttribute(PropertyAlias:="Title")> _
     Public Property Title() As String

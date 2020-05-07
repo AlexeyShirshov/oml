@@ -42,7 +42,7 @@ Public Class Table1
 
     Public Sub New(ByVal id As Integer)
         _id = id
-        PKLoaded(1, "ID")
+        PKLoaded("ID")
     End Sub
 
     <EntityProperty(Field2DbRelations.PrimaryKey)> _
@@ -64,16 +64,24 @@ Public Class Table1
         End Set
     End Property
 
-    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
-        With Me
-            CType([to], Table1)._id = ._id
-            CType([to], Table1)._code = ._code
-            CType([to], Table1)._dt = ._dt
-            CType([to], Table1)._e = ._e
-            CType([to], Table1)._e2 = ._e2
-            CType([to], Table1)._name = ._name
-        End With
-    End Sub
+    Protected Function CopyProperties(ByVal [to] As Object) As Boolean Implements ICopyProperties.CopyTo
+        Dim dst = TryCast([to], Table1)
+        If dst IsNot Nothing Then
+
+            With Me
+                dst._id = ._id
+                dst._code = ._code
+                dst._dt = ._dt
+                dst._e = ._e
+                dst._e2 = ._e2
+                dst._name = ._name
+            End With
+
+            Return True
+        End If
+
+        Return False
+    End Function
 
     Public Function CompareTo(ByVal obj As Object) As Integer Implements System.IComparable.CompareTo
         Return _id.CompareTo(CType(obj, Table1)._id)

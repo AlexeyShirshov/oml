@@ -509,10 +509,10 @@ Namespace Expressions2
             Return New IExpression() {Me}
         End Function
 
-        Public Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef, _
-            ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam, _
-            ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, ByVal stmtMode As MakeStatementMode, _
-            ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
+        Public Function MakeStatement(ByVal mpe As ObjectMappingEngine, ByVal fromClause As Query.QueryCmd.FromClauseDef,
+                                      ByVal stmt As StmtGenerator, ByVal paramMgr As Entities.Meta.ICreateParam,
+                                      ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary, ByVal stmtMode As MakeStatementMode,
+                                      ByVal executor As Query.IExecutionContext) As String Implements IExpression.MakeStatement
 
             Dim al As String = String.Empty
 

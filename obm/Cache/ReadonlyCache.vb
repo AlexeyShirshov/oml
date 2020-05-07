@@ -664,7 +664,7 @@ Namespace Cache
 
         '    Return FindObjectInCache(Nothing, obj, load, checkOnCreate, dic, addOnCreate, mgr, False, mgr.MappingEngine.GetEntitySchema(obj.GetType))
         'End Function
-
+        <Obsolete>
         Public Function FindObjectInCache(ByVal type As Type, ByVal obj As Object,
                                           ByVal id As PKWrapper, ByVal cb As ICacheBehavior,
                                           ByVal entityDictionary As IDictionary, ByVal addIfNotFound As Boolean,
@@ -699,15 +699,49 @@ Namespace Cache
 
             Return a
         End Function
+        Public Function FindObjectInCacheOrAdd(ByVal type As Type,
+                                               ByVal id As PKWrapper,
+                                               ByVal entityDictionary As IDictionary,
+                                               ByVal fromDb As Boolean,
+                                               ByVal getObject As Func(Of Object)) As Object
 
+            Dim a As Object = entityDictionary(id)
+            'Dim oc As ObjectModification = Nothing
+            If a Is Nothing AndAlso Not fromDb AndAlso NewObjectManager IsNot Nothing Then
+                a = NewObjectManager.GetNew(type, id.GetPKs)
+                If a IsNot Nothing Then Return a
+                'oc = ShadowCopy(type, id, cb)
+                'If oc IsNot Nothing Then
+                '    Dim oldpk() As PKDesc = oc.OlPK
+                '    If oldpk IsNot Nothing Then
+                '        a = NewObjectManager.GetNew(type, oldpk)
+                '        If a IsNot Nothing Then Return a
+                '    End If
+                'End If
+            End If
+
+            If a Is Nothing Then
+                'If oc Is Nothing Then oc = ShadowCopy(type, id, cb)
+                'If oc IsNot Nothing Then
+                '    Return AddObjectInternal(oc.Obj, id, entityDictionary)
+                'End If
+            End If
+            Dim addIfNotFound = getObject IsNot Nothing
+            If a Is Nothing AndAlso addIfNotFound Then
+                a = AddObjectInternal(getObject(), id, entityDictionary)
+                RemoveNonExistent(type, id)
+            End If
+
+            Return a
+        End Function
         'Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type, _
         '    ByVal add2CacheOnCreate As Boolean) As IKeyEntity
 
         '    Return GetKeyEntityFromCacheOrCreate(id, type, add2CacheOnCreate, Nothing, Nothing)
         'End Function
 
-        Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type, _
-            ByVal add2CacheOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As ISinglePKEntity
+        Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type,
+                                                      ByVal add2CacheOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As ISinglePKEntity
 
             Dim o As ISinglePKEntity = SinglePKEntity.CreateKeyEntity(id, type, mpe)
             o.SetObjectState(ObjectState.NotLoaded)
@@ -837,31 +871,34 @@ Namespace Cache
             '    pk.Add(pkd)
             'Next
             Dim pks = oschema.GetPKs(o)
-            Dim c As _ICachedEntity = CachedEntity.CreateEntity(pks, GetType(AnonymousCachedEntity), mpe)
-            Dim cc As IKeyProvider = TryCast(o, IKeyProvider)
-            If cc IsNot Nothing Then
-                CType(c, AnonymousCachedEntity).SetKey(cc.Key)
-            End If
-            c.SetObjectState(ObjectState.NotLoaded)
             Dim cb As ICacheBehavior = TryCast(oschema, ICacheBehavior)
 
-            Dim ro As Object = FindObjectInCache(type, c, New CacheKey(c), cb, GetOrmDictionary(GetType(AnonymousCachedEntity), cb), True, False)
+            Dim ro As Object = FindObjectInCacheOrAdd(type, New PKWrapper(pks), GetOrmDictionary(GetType(AnonymousCachedEntity), cb), False,
+                                                                                                 Function()
+                                                                                                     Dim c As _ICachedEntity = CachedEntity.CreateEntity(pks, GetType(AnonymousCachedEntity), mpe)
+                                                                                                     Dim cc As IKeyProvider = TryCast(o, IKeyProvider)
+                                                                                                     If cc IsNot Nothing Then
+                                                                                                         CType(c, AnonymousCachedEntity).SetKey(cc.Key)
+                                                                                                     End If
+                                                                                                     c.SetObjectState(ObjectState.NotLoaded)
 
-            If ReferenceEquals(ro, c) Then
-                CType(c, AnonymousCachedEntity)._myschema = oschema
-                If mgr IsNot Nothing Then
-                    mgr.Load(c)
-                    If c.ObjectState = ObjectState.NotFoundInSource Then
-                        c.SetObjectState(ObjectState.Created)
-                    End If
-                End If
-            End If
+                                                                                                     CType(c, AnonymousCachedEntity)._myschema = oschema
+                                                                                                     If mgr IsNot Nothing Then
+                                                                                                         mgr.Load(c)
+                                                                                                         If c.ObjectState = ObjectState.NotFoundInSource Then
+                                                                                                             c.SetObjectState(ObjectState.Created)
+                                                                                                         End If
+                                                                                                     End If
+
+                                                                                                     Return c
+                                                                                                 End Function)
+
             Return CType(ro, _ICachedEntity)
         End Function
 
-        Public Function SyncPOCO(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, _
-            ByVal o As Object, ByVal mgr As OrmManager) As ICachedEntity
-            Dim c As _ICachedEntity = GetPOCO(mpe, oschema, o, mgr)
+        Public Function SyncPOCO(ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema,
+                                 ByVal o As Object, ByVal mgr As OrmManager) As ICachedEntity
+            Dim c = GetPOCO(mpe, oschema, o, mgr)
             SyncPOCO(c, mpe, oschema, o)
             Return c
         End Function
@@ -869,10 +906,14 @@ Namespace Cache
         Public Sub SyncPOCO(ByVal c As _ICachedEntity, ByVal mpe As ObjectMappingEngine, ByVal oschema As IEntitySchema, ByVal o As Object)
             If c IsNot Nothing Then
                 If c.ObjectState = ObjectState.Created Then c.BeginLoading()
-                For Each m As MapField2Column In oschema.FieldColumnMap
-                    ObjectMappingEngine.SetPropertyValue(c, m.PropertyAlias, _
-                        ObjectMappingEngine.GetPropertyValue(o, m.PropertyAlias, oschema), oschema)
-                Next
+                'For Each m As MapField2Column In oschema.FieldColumnMap
+
+                'ObjectMappingEngine.SetPropertyValue(c, m.PropertyAlias, _
+
+                'ObjectMappingEngine.GetPropertyValue(o, m.PropertyAlias, oschema), oschema)
+
+                'Next
+                OrmManager.CopyProperties(o, c, oschema)
                 If c.ObjectState = ObjectState.Created Then c.EndLoading()
             End If
         End Sub
@@ -943,8 +984,7 @@ Namespace Cache
             Return dic
         End Function
 
-        Public Overrides Function GetOrmDictionary(ByVal t As System.Type, _
-            ByVal cb As ICacheBehavior) As System.Collections.IDictionary
+        Public Overrides Function GetOrmDictionary(ByVal t As System.Type, ByVal cb As ICacheBehavior) As System.Collections.IDictionary
 
             'If Not GetType(_ICachedEntity).IsAssignableFrom(t) Then
             '    Return Nothing

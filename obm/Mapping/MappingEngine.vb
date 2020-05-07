@@ -14,6 +14,7 @@ Imports System.Linq
 Imports System.Text.RegularExpressions
 Imports System.Reflection
 Imports Worm.Collections
+Imports Worm.Database
 
 'Namespace Schema
 
@@ -557,7 +558,7 @@ Public Class ObjectMappingEngine
 
                 Return New EntityPropertyAttribute() With {.PropertyAlias = pi.Name, ._raw = True}
             Else
-                Dim fields() As SourceFieldAttribute = CType(Attribute.GetCustomAttributes(pi, GetType(SourceFieldAttribute)), SourceFieldAttribute())
+                Dim fields() As SourceFieldAttribute = CType(Attribute.GetCustomAttributes(pi, GetType(SourceFieldAttribute), False), SourceFieldAttribute())
                 If fields.Length = 0 Then
                     Return Nothing
                 Else
@@ -568,7 +569,7 @@ Public Class ObjectMappingEngine
             Dim o = ChooseOneVersionable(props, mpeVersion, convertVersion, features)
             If o IsNot Nothing Then
                 If Not o.SourceFields?.Any Then
-                    Dim fields() As SourceFieldAttribute = CType(Attribute.GetCustomAttributes(pi, GetType(SourceFieldAttribute)), SourceFieldAttribute())
+                    Dim fields() As SourceFieldAttribute = CType(Attribute.GetCustomAttributes(pi, GetType(SourceFieldAttribute), False), SourceFieldAttribute())
                     If fields IsNot Nothing Then
                         o.SourceFields = If(ChooseVersionable(mpeVersion, convertVersion, fields, features)?.ToArray, {})
                     End If
@@ -1475,8 +1476,9 @@ l1:
         SetPropertyValue(obj, propertyAlias, value, schema, Nothing)
     End Sub
 
-    Public Shared Sub SetPropertyValue(ByVal obj As Object, ByVal propertyAlias As String, ByVal value As Object,
-                                       ByVal oschema As IEntitySchema, Optional ByVal pi As Reflection.PropertyInfo = Nothing)
+    Public Shared Function SetPropertyValue(ByVal obj As Object, ByVal propertyAlias As String, ByVal value As Object,
+                                            ByVal oschema As IEntitySchema,
+                                            Optional ByVal pi As Reflection.PropertyInfo = Nothing) As Boolean
 
         If obj Is Nothing Then
             Throw New ArgumentNullException(NameOf(obj))
@@ -1487,30 +1489,24 @@ l1:
 l1:
             If pi Is Nothing Then
                 Dim m As MapField2Column = Nothing
-                If oschema Is Nothing Then
-                    Throw New ArgumentNullException(NameOf(oschema))
-                End If
+                If oschema IsNot Nothing AndAlso oschema.FieldColumnMap.TryGetValue(propertyAlias, m) Then
 
-                If Not oschema.FieldColumnMap.TryGetValue(propertyAlias, m) Then
-                    Throw New ArgumentException(String.Format("Type {0} doesnot contain field {1}", obj.GetType, propertyAlias))
-                End If
+                    If m.OptimizedSetValue IsNot Nothing AndAlso m.OptimizedSetValue IsNot MapField2Column.EmptyOptimizedSetValue Then
 
-                If m.OptimizedSetValue IsNot Nothing AndAlso m.OptimizedSetValue IsNot MapField2Column.EmptyOptimizedSetValue Then
-
-                    Dim uc As IUndoChanges = TryCast(obj, IUndoChanges)
-                    If uc IsNot Nothing Then
-                        Using uc.Write(propertyAlias)
+                        Dim uc As IUndoChanges = TryCast(obj, IUndoChanges)
+                        If uc IsNot Nothing Then
+                            Using uc.Write(propertyAlias)
+                                m.OptimizedSetValue(obj, value)
+                            End Using
+                        Else
                             m.OptimizedSetValue(obj, value)
-                        End Using
-                    Else
-                        m.OptimizedSetValue(obj, value)
+                        End If
+
+                        Return True
                     End If
 
-
-                    Return
+                    pi = m.PropertyInfo
                 End If
-
-                pi = m.PropertyInfo
             End If
 
             If pi Is Nothing Then
@@ -1518,7 +1514,13 @@ l1:
                 pi = t.GetProperty(propertyAlias)
             End If
 
+            If pi Is Nothing Then
+                Return False
+            End If
+
             pi.SetValue(obj, value, Nothing)
+
+            Return True
         Else
             Dim uc As IUndoChanges = TryCast(obj, IUndoChanges)
             Dim r As Boolean
@@ -1533,8 +1535,10 @@ l1:
             If Not r Then
                 GoTo l1
             End If
+
+            Return True
         End If
-    End Sub
+    End Function
 
     'Protected Function GetPrimaryKeysValue(ByVal obj As OrmBase) As Object()
     '    If obj Is Nothing Then
@@ -1822,7 +1826,9 @@ l1:
         Dim idic As New Specialized.HybridDictionary
         names = New Specialized.HybridDictionary
         For Each tp As Type In GetEntityTypes()
-            GetEntitySchema(tp, Me, idic, names)
+            If Not idic.Contains(tp) Then
+                GetEntitySchema(tp, Me, idic, names)
+            End If
         Next
         RaiseEvent EndInitSchema(idic)
         Return idic
@@ -1890,7 +1896,7 @@ l1:
                 End If
                 If bsch IsNot Nothing Then
                     schema = New SimpleMultiTableObjectSchema(tp, ownTable,
-                        GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, mpe?._features), bsch, mpeVersion, mpe, idic, names)
+                                                              GetMappedProperties(tp, mpeVersion, ea.RawProperties, True, c2int, mpe?._features), bsch, mpeVersion, mpe, idic, names)
                     Dim n As ISchemaInit = TryCast(schema, ISchemaInit)
                     If n IsNot Nothing Then
                         n.InitSchema(mpe, tp)
@@ -1997,7 +2003,8 @@ l1:
     End Function
 
     Private Shared Function CreateAndInitSchemaAndNamesWithMapping(ByVal tp As Type, ByVal mpe As ObjectMappingEngine, ByVal idic As IDictionary,
-        ByVal names As IDictionary, ByVal ownEntityAttr As EntityAttribute) As IEntitySchema
+                                                                   ByVal names As IDictionary, ByVal ownEntityAttr As EntityAttribute) As IEntitySchema
+
         Dim schema As IEntitySchema = CreateAndInitSchema(tp, mpe, idic, names, ownEntityAttr)
 
         If names IsNot Nothing AndAlso Not String.IsNullOrEmpty(ownEntityAttr.EntityName) Then
@@ -3131,6 +3138,10 @@ l1:
     End Function
 
     Public Shared Function IsEntityType(ByVal t As Type) As Boolean
+        If t Is Nothing Then
+            Return False
+        End If
+
         If t.IsPrimitive OrElse t.IsValueType OrElse t.IsAbstract OrElse Not t.IsClass Then
             Return False
         End If
@@ -3270,6 +3281,15 @@ l1:
         End Get
     End Property
     Friend Shared Sub SetPK(ByVal e As Object, ByVal pk As IEnumerable(Of PKDesc2), ByVal oschema As IEntitySchema, pkName As String)
+#If DEBUG Then
+        If pk Is Nothing Then
+            Throw New ArgumentNullException(NameOf(pk))
+        End If
+
+        If String.IsNullOrEmpty(pkName) Then
+            Throw New ArgumentNullException(NameOf(pkName))
+        End If
+#End If
         Dim op As IOptimizePK = TryCast(e, IOptimizePK)
         If op IsNot Nothing Then
             op.SetPK(New PKDesc(pk) With {.PKName = pkName})
@@ -3277,7 +3297,7 @@ l1:
             'Dim m = oschema.GetPK
             For Each p In pk
                 'Dim sf = m.SourceFields.FirstOrDefault(Function(it) it.SourceFieldExpression = p.Column)
-                ObjectMappingEngine.SetPropertyValue(e, MakePKName(Nothing, p.Column), p.Value, oschema, p.pi)
+                ObjectMappingEngine.SetPropertyValue(e, pkName, p.Value, oschema, p.pi)
             Next
         End If
     End Sub

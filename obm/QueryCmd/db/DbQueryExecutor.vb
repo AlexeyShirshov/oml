@@ -634,16 +634,16 @@ Namespace Query.Database
         '    End If
         'End Sub
 
-        Protected Shared Sub FormSelectList(ByVal mpe As ObjectMappingEngine, ByVal execCtx As IExecutionContext, _
-            ByVal sb As StringBuilder, ByVal s As DbGenerator, ByVal from As FromClauseDef, _
-            ByVal almgr As IPrepareTable, ByVal filterInfo As IDictionary, ByVal params As ICreateParam, _
-            ByVal selList As IEnumerable(Of SelectExpression))
+        Protected Shared Sub FormSelectList(ByVal mpe As ObjectMappingEngine, ByVal execCtx As IExecutionContext,
+                                            ByVal sb As StringBuilder, ByVal s As DbGenerator, ByVal from As FromClauseDef,
+                                            ByVal almgr As IPrepareTable, ByVal filterInfo As IDictionary, ByVal params As ICreateParam,
+                                            ByVal selList As IEnumerable(Of SelectExpression))
 
             Dim b As Boolean
             Dim cols As New StringBuilder
             Dim be As BinaryExpressionBase = BinaryExpressionBase.CreateFromEnumerable(selList)
             If be IsNot Nothing Then
-                cols.Append(be.MakeStatement(mpe, from, s, _
+                cols.Append(be.MakeStatement(mpe, from, s,
                        params, almgr, filterInfo, MakeStatementMode.Select Or MakeStatementMode.AddColumnAlias, execCtx))
             End If
             If cols.Length > 0 Then
@@ -1268,25 +1268,25 @@ l1:
             Return Nothing
         End Function
 
-        Protected Shared Sub FormHaving(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
-            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As DbGenerator, _
-            ByVal pmgr As ICreateParam)
+        Protected Shared Sub FormHaving(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd,
+                                        ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As DbGenerator,
+                                        ByVal pmgr As ICreateParam)
 
             If query.HavingFilter IsNot Nothing Then
                 sb.Append(" having ").Append(query.HavingFilter.Filter.MakeQueryStmt(mpe, query.FromClause, s, query, Nothing, almgr, pmgr))
             End If
         End Sub
 
-        Protected Shared Sub FormGroupBy(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
-            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As DbGenerator)
+        Protected Shared Sub FormGroupBy(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd,
+                                         ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As DbGenerator)
             If query.Group IsNot Nothing Then
                 sb.Append(" ").Append(query.Group.MakeStatement(mpe, query.FromClause, s, Nothing, almgr, Nothing, MakeStatementMode.None, query))
             End If
         End Sub
 
-        Protected Shared Sub FormOrderBy(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd, _
-            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As DbGenerator, ByVal contextInfo As IDictionary, _
-            ByVal params As ICreateParam)
+        Protected Shared Sub FormOrderBy(ByVal mpe As ObjectMappingEngine, ByVal query As QueryCmd,
+                                         ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As DbGenerator, ByVal contextInfo As IDictionary,
+                                         ByVal params As ICreateParam)
             If query.Sort IsNot Nothing Then
                 's.CreateSelectExpressionFormater().Format(query.Sort, sb, query, Nothing, mpe, almgr, params, filterInfo, query.SelectList, query.FromClause, False)
                 'Dim adv As DbSort = TryCast(query.propSort, DbSort)
@@ -1295,14 +1295,14 @@ l1:
                 'Else
                 '    s.AppendOrder(t, query.propSort, almgr, sb, True, query.SelectList, query.Table)
                 'End If
-                sb.Append(" order by ").Append(BinaryExpressionBase.CreateFromEnumerable(query.Sort).MakeStatement( _
+                sb.Append(" order by ").Append(BinaryExpressionBase.CreateFromEnumerable(query.Sort).MakeStatement(
                     mpe, query.FromClause, s, params, almgr, contextInfo, MakeStatementMode.None, query))
             End If
         End Sub
 
-        Public Shared Sub MakeInnerQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal schema As DbGenerator, _
-            ByVal query As QueryCmd, ByVal params As ICreateParam, _
-            ByVal eu As EntityUnion, ByVal sb As StringBuilder, ByVal almgr As IPrepareTable)
+        Public Shared Sub MakeInnerQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal schema As DbGenerator, 
+                                                  ByVal query As QueryCmd, ByVal params As ICreateParam, 
+                                                  ByVal eu As EntityUnion, ByVal sb As StringBuilder, ByVal almgr As IPrepareTable)
 
             Dim t As SourceFragment = Nothing 'QueryCmd.InnerTbl
 
@@ -1324,20 +1324,20 @@ l1:
             'almgr.Replace(mpe, schema, t, eu, sb)
         End Sub
 
-        Public Shared Function MakeQueryStatement(dx As IDataContext, _
-                    ByVal query As QueryCmd, ByVal params As ICreateParam) As String
+        Public Shared Function MakeQueryStatement(dx As IDataContext,
+                                                  ByVal query As QueryCmd, ByVal params As ICreateParam) As String
 
             Return MakeQueryStatement(dx.MappingEngine, dx.Context, CType(dx.StmtGenerator, DbGenerator), query, params, AliasMgr.Create)
         End Function
 
-        Public Shared Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal schema As DbGenerator, _
-            ByVal query As QueryCmd, ByVal params As ICreateParam) As String
+        Public Shared Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal schema As DbGenerator,
+                                                  ByVal query As QueryCmd, ByVal params As ICreateParam) As String
 
             Return MakeQueryStatement(mpe, contextInfo, schema, query, params, AliasMgr.Create)
         End Function
 
-        Public Shared Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal schema As DbGenerator, _
-            ByVal query As QueryCmd, ByVal params As ICreateParam, ByVal almgr As IPrepareTable) As String
+        Public Shared Function MakeQueryStatement(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal schema As DbGenerator,
+                                                  ByVal query As QueryCmd, ByVal params As ICreateParam, ByVal almgr As IPrepareTable) As String
 
             If Not query._prepared Then
                 Throw New QueryCmdException("Query not prepared", query)

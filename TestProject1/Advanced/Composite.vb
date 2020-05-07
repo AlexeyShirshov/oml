@@ -68,13 +68,21 @@ Public Class Composite
         End Set
     End Property
 
-    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
-        With Me
-            CType([to], Composite)._id = ._id
-            CType([to], Composite)._m = ._m
-            CType([to], Composite)._m2 = ._m2
-        End With
-    End Sub
+    Protected Function CopyProperties(ByVal [to] As Object) As Boolean Implements ICopyProperties.CopyTo
+        Dim dst = TryCast([to], Composite)
+        If dst IsNot Nothing Then
+
+            With Me
+                dst._id = ._id
+                dst._m = ._m
+                dst._m2 = ._m2
+            End With
+
+            Return True
+        End If
+
+        Return False
+    End Function
 End Class
 
 

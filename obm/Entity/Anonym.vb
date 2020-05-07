@@ -26,7 +26,7 @@ Namespace Entities
             Return True
         End Function
 
-        Default Public Property Item(ByVal field As String) As Object
+        Default Public Overridable Property Item(ByVal field As String) As Object
             Get
                 Return GetValueOptimized(field, Nothing, Nothing)
             End Get
@@ -189,16 +189,19 @@ Namespace Entities
 
 #End Region
 
-        Public Sub CopyTo(ByVal dst As Object) Implements ICopyProperties.CopyTo
+        Public Function CopyTo(ByVal dst As Object) As Boolean Implements ICopyProperties.CopyTo
             Dim d As AnonymousEntity = TryCast(dst, AnonymousEntity)
             If d IsNot Nothing Then
-                For Each de As KeyValuePair(Of String, Object) In _props
+                For Each de In _props
                     d(de.Key) = de.Value
                 Next
-            Else
-                OrmManager.CopyProperties(Me, dst, GetEntitySchema(GetMappingEngine))
+                'Else
+                '    OrmManager.CopyProperties(Me, dst, GetEntitySchema(GetMappingEngine))
+                Return True
             End If
-        End Sub
+
+            Return False
+        End Function
     End Class
 
     <Serializable()> _
@@ -206,8 +209,8 @@ Namespace Entities
         Inherits AnonymousEntity
         Implements _ICachedEntity, IPropertyLazyLoad, IUndoChanges, IOptimizePK
 
-        Friend _pk As IEnumerable(Of String)
-        Private _hasPK As Boolean
+        Friend _pkColumns As IEnumerable(Of String)
+        Private _pkName As String
         Private _key As Integer?
 
         <NonSerialized()> _
@@ -240,22 +243,18 @@ Namespace Entities
         <NonSerialized()>
         Public Event ChangesAccepted(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.ChangesAccepted
 
-        'Private Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer, _
-        '    ByVal map As Collections.IndexedCollection(Of String, MapField2Column)) As Boolean Implements _ICachedEntity.CheckIsAllLoaded
-        '    Using SyncHelper(False)
-        '        Dim allloaded As Boolean = True
-        '        If Not _loaded OrElse _loaded_members.Count <= loadedColumns Then
-        '            For i As Integer = 0 To _props.Count - 1
-        '                If Not _members_load_state(i, map, schema) Then
-        '                    allloaded = False
-        '                    Exit For
-        '                End If
-        '            Next
-        '            _loaded = allloaded
-        '        End If
-        '        Return allloaded
-        '    End Using
-        'End Function
+        Default Public Overrides Property Item(field As String) As Object
+            Get
+                Using Read(field)
+                    Return MyBase.Item(field)
+                End Using
+            End Get
+            Set(value As Object)
+                Using Write(field)
+                    MyBase.Item(field) = value
+                End Using
+            End Set
+        End Property
 
         Public Function ForseUpdate(ByVal propertyAlias As String) As Boolean Implements _ICachedEntity.ForseUpdate
             Return False
@@ -274,22 +273,33 @@ Namespace Entities
 
         Public ReadOnly Property IsPKLoaded() As Boolean Implements _ICachedEntity.IsPKLoaded
             Get
-                Return _hasPK
+                Return Not String.IsNullOrEmpty(_pkName)
             End Get
         End Property
 
-        Public Sub PKLoaded(ByVal pkCount As Integer, props As IPropertyMap) Implements _ICachedEntity.PKLoaded
-            If _pk Is Nothing Then
+        Public Sub PKLoaded(ByVal pkName As String) Implements _ICachedEntity.PKLoaded
+            _pkName = pkName
+#If DEBUG OrElse Not TurnOffStrictChecks Then
+            If _pkColumns Is Nothing Then
                 Throw New OrmObjectException("PK is not loaded")
             End If
-            _hasPK = True
-            For Each p As String In _pk
-                IsPropertyLoaded(p) = True
-            Next
+
+            'If _pkName <> pkName Then
+            '    Throw New OrmObjectException($"PK {_pkName} is not equals to {pkName}")
+            'End If
+#End If
+
+            If _pkColumns.Count = 1 Then
+                IsPropertyLoaded(_pkName) = True
+            Else
+                For Each p In _pkColumns
+                    IsPropertyLoaded(p) = True
+                Next
+            End If
         End Sub
-        Private Sub _PKLoaded(ByVal pkCount As Integer, propertyAlias As String) Implements _ICachedEntity.PKLoaded
-            PKLoaded(pkCount, CType(Nothing, IPropertyMap))
-        End Sub
+        'Private Sub _PKLoaded(ByVal pkCount As Integer, propertyAlias As String) Implements _ICachedEntity.PKLoaded
+        '    PKLoaded(pkCount, CType(Nothing, IPropertyMap))
+        'End Sub
         Public Sub RaiseOriginalCopyRemoved() Implements IUndoChanges.RaiseOriginalCopyRemoved
             RaiseEvent OriginalCopyRemoved(Me)
         End Sub
@@ -518,7 +528,7 @@ Namespace Entities
         'End Sub
         Protected Overridable Sub SetPK(ByVal pk As IPKDesc) Implements IOptimizePK.SetPK
             If pk.Count = 1 AndAlso Not String.IsNullOrEmpty(pk.PKName) Then
-                _pk = {pk.PKName}
+                _pkColumns = {pk(0).Column}
                 Me(pk.PKName) = pk(0).Value
             Else
                 Dim spk As New List(Of String)
@@ -526,19 +536,19 @@ Namespace Entities
                     spk.Add(p.Column)
                     Me(p.Column) = p.Value
                 Next
-                _pk = spk
+                _pkColumns = spk
             End If
 
-            PKLoaded(pk.Count, Nothing)
+            PKLoaded(pk.PKName)
         End Sub
 
         Public Function GetPKValues() As IPKDesc Implements IOptimizePK.GetPKValues
-            If _pk Is Nothing Then
+            If _pkColumns Is Nothing Then
                 Throw New OrmObjectException("PK is not loaded")
             End If
-            Dim l As New PKDesc
-            For Each pk In _pk
-                l.Add(New ColumnValue(pk, Me(pk)))
+            Dim l As New PKDesc With {.PKName = _pkName}
+            For Each pk In _pkColumns
+                l.Add(New ColumnValue(pk, Me(If(_pkColumns.Count = 1, _pkName, pk))))
             Next
             Return l
         End Function
@@ -564,13 +574,20 @@ Namespace Entities
                 If _key.HasValue Then
                     Return _key.Value
                 Else
-                    If _pk Is Nothing Then
+                    If _pkColumns Is Nothing Then
                         Throw New OrmObjectException("PK is not loaded")
                     End If
+
                     Dim k As Integer
-                    For Each pk As String In _pk
-                        k = k Xor Me(pk).GetHashCode
-                    Next
+                    If _pkColumns.Count = 1 Then
+                        k = Me(_pkName).GetHashCode
+                    Else
+                        For Each pk In _pkColumns
+                            k = k Xor Me(pk).GetHashCode
+                        Next
+                    End If
+                    _key = k
+
                     Return k
                 End If
             End Get
@@ -856,6 +873,10 @@ Namespace Entities
         End Function
 
         Protected Function Write(ByVal propertyAlias As String) As System.IDisposable Implements IUndoChanges.Write
+            'Dim d As New BlankSyncHelper(Nothing)
+
+            'd = OrmManager.RegisterChange(Me, propertyAlias)
+            'Return d
             Return OrmManager.RegisterChange(Me, propertyAlias)
         End Function
 
@@ -1025,8 +1046,8 @@ Namespace Entities
         Public ReadOnly Property UniqueString() As String Implements IKeyProvider.UniqueString
             Get
                 Dim r As New StringBuilder
-                For Each pk As String In _pk
-                    r.Append("""").Append(pk).Append("""").Append(":").Append("""").Append(Me(pk).ToString).Append("""").Append(",")
+                For Each pk In GetPKValues()
+                    r.Append("""").Append(pk.Column).Append("""").Append(":").Append("""").Append(pk.Value.ToString).Append("""").Append(",")
                 Next
                 If r.Length > 0 Then
                     r.Length -= 1

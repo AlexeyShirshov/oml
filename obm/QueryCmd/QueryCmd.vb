@@ -1360,10 +1360,10 @@ l1:
             End If
         End Sub
 
-        Protected Overridable Sub _Prepare(ByVal executor As IExecutor, _
-            ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, _
-            ByVal stmt As StmtGenerator, ByRef filter As IFilter, ByVal selectOS As EntityUnion, _
-            ByVal isAnonym As Boolean)
+        Protected Overridable Sub _Prepare(ByVal executor As IExecutor,
+                                           ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary,
+                                           ByVal stmt As StmtGenerator, ByRef filter As IFilter, ByVal selectOS As EntityUnion,
+                                           ByVal isAnonym As Boolean)
 
             If _from IsNot Nothing Then
                 Dim anq As QueryCmd = _from.AnyQuery
@@ -1395,8 +1395,8 @@ l1:
                             Dim selSchema As IEntitySchema = _types(selOS) 'mpe.GetEntitySchema(t)
                             If Not HasInQuery(eu) Then
                                 Dim jt As Type = eu.GetRealType(mpe)
-                                mpe.AppendJoin(selOS, t, selSchema, _
-                                    eu, jt, _types(eu), _
+                                mpe.AppendJoin(selOS, t, selSchema,
+                                    eu, jt, _types(eu),
                                     filter, _js, contextInfo, JoinType.Join)
                             End If
                         End If
@@ -1506,7 +1506,7 @@ l1:
                             Dim parentTypeAdded As Boolean = False
                             For Each m As MapField2Column In oschema.FieldColumnMap
                                 Dim pi As Reflection.PropertyInfo = m.PropertyInfo
-                                Dim parentType As Type = pi.PropertyType
+                                Dim parentType As Type = pi?.PropertyType
 
                                 'если тип парента не сущность, продолжаем цикл
                                 If Not ObjectMappingEngine.IsEntityType(parentType) Then Continue For
@@ -1527,8 +1527,8 @@ l1:
                                             If p.Second.Contains(pa) Then
                                                 parentTypeAdded = AddParentTypeToQuery(mpe, contextInfo, filter, child2parentRelation, de, parentType, t, pa)
                                                 If Not parentTypeAdded AndAlso Not _sl.Exists(Function(se) se.GetIntoPropertyAlias = pa AndAlso se.GetIntoEntityUnion = deEU) Then
-                                                    _sl.Add(New SelectExpression(deEU, pa) With { _
-                                                        .Attributes = m.Attributes _
+                                                    _sl.Add(New SelectExpression(deEU, pa) With {
+                                                        .Attributes = m.Attributes
                                                     })
                                                 End If
                                             End If
@@ -1626,10 +1626,10 @@ l1:
             _f = filter
         End Sub
 
-        Private Function AddParentTypeToQuery(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, _
-            ByRef f As IFilter, ByVal child2parentRelation As Dictionary(Of String, Pair(Of String, EntityUnion)), _
-            ByVal de As KeyValuePair(Of EntityUnion, IEntitySchema), ByVal parentType As Type, _
-            ByVal childType As Type, ByVal childPropertyAlias As String) As Boolean
+        Private Function AddParentTypeToQuery(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary,
+                                              ByRef f As IFilter, ByVal child2parentRelation As Dictionary(Of String, Pair(Of String, EntityUnion)),
+                                              ByVal de As KeyValuePair(Of EntityUnion, IEntitySchema), ByVal parentType As Type,
+                                              ByVal childType As Type, ByVal childPropertyAlias As String) As Boolean
             Dim parentEU As EntityUnion = Nothing
             Dim p As Pair(Of String, EntityUnion) = Nothing
             Dim inQuery As Boolean = False
@@ -1747,9 +1747,9 @@ l1:
             _cancel = args.Cancel
         End Sub
 
-        Protected Friend Function HasJoins(ByVal schema As ObjectMappingEngine, ByVal selectType As Type, _
-            ByRef filter As IFilter, ByVal s As OrderByClause, ByVal contextInfo As IDictionary, ByRef joins() As QueryJoin, _
-            ByRef appendMain As Boolean, ByVal selectOS As EntityUnion) As Boolean
+        Protected Friend Function HasJoins(ByVal schema As ObjectMappingEngine, ByVal selectType As Type,
+                                           ByRef filter As IFilter, ByVal s As OrderByClause, ByVal contextInfo As IDictionary, ByRef joins() As QueryJoin,
+                                           ByRef appendMain As Boolean, ByVal selectOS As EntityUnion) As Boolean
             Dim l As New List(Of QueryJoin)
             Dim oschema As IEntitySchema = schema.GetEntitySchema(selectType)
             Dim ictx As IContextObjectSchema = TryCast(oschema, IContextObjectSchema)
@@ -1792,7 +1792,7 @@ l1:
                                 If se.EntityUnion IsNot Nothing Then
                                     Dim seeu As EntityUnion = se.EntityUnion
                                     If _js.Find(Function(join) join.ObjectSource = seeu) Is Nothing Then
-                                        AppendJoin(schema, selectType, filter, contextInfo, appendMain, l, oschema, types, _
+                                        AppendJoin(schema, selectType, filter, contextInfo, appendMain, l, oschema, types,
                                             se.EntityUnion, se.EntityUnion.GetRealType(schema), selectOS)
                                     End If
                                 End If
@@ -3823,7 +3823,17 @@ l1:
                 End Using
             End Using
         End Function
+        Public Function ToList(Of CreateReturnType As {New, _ICachedEntity})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyEntityList(Of CreateReturnType)
+            Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
 
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return ToList(Of CreateReturnType)(gm.Manager)
+                End Using
+            End Using
+        End Function
         Public Function ToList(Of CreateReturnType As {New, _ICachedEntity})() As ReadOnlyEntityList(Of CreateReturnType)
             Return ToList(Of CreateReturnType)(_getMgr)
         End Function
@@ -4191,7 +4201,18 @@ l1:
 
             End Using
         End Function
+        Public Function ToObjectList(Of T As _IEntity)(ByVal getMgr As CreateManagerDelegate) As ReadOnlyObjectList(Of T)
+            Using gm = GetManager(getMgr)
+                If gm Is Nothing Then
+                    Throw New QueryCmdException("OrmManager required", Me)
+                End If
 
+                Using New SetManagerHelper(gm.Manager, getMgr, _schema, ContextInfo)
+                    Return ToObjectList(Of T)(gm.Manager)
+                End Using
+
+            End Using
+        End Function
         Public Function ToObjectList(Of T As _IEntity)(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
             If mgr Is Nothing Then
                 Throw New ArgumentNullException("mgr")
@@ -4254,7 +4275,7 @@ l1:
                 If FromClause Is Nothing Then
                     Me.From(selSchema.Table)
                 End If
-                hasPK = selSchema.GetPKs.Any
+                hasPK = selSchema.GetPK IsNot Nothing
                 _pocoType = rt
             End If
 
@@ -4754,6 +4775,25 @@ l1:
                 _rn = oldRowFilter
             End Try
         End Function
+        Public Function First(Of T As {New, _ICachedEntity})(ByVal getMgr As CreateManagerDelegate) As T
+            Dim oldT As Top = TopParam
+            Dim oldRowFilter As TableFilter = RowNumberFilter
+            Try
+                Dim l As ReadOnlyEntityList(Of T) = Nothing
+                If RowNumberFilter Is Nothing Then
+                    l = Top(1).ToList(Of T)(getMgr)
+                Else
+                    l = Take(1).ToList(Of T)(getMgr)
+                End If
+                If l.Count = 0 Then
+                    Throw New InvalidOperationException("Number of items is " & l.Count)
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+                _rn = oldRowFilter
+            End Try
+        End Function
 
         Public Function First(Of T As {New, _ICachedEntity})() As T
             Dim oldT As Top = TopParam
@@ -4971,7 +5011,27 @@ l1:
                 _rn = oldRowFilter
             End Try
         End Function
+        Public Function FirstEntity(Of T As _IEntity)(getMgr As CreateManagerDelegate) As T
+            Dim oldT As Top = TopParam
+            Dim oldRowFilter As TableFilter = RowNumberFilter
+            Try
 
+                Dim l As IList(Of T) = Nothing
+                If RowNumberFilter Is Nothing Then
+                    l = Top(1).ToObjectList(Of T)(getMgr)
+                Else
+                    l = Take(1).ToObjectList(Of T)(getMgr)
+                End If
+
+                If l.Count = 0 Then
+                    Throw New InvalidOperationException("Number of items is " & l.Count)
+                End If
+                Return l(0)
+            Finally
+                _top = oldT
+                _rn = oldRowFilter
+            End Try
+        End Function
         Public Function FirstEntity(Of T As _IEntity)() As T
             Dim oldT As Top = TopParam
             Dim oldRowFilter As TableFilter = RowNumberFilter
@@ -5227,7 +5287,8 @@ l1:
 #End Region
 
         Friend Function GetFieldsIdx(ByVal mpe As ObjectMappingEngine, ByVal t As Type) As Collections.IndexedCollection(Of String, MapField2Column)
-            Dim c As New OrmObjectIndex
+            'Dim c As New OrmObjectIndex
+            Dim c = GetFieldsIdx(mpe)
             Dim ll As List(Of EntityPropertyAttribute) = ObjectMappingEngine.GetMappedProperties(t, mpe.Version, True, True, mpe.ConvertVersionToInt, mpe.Features)
             ObjectMappingEngine.ApplyAttributes2Schema(c, ll, mpe, FromClause.Table)
             Return c
@@ -5254,15 +5315,15 @@ l1:
             Return c
         End Function
 
-        Private Function GetPOCOSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, _
-                                   ByRef hasPK As Boolean) As IEntitySchema
+        Private Function GetPOCOSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type,
+                                       ByRef hasPK As Boolean) As IEntitySchema
             hasPK = False
             Dim s As IEntitySchema = mpe.GetPOCOEntitySchema(t)
             If s Is Nothing Then
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = GetFieldsIdx(mpe, t)
-                If fields.Count = 0 Then
-                    fields = GetFieldsIdx(mpe)
-                End If
+                'If fields.Count = 0 Then
+                '    fields = GetFieldsIdx(mpe)
+                'End If
 
                 If fields.Count = 0 Then
                     Throw New QueryCmdException(String.Format("Unable to map {0}", t), Me)
@@ -5299,7 +5360,7 @@ l1:
                 '                End If
                 '                s = mpe.CreateAndInitSchemaAndNames(t, New EntityAttribute(mpe.Version) With {._tbl = tbl, .RawProperties = True})
             End If
-            hasPK = s.GetPKs.Any
+            hasPK = s.GetPK IsNot Nothing
             Return s
         End Function
 

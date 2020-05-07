@@ -181,6 +181,8 @@ Imports Worm
             If c.ID = 13 Then
                 Assert.IsTrue(CType(c, Ent3).Code <> 0)
                 Console.WriteLine(CType(c, Ent3).Code)
+            ElseIf c.ID = 1 Then
+                Assert.IsTrue(TypeOf c Is Ent2)
             End If
         Next
     End Sub
@@ -463,7 +465,7 @@ End Class
             Private _idx As OrmObjectIndex
 
             Public Sub New()
-                _tbl = New SourceFragment() {MyBase.Table, New SourceFragment("dbo", "ent4")}
+                _tbl = New SourceFragment() {New SourceFragment("dbo", "ent4"), MyBase.Table}
             End Sub
 
             Public Overrides ReadOnly Property Table() As Worm.Entities.Meta.SourceFragment
@@ -478,8 +480,8 @@ End Class
                         _idx = New OrmObjectIndex
                         _idx.AddRange(MyBase.GetFieldColumnMap)
                         _idx.Remove("ID")
-                        _idx.Add(New MapField2Column("ID", _tbl(1), Field2DbRelations.PK, New SourceField("pk")))
-                        _idx.Add(New MapField2Column("Code", _tbl(1), "code"))
+                        _idx.Add(New MapField2Column("ID", Table, Field2DbRelations.PK, New SourceField("pk")))
+                        _idx.Add(New MapField2Column("Code", Table, "code"))
                     End If
                     Return _idx
                 End Get
@@ -487,9 +489,9 @@ End Class
 
             Public Function GetJoins(ByVal left As Worm.Entities.Meta.SourceFragment, ByVal right As Worm.Entities.Meta.SourceFragment) As Worm.Criteria.Joins.QueryJoin Implements Worm.Entities.Meta.IMultiTableObjectSchema.GetJoins
                 If right Is _tbl(1) Then
-                    Return JCtor.join(right).on(right, "pk").eq(left, "id")
-                Else
                     Return JCtor.join(right).on(left, "pk").eq(right, "id")
+                Else
+                    Return JCtor.join(right).on(right, "pk").eq(left, "id")
                 End If
             End Function
 

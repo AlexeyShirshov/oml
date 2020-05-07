@@ -23,7 +23,7 @@ Public Class Table3
 
     Public Sub New(ByVal id As Integer)
         _id = id
-        PKLoaded(1, "ID")
+        PKLoaded("ID")
     End Sub
 
     <EntityProperty(Field2DbRelations.PrimaryKey)>
@@ -45,15 +45,22 @@ Public Class Table3
         End Set
     End Property
 
-    Protected Sub CopyProperties(ByVal [to] As Object) Implements ICopyProperties.CopyTo
-        With Me
-            CType([to], Table3)._id = ._id
-            CType([to], Table3)._obj = ._obj
-            CType([to], Table3)._code = ._code
-            CType([to], Table3)._v = ._v
-            CType([to], Table3)._x = CType(._x?.Clone, System.Xml.XmlDocument)
-        End With
-    End Sub
+    Protected Function CopyProperties(ByVal [to] As Object) As Boolean Implements ICopyProperties.CopyTo
+        Dim dst = TryCast([to], Table3)
+        If dst IsNot Nothing Then
+            With Me
+                dst._id = ._id
+                dst._obj = ._obj
+                dst._code = ._code
+                dst._v = ._v
+                dst._x = CType(._x?.Clone, System.Xml.XmlDocument)
+            End With
+            Return True
+        End If
+
+        Return False
+
+    End Function
 
     Protected Function GetObjectType() As Type
         If _code = 1 Then

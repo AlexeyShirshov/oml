@@ -7,10 +7,11 @@ Imports Worm.Query.Sorting
 Imports Worm.Criteria.Core
 Imports Worm.Query
 Imports Worm.Criteria
+Imports Worm.Entities.Meta
 
 <TestClass()> Public Class TestComplexEntities
 
-    <TestMethod()> _
+    <TestMethod()>
     Public Sub TestGuid()
         Using mgr As OrmManager = TestManager.CreateManager(New ObjectMappingEngine("1"))
             Dim o As GuidPK = New QueryCmd().GetByID(Of GuidPK)(New Guid("127ed64d-c7b9-448b-ab67-390808e636ee"), GetByIDOptions.EnsureExistsInStore, mgr)
@@ -25,7 +26,7 @@ Imports Worm.Criteria
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
+    <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))>
     Public Sub TestGuidCreateWrong()
         Using mgr As OrmDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
             Dim o As GuidPK = Nothing
@@ -47,7 +48,7 @@ Imports Worm.Criteria
         End Using
     End Sub
 
-    <TestMethod()> _
+    <TestMethod()>
     Public Sub TestGuidCreate()
         Using mgr As OrmDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"), New MSSQL2005Generator)
             Dim o As GuidPK = Nothing
@@ -75,22 +76,28 @@ Imports Worm.Criteria
         End Using
     End Sub
 
-    <TestMethod()> _
+    <TestMethod()>
     Public Sub TestCPK()
         Dim cache As New Worm.Cache.OrmCache
         Dim gen As New ObjectMappingEngine("1")
-
+        Dim schema = gen.GetEntitySchema(GetType(ComplexPK))
+        Dim tbl = schema.Table
         Dim q As QueryCmd = New QueryCmd().SelectEntity(GetType(ComplexPK)).Where _
-            (Ctor.prop(GetType(ComplexPK), "Int").eq(345))
+            (Ctor.column(tbl, "i").eq(345))
 
-        Dim l As ReadOnlyEntityList(Of ComplexPK) = q.ToEntityList(Of ComplexPK)( _
+        Dim l = q.ToList(Of ComplexPK)(
             Function() TestManager.CreateManager(cache, gen))
 
         Assert.AreEqual(2, l.Count)
 
         Dim f As ComplexPK = l(0)
+        Assert.IsFalse(f.InternalProperties.IsLoaded)
+        Assert.IsTrue(CType(f, _ICachedEntity).IsPKLoaded)
+        Assert.IsTrue(f.InternalProperties.IsPropertyLoaded(MapField2Column.PK))
 
         Assert.AreEqual(345, f.Int)
+        Assert.IsFalse(f.InternalProperties.IsLoaded)
+
         Assert.AreEqual(345, l(1).Int)
 
         Assert.AreEqual("dglm", f.Code)
@@ -101,19 +108,29 @@ Imports Worm.Criteria
         Assert.IsTrue(f.InternalProperties.IsLoaded)
 
         l = New QueryCmd().SelectEntity(GetType(ComplexPK)).Where _
-            (Ctor.prop(GetType(ComplexPK), "Int").eq(345).[and]("Code").eq("dglm")).ToEntityList(Of ComplexPK)(Function() TestManager.CreateManager(cache, gen))
+            (Ctor.column(tbl, "i").eq(345).[and](tbl, "code").eq("dglm")).ToList(Of ComplexPK)(Function() TestManager.CreateManager(cache, gen))
 
         Assert.AreEqual(1, l.Count)
         Assert.IsTrue(l(0).InternalProperties.IsLoaded)
         Assert.AreSame(f, l(0))
+
+        Dim f2 As ComplexPK = New QueryCmd().SelectEntity(GetType(ComplexPK)).Where _
+                             (Ctor.prop(GetType(ComplexPK), "Name").eq("wf0pvmdb")).First(Of ComplexPK)(Function() TestManager.CreateManager(cache, gen))
+
+        Assert.IsTrue(f2.InternalProperties.IsLoaded)
+
     End Sub
 
-    <TestMethod()> _
+    <TestMethod()>
     Public Sub TestCPKUpdate()
-        Using mgr As OrmDBManager = TestManager.CreateWriteManager(New ObjectMappingEngine("1"))
-            Dim l As ReadOnlyEntityList(Of ComplexPK) = _
-                New QueryCmd().SelectEntity(GetType(ComplexPK)). _
-                    Where(Ctor.prop(GetType(ComplexPK), "Int").eq(345).[and]("Code").eq("dglm")).ToEntityList(Of ComplexPK)(mgr)
+        Dim gen As New ObjectMappingEngine("1")
+        Using mgr As OrmDBManager = TestManager.CreateWriteManager(gen)
+            Dim schema = gen.GetEntitySchema(GetType(ComplexPK))
+            Dim tbl = schema.Table
+
+            Dim l As ReadOnlyEntityList(Of ComplexPK) =
+                New QueryCmd().SelectEntity(GetType(ComplexPK)).
+                    Where(Ctor.column(tbl, "i").eq(345).[and](tbl, "code").eq("dglm")).ToEntityList(Of ComplexPK)(mgr)
 
             Dim f As ComplexPK = l(0)
 

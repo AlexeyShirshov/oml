@@ -344,10 +344,12 @@ Namespace Entities
         '    Throw New NotSupportedException
         'End Sub
 
-        Protected Overridable Sub PKLoaded(ByVal pkCount As Integer, props As IPropertyMap) Implements _ICachedEntityEx.PKLoaded
-            PKLoaded(pkCount, props.GetPK.PropertyAlias)
-        End Sub
-        Protected Overridable Sub PKLoaded(ByVal pkCount As Integer, propertyAlias As String) Implements _ICachedEntityEx.PKLoaded
+        'Protected Overridable Sub PKLoaded(ByVal pkCount As Integer, props As IPropertyMap) Implements _ICachedEntityEx.PKLoaded
+        '    _key = GetCacheKey()
+        '    _hasPK = True
+        '    SetLoaded(props.GetPK.PropertyAlias, True)
+        'End Sub
+        Protected Overridable Sub PKLoaded(propertyAlias As String) Implements _ICachedEntityEx.PKLoaded
             _key = GetCacheKey()
             _hasPK = True
             SetLoaded(propertyAlias, True)
@@ -959,7 +961,7 @@ l1:
                 Dim obj As _ICachedEntity = Me
 
                 If pk_count > 0 Then
-                    PKLoaded(pk_count, oschema)
+                    PKLoaded(oschema.GetPK.PropertyAlias)
                     'Using mc As IGetManager = GetMgr()
                     Dim c As OrmCache = TryCast(mgr.Cache, OrmCache)
                     If c IsNot Nothing AndAlso c.IsDeleted(Me) Then
