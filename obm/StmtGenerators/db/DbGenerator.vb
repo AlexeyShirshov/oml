@@ -357,9 +357,9 @@ Namespace Database
         End Function
 
         Public Overridable Function SelectWithJoin(ByVal mpe As ObjectMappingEngine, ByVal original_type As Type, ByVal tables() As SourceFragment,
-            ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.QueryJoin,
-            ByVal wideLoad As Boolean, ByVal empty As Object, ByVal additionalColumns As String,
-            ByVal selectedProperties As Generic.IList(Of EntityExpression), ByVal schema As IEntitySchema, ByVal contextInfo As IDictionary) As String
+                                                   ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.QueryJoin,
+                                                   ByVal wideLoad As Boolean, ByVal empty As Object, ByVal additionalColumns As String,
+                                                   ByVal selectedProperties As Generic.IList(Of EntityExpression), ByVal schema As IEntitySchema, ByVal contextInfo As IDictionary) As String
 
             Dim selectcmd As New StringBuilder
             'Dim pmgr As ParamMgr = params 'New ParamMgr()
@@ -617,7 +617,7 @@ Namespace Database
                         del_cmd.Append(DeclareVariable("@id_" & p.Column.ClearSourceField, dbt))
                         del_cmd.Append(EndLine)
                         del_cmd.Append("set @id_").Append(p.Column.ClearSourceField).Append(" = ")
-                        del_cmd.Append(params.CreateParam(oschema.ChangeValueType(p.Column, p.Value))).Append(EndLine)
+                        del_cmd.Append(params.CreateParam(oschema.ReplaceValueOnSave(p.Column, p.Value))).Append(EndLine)
                     Next
 
                     Dim exec As New ExecutorCtx(type, relSchema)
@@ -788,7 +788,7 @@ Namespace Database
                             Dim tb As SourceFragment = mpe.GetPropertyTable(es, propertyAlias)
 
                             Dim f As EntityFilter = Nothing
-                            Dim v As Object = es.ChangeValueType(propertyAlias, current)
+                            Dim v As Object = es.ReplaceValueOnSave(propertyAlias, current)
                             If (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault AndAlso v Is DBNull.Value Then
                                 If Not String.IsNullOrEmpty(DefaultValue) Then
                                     f = New dc.EntityFilter(real_t, propertyAlias, New LiteralValue(DefaultValue), FilterOperation.Equal)
@@ -1332,7 +1332,7 @@ l2:
                             Dim sb As IEntitySchemaBase = TryCast(oschema, IEntitySchemaBase)
                             If sb IsNot Nothing Then
                                 Dim nv As Object = Nothing
-                                If sb.ChangeValueType(pa, original, nv) Then
+                                If sb.ReplaceValueOnSave(pa, original, nv) Then
                                     original = nv
                                 End If
                             End If

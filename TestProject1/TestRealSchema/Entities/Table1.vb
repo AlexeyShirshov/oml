@@ -236,12 +236,12 @@ Public Class Table1Implementation
         _tbl = New SourceFragment("dbo.Table1")
     End Sub
 
-    Public Overrides Function ChangeValueType(ByVal c As String, ByVal value As Object, ByRef newvalue As Object) As Boolean
+    Public Overrides Function ReplaceValueOnSave(ByVal c As String, ByVal value As Object, ByRef newvalue As Object) As Boolean
         If c = "EnumStr" AndAlso TypeOf value Is Enum1 Then
             newvalue = value.ToString
             Return True
         End If
-        Return MyBase.ChangeValueType(c, value, newvalue)
+        Return MyBase.ReplaceValueOnSave(c, value, newvalue)
     End Function
 
     Public Overrides ReadOnly Property FieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)

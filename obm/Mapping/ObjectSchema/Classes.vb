@@ -58,7 +58,7 @@ Namespace Entities.Meta
         Private _dbType As DBType
         Private _columnName As String
         Private _exp As String
-        Private ReadOnly _pk As String
+        'Private ReadOnly _pk As String
         Public Sub New(columnName As String)
             _exp = columnName
         End Sub
@@ -127,21 +127,21 @@ Namespace Entities.Meta
         Friend Shared EmptyConverter As New ConverterDelegate(Function(i, j, k) 1)
         Friend Delegate Function ConverterDelegate(ByVal propType As Type, dbType As Type, value As Object) As Object
         Friend OptimizedSetValue As IOptimizeSetValue.SetValueDelegate
-        Friend Shared EmptyOptimizedSetValue As New IOptimizeSetValue.SetValueDelegate(Sub(i, j)
+        Public Shared EmptyOptimizedSetValue As New IOptimizeSetValue.SetValueDelegate(Sub(i, j)
                                                                                        End Sub)
 #End Region
-        Public Sub New(ByVal tableName As SourceFragment, ByVal attributes As Field2DbRelations)
+        Public Sub New(ByVal table As SourceFragment, ByVal attributes As Field2DbRelations)
             _propertyAlias = PK
-            _tbl = tableName
+            _tbl = table
             _attributes = attributes
         End Sub
         Friend Sub New(ByVal propertyAlias As String)
             _propertyAlias = propertyAlias
         End Sub
 
-        Public Sub New(ByVal propertyAlias As String, ByVal tableName As SourceFragment, ByVal attributes As Field2DbRelations)
+        Public Sub New(ByVal propertyAlias As String, ByVal table As SourceFragment, ByVal attributes As Field2DbRelations)
             _propertyAlias = propertyAlias
-            _tbl = tableName
+            _tbl = table
             _attributes = attributes
         End Sub
 
@@ -192,16 +192,16 @@ Namespace Entities.Meta
         '    MyClass.New(propertyAlias, columnExpression, tableName, newAttributes)
         '    _sf(0).DBType = New DBType(dbType, nullable)
         'End Sub
-        Public Sub New(ByVal propertyAlias As String, ByVal tableName As SourceFragment, ByVal newAttributes As Field2DbRelations, ParamArray sourceFields() As SourceField)
-            MyClass.New(propertyAlias, tableName, newAttributes)
+        Public Sub New(ByVal propertyAlias As String, ByVal table As SourceFragment, ByVal newAttributes As Field2DbRelations, ParamArray sourceFields() As SourceField)
+            MyClass.New(propertyAlias, table, newAttributes)
             _sf = sourceFields
         End Sub
-        Public Sub New(ByVal propertyAlias As String, ByVal tableName As SourceFragment, ParamArray sourceFields() As SourceField)
-            MyClass.New(propertyAlias, tableName, Field2DbRelations.None)
+        Public Sub New(ByVal propertyAlias As String, ByVal table As SourceFragment, ParamArray sourceFields() As SourceField)
+            MyClass.New(propertyAlias, table, Field2DbRelations.None)
             _sf = sourceFields
         End Sub
-        Public Sub New(ByVal propertyAlias As String, ByVal tableName As SourceFragment, ParamArray sourceFields() As String)
-            MyClass.New(propertyAlias, tableName, sourceFields.Select(Function(it) New SourceField(it)).ToArray)
+        Public Sub New(ByVal propertyAlias As String, ByVal table As SourceFragment, ParamArray sourceFields() As String)
+            MyClass.New(propertyAlias, table, sourceFields.Select(Function(it) New SourceField(it)).ToArray)
         End Sub
         Public Function GetAttributes(ByVal c As EntityPropertyAttribute) As Field2DbRelations
             If _attributes = Field2DbRelations.None Then

@@ -515,6 +515,11 @@ Namespace Entities
         Friend Shared Sub InitSinglePK(id As Object, o As ISinglePKEntity, oschema As IEntitySchema)
             Using New LoadingWrapper(o)
                 Dim m = oschema.GetPK
+#If DEBUG OrElse Not TurnOffStrictChecks Then
+                If m Is Nothing Then
+                    Throw New OrmObjectException($"Schema {oschema} has no primary key")
+                End If
+#End If
                 Dim col = m.SourceFields(0).SourceFieldExpression
                 Dim propertyAlias = m.PropertyAlias
                 Dim value = id

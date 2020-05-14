@@ -159,7 +159,7 @@ Namespace Entities.Meta
 
     Public Interface IEntitySchemaBase
         Inherits IEntitySchema
-        Function ChangeValueType(ByVal propertyAlias As String, ByVal value As Object, ByRef newvalue As Object) As Boolean
+        Function ReplaceValueOnSave(ByVal propertyAlias As String, ByVal value As Object, ByRef newvalue As Object) As Boolean
         'Function GetSuppressedFields() As String()
     End Interface
 

@@ -664,7 +664,6 @@ Namespace Cache
 
         '    Return FindObjectInCache(Nothing, obj, load, checkOnCreate, dic, addOnCreate, mgr, False, mgr.MappingEngine.GetEntitySchema(obj.GetType))
         'End Function
-        <Obsolete>
         Public Function FindObjectInCache(ByVal type As Type, ByVal obj As Object,
                                           ByVal id As PKWrapper, ByVal cb As ICacheBehavior,
                                           ByVal entityDictionary As IDictionary, ByVal addIfNotFound As Boolean,

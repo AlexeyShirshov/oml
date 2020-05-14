@@ -151,4 +151,19 @@ Imports Worm.Entities.Meta
             End Try
         End Using
     End Sub
+
+    <TestMethod>
+    Public Sub TestComplexFK()
+        Dim cache As New Worm.Cache.OrmCache
+        Dim gen As New ObjectMappingEngine("1")
+        Dim dx As New DataContext(Function() TestManager.CreateManager(cache, gen))
+
+        Dim o = dx.GetByID(Of ComplexFK)(1)
+
+        Assert.IsNotNull(o)
+
+        Assert.IsNotNull(o.Parent)
+
+        Assert.AreEqual("dsfklvmdlf", o.Parent.Name)
+    End Sub
 End Class

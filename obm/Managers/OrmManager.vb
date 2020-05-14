@@ -1656,6 +1656,9 @@ l1:
         Dim cb As ICacheBehavior = TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior)
         Dim ck As CacheKey = New CacheKey(obj)
         Dim t As Type = obj.GetType
+        'Dim e = _cache.FindObjectInCacheOrAdd(t, ck, dic, False, Function()
+
+        '                                                         End Function)
         Dim e As _ICachedEntity = CType(_cache.FindObjectInCache(t, obj, ck, cb, dic, False, False), _ICachedEntity)
         If e Is Nothing Then
             If _cache.CheckNonExistent(t, ck) Then

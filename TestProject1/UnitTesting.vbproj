@@ -114,6 +114,7 @@
     <Import Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Advanced\ComplexFK.vb" />
     <Compile Include="Advanced\Composite.vb" />
     <Compile Include="Advanced\GuidPK.vb" />
     <Compile Include="Advanced\Inheritance.vb" />

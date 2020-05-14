@@ -1063,7 +1063,7 @@ Public Class ObjectMappingEngine
             Throw New ArgumentNullException("type")
         End If
 
-        Return GetEntitySchema(type).ChangeValueType(propertyAlias, o)
+        Return GetEntitySchema(type).ReplaceValueOnSave(propertyAlias, o)
     End Function
 
     Public Function GetPrimaryKey(ByVal t As Type, Optional ByVal oschema As IEntitySchema = Nothing) As String
@@ -1935,6 +1935,13 @@ l1:
                     l = GetMappedProperties(tp, mpeVersion, True, True, c2int, mpe?._features)
                 End If
                 ApplyAttributes2Schema(schema, l, mpe, idic, names)
+
+                If GetType(ISinglePKEntity).IsAssignableFrom(tp) Then
+                    Dim pk = schema.GetPK
+                    If pk.PropertyInfo Is Nothing Then
+                        pk.PropertyInfo = tp.GetProperty("Identifier")
+                    End If
+                End If
             Catch ex As Exception
                 Throw New ObjectMappingException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
             End Try

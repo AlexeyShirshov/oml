@@ -145,7 +145,7 @@ Namespace Entities.Meta
             End If
         End Function
         <Extension>
-        Public Function ChangeValueType(ByVal s As IEntitySchema, ByVal propertyAlias As String, ByVal o As Object) As Object
+        Public Function ReplaceValueOnSave(ByVal s As IEntitySchema, ByVal propertyAlias As String, ByVal o As Object) As Object
             If s Is Nothing Then
                 Throw New ArgumentNullException(NameOf(s))
             End If
@@ -168,7 +168,7 @@ Namespace Entities.Meta
 
             Dim v As Object = o
 
-            If schema IsNot Nothing AndAlso schema.ChangeValueType(propertyAlias, o, v) Then
+            If schema IsNot Nothing AndAlso schema.ReplaceValueOnSave(propertyAlias, o, v) Then
                 Return v
             End If
 

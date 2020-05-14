@@ -6,7 +6,7 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
     Protected _schema As Worm.ObjectMappingEngine
     Protected _tbl As SourceFragment
 
-    Public Overridable Function ChangeValueType(ByVal c As String, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IEntitySchemaBase.ChangeValueType
+    Public Overridable Function ReplaceValueOnSave(ByVal c As String, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IEntitySchemaBase.ReplaceValueOnSave
         newvalue = value
         Return False
     End Function

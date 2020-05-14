@@ -227,7 +227,7 @@ l1:
                 _pa = pa
             End Sub
             Public Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object 'Implements IEntityFilter.PrepareValue
-                Return _s.ChangeValueType(_pa, v)
+                Return _s.ReplaceValueOnSave(_pa, v)
             End Function
         End Class
         'Public Overrides Function Equals(ByVal obj As Object) As Boolean
