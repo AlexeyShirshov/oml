@@ -8,12 +8,13 @@ Imports Worm.Query.QueryCmd
 Imports Worm.Cache
 Imports Worm.Expressions2
 Imports System.Linq
+Imports Worm.Criteria
 
 'Imports Worm.Database.Sorting
 
 Namespace Query.Database
 
-    <Serializable()> _
+    <Serializable()>
     Public Class ExecutorException
         Inherits System.Exception
 
@@ -25,8 +26,8 @@ Namespace Query.Database
             MyBase.New(message, inner)
         End Sub
 
-        Private Sub New( _
-            ByVal info As System.Runtime.Serialization.SerializationInfo, _
+        Private Sub New(
+            ByVal info As System.Runtime.Serialization.SerializationInfo,
             ByVal context As System.Runtime.Serialization.StreamingContext)
             MyBase.New(info, context)
         End Sub
@@ -46,7 +47,7 @@ Namespace Query.Database
 
 #Region " Get providers "
 
-        Protected Overrides Function GetProvider(ByVal mgr As OrmManager, ByVal query As QueryCmd, _
+        Protected Overrides Function GetProvider(ByVal mgr As OrmManager, ByVal query As QueryCmd,
             ByVal initTypes As InitTypesDelegate) As CacheItemBaseProvider
             If Prepared Then
                 _proc = New BaseProvider(mgr, query)
@@ -143,7 +144,7 @@ Namespace Query.Database
             Return _proc
         End Function
 
-        Protected Shared Function InitTypes(ByVal mgr As OrmManager, ByVal query As QueryCmd, _
+        Protected Shared Function InitTypes(ByVal mgr As OrmManager, ByVal query As QueryCmd,
                                        ByVal type As Type) As Boolean
             Dim r As Boolean
 
@@ -208,8 +209,8 @@ Namespace Query.Database
             CType(o, _IEntity).SpecificMappingEngine = mgr.MappingEngine
         End Sub
 
-        Protected Function ExecBase(Of ReturnType)(ByVal mgr As OrmManager, _
-            ByVal query As QueryCmd, ByVal cacheItemProvoder As GetCacheItemProvoderDelegate, _
+        Protected Function ExecBase(Of ReturnType)(ByVal mgr As OrmManager,
+            ByVal query As QueryCmd, ByVal cacheItemProvoder As GetCacheItemProvoderDelegate,
             ByVal cachedItem As GetCachedItemDelegate,
             ByVal resultFromCachedItem As GetListFromCachedItemDelegate(Of ReturnType)) As ReturnType
 
@@ -680,8 +681,8 @@ Namespace Query.Database
 
         Public Delegate Function Func(Of T)() As T
 
-        Protected Shared Function FormatSearchTable(ByVal mpe As ObjectMappingEngine, ByVal sb As StringBuilder, ByVal st As SearchFragment, _
-            ByVal s As DbGenerator, ByVal os As IEntitySchema, ByVal params As ICreateParam, _
+        Protected Shared Function FormatSearchTable(ByVal mpe As ObjectMappingEngine, ByVal sb As StringBuilder, ByVal st As SearchFragment,
+            ByVal s As DbGenerator, ByVal os As IEntitySchema, ByVal params As ICreateParam,
             ByVal selectType As Type, ByVal contextInfo As IDictionary) As Boolean
 
             Dim searcht As Type = If(st.Entity Is Nothing, selectType, st.Entity.GetRealType(mpe))
@@ -747,11 +748,11 @@ l1:
             Return appendMain
         End Function
 
-        Public Shared Function FormTypeTables(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal params As ICreateParam, _
-            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As DbGenerator, _
-            ByVal osrc As EntityUnion, ByVal q As QueryCmd, ByVal execCtx As IExecutionContext, _
-            ByVal from As QueryCmd.FromClauseDef, ByVal appendMain As Boolean?, _
-            ByVal apd As Func(Of String), ByVal predi As Criteria.PredicateLink) As Pair(Of SourceFragment, String)
+        Public Shared Function FormTypeTables(ByVal mpe As ObjectMappingEngine, ByVal contextInfo As IDictionary, ByVal params As ICreateParam,
+                                              ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As DbGenerator,
+                                              ByVal osrc As EntityUnion, ByVal q As QueryCmd, ByVal execCtx As IExecutionContext,
+                                              ByVal from As QueryCmd.FromClauseDef, ByVal appendMain As Boolean?,
+                                              ByVal apd As Func(Of String), ByVal predi As Criteria.PredicateLink) As Pair(Of SourceFragment, String)
 
             Dim tables() As SourceFragment = Nothing
             Dim osrc_ As EntityUnion = Nothing
@@ -947,7 +948,7 @@ l1:
 
                     sb.Append(s.EndLine).Append(QueryJoin.JoinTypeString(JoinType.Join))
 
-                    FormTypeTables(mpe, contextInfo, params, almgr, sb, s, eus, q, execCtx, New QueryCmd.FromClauseDef(eus), False, _
+                    FormTypeTables(mpe, contextInfo, params, almgr, sb, s, eus, q, execCtx, New QueryCmd.FromClauseDef(eus), False,
                         Function() " on " & jf.MakeQueryStmt(mpe, from, s, q, contextInfo, almgr, params), predi)
                 Else
                     pk = New Pair(Of SourceFragment, String)(tbl_real, s.FTSKey)
@@ -1086,7 +1087,8 @@ l1:
                             Dim rcmd As RelationCmd = TryCast(query, RelationCmd)
                             If rcmd IsNot Nothing Then
                                 If t12t2.Equals(rcmd.RelationDesc) Then
-                                    Dim flt As IGetFilter = Ctor.column(t12t2.Table, t12t2.Column).eq(New ObjectProperty(join.M2MObjectSource, t2_pk))
+                                    'Dim flt As IGetFilter = Ctor.column(t12t2.Table, t12t2.Column).eq(New ObjectProperty(join.M2MObjectSource, t2_pk))
+                                    Dim flt As IGetFilter = New JoinFilter(t12t2.Table, t12t2.Columns, New ObjectProperty(join.M2MObjectSource, t2_pk), FilterOperation.Equal)
                                     predi.and(flt.Filter.SetUnion(rcmd.RelationDesc.Entity))
                                     Continue For
                                 End If
@@ -1114,29 +1116,29 @@ l1:
                                     'End If
 
                                     If pk IsNot Nothing Then
-                                        jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(pk.First, pk.Second)
+                                        jl = JCtor.join(tbl).[on](tbl, t12t2.Columns).eq(pk.First, pk.Second)
                                     Else
-                                        jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(New ObjectProperty(join.M2MObjectSource, t2_pk))
+                                        jl = JCtor.join(tbl).[on](tbl, t12t2.Columns).eq(New ObjectProperty(join.M2MObjectSource, t2_pk))
                                     End If
 
                                     'If join.M2MObjectSource.Equals(
                                     If almgr.ContainsKey(oschema.Table, join.ObjectSource) Then
-                                        jl.[and](tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk))
+                                        jl.[and](tbl, t22t1.Columns).eq(New ObjectProperty(join.ObjectSource, t1_pk))
                                         needAppend = False
                                     End If
                                 Else
                                     If pk IsNot Nothing Then
-                                        jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(pk.First, pk.Second)
+                                        jl = JCtor.join(tbl).[on](tbl, t12t2.Columns).eq(pk.First, pk.Second)
                                     Else
-                                        jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(ftbl, t22t1.Column)
+                                        jl = JCtor.join(tbl).[on](tbl, t12t2.Columns).eq(ftbl, t22t1.Columns)
                                     End If
                                 End If
                                 needAppend = query.Need2Join(join.ObjectSource)
                             Else
                                 If prevJ.Table IsNot Nothing Then
-                                    jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(prevJ.Table, t22t1.Column)
+                                    jl = JCtor.join(tbl).[on](tbl, t12t2.Columns).eq(prevJ.Table, t22t1.Columns)
                                 Else
-                                    jl = JCtor.join(tbl).[on](tbl, t12t2.Column).eq(prevJ.TmpTable, t22t1.Column)
+                                    jl = JCtor.join(tbl).[on](tbl, t12t2.Columns).eq(prevJ.TmpTable, t22t1.Columns)
                                 End If
                                 needAppend = query.Need2Join(join.ObjectSource)
                             End If
@@ -1147,7 +1149,7 @@ l1:
                             js(0).MakeSQLStmt(mpe, query.FromClause, s, query, filterInfo, almgr, params, join.M2MObjectSource, sb)
 
                             If needAppend Then
-                                cond = Ctor.column(tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk)).Filter
+                                cond = New JoinFilter(tbl, t22t1.Columns, New ObjectProperty(join.ObjectSource, t1_pk), FilterOperation.Equal) 'Ctor.column(tbl, t22t1.Column).eq(New ObjectProperty(join.ObjectSource, t1_pk)).Filter
                             Else
                                 If almgr.ContainsKey(tbl, join.ObjectSource) Then
                                     'almgr.Replace(mpe, s, t22t1.Table, join.ObjectSource, sb)
@@ -1224,8 +1226,8 @@ l1:
                                             Else
                                                 Dim jf As JoinFilter = TryCast(fl, JoinFilter)
                                                 If jf IsNot Nothing Then
-                                                    If (jf.Left.Column IsNot Nothing AndAlso jf.Left.Column.First Is sf) OrElse
-                                                        (jf.Right.Column IsNot Nothing AndAlso jf.Right.Column.First Is sf) Then
+                                                    If (jf.Left.Table IsNot Nothing AndAlso jf.Left.Table Is sf) OrElse
+                                                        (jf.Right.Table IsNot Nothing AndAlso jf.Right.Table Is sf) Then
                                                         query._f = query._f.RemoveFilter(fl)
                                                     End If
                                                 End If
@@ -1666,8 +1668,8 @@ l1:
                     l.Add(j)
 
                     If fr.Property.Entity Is Nothing Then
-                        l.AddRange(OrderJoins(fr.Column.First, From k In js
-                                   Where Not k.Equals(j), mpe))
+                        l.AddRange(OrderJoins(fr.Table, From k In js
+                                                        Where Not k.Equals(j), mpe))
                     Else
                         l.AddRange(OrderJoins(fr.Property.Entity, From k In js
                                    Where Not k.Equals(j), mpe))
@@ -1689,8 +1691,8 @@ l1:
                     l.Add(j)
 
                     If fr.Property.Entity Is Nothing Then
-                        l.AddRange(OrderJoins(fr.Column.First, From k In js
-                                   Where Not k.Equals(j), mpe))
+                        l.AddRange(OrderJoins(fr.Table, From k In js
+                                                        Where Not k.Equals(j), mpe))
                     Else
                         l.AddRange(OrderJoins(fr.Property.Entity, From k In js
                                    Where Not k.Equals(j), mpe))
@@ -1723,9 +1725,9 @@ l1:
 
         Private Shared Function GetFieldRef(j As QueryJoin, root As SourceFragment) As FieldReference
             For Each jf In j.Condition.GetAllFilters.OfType(Of JoinFilter)()
-                If jf.Left.Column IsNot Nothing AndAlso jf.Left.Column.First.Equals(root) Then
+                If jf.Left.Table IsNot Nothing AndAlso jf.Left.Table.Equals(root) Then
                     Return jf.Right
-                ElseIf jf.Right.Column IsNot Nothing AndAlso jf.Right.Column.First.Equals(root) Then
+                ElseIf jf.Right.Table IsNot Nothing AndAlso jf.Right.Table.Equals(root) Then
                     Return jf.Left
                 End If
             Next

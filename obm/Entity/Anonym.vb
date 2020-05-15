@@ -4,6 +4,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Cache
 Imports System.Linq
 Imports System.Collections.Concurrent
+Imports Worm.Query
 
 Namespace Entities
 
@@ -204,7 +205,7 @@ Namespace Entities
         End Function
     End Class
 
-    <Serializable()> _
+    <Serializable()>
     Public Class AnonymousCachedEntity
         Inherits AnonymousEntity
         Implements _ICachedEntity, IPropertyLazyLoad, IUndoChanges, IOptimizePK
@@ -213,15 +214,15 @@ Namespace Entities
         Private _pkName As String
         Private _key As Integer?
 
-        <NonSerialized()> _
+        <NonSerialized()>
         Private _upd As New UpdateCtx
-        <NonSerialized()> _
+        <NonSerialized()>
         Private _copy As AnonymousCachedEntity
-        <NonSerialized()> _
+        <NonSerialized()>
         Friend _myschema As IEntitySchema
         <NonSerialized()>
         Private ReadOnly _alterLock As New Object
-        <NonSerialized()> _
+        <NonSerialized()>
         Private _readRaw As Boolean
         '<NonSerialized()> _
         'Private _old_state As ObjectState
@@ -569,7 +570,7 @@ Namespace Entities
             _key = k
         End Sub
 
-        Public ReadOnly Property Key() As Integer Implements ICachedEntity.Key
+        Public ReadOnly Property Key() As Integer
             Get
                 If _key.HasValue Then
                     Return _key.Value
@@ -1042,7 +1043,25 @@ Namespace Entities
         Public Function GetChangedObjectGraph() As System.Collections.Generic.List(Of _ICachedEntity) Implements _ICachedEntity.GetChangedObjectList
             Throw New NotImplementedException
         End Function
+        Public Overrides Function Equals(obj As Object) As Boolean Implements IKeyProvider.Equals
+            Return MyBase.Equals(obj)
+        End Function
+        Public Overloads Function Equals(obj As AnonymousCachedEntity) As Boolean
+            If obj Is Nothing Then
+                Return False
+            End If
 
+            For Each c In _pkColumns
+                If Object.Equals(Me(c), obj(c)) Then
+                    Return False
+                End If
+            Next
+
+            Return True
+        End Function
+        Public Overrides Function GetHashCode() As Integer Implements IKeyProvider.Key
+            Return Key
+        End Function
         Public ReadOnly Property UniqueString() As String Implements IKeyProvider.UniqueString
             Get
                 Dim r As New StringBuilder
@@ -1133,11 +1152,140 @@ Namespace Entities
                 End Using
             End Set
         End Property
+
+        Public ReadOnly Property HasChanges As Boolean Implements IRelations.HasChanges
+            Get
+                Throw New NotImplementedException()
+            End Get
+        End Property
+
         <NonSerialized()>
         Public Event ChangesRejected(sender As ICachedEntity, args As EventArgs) Implements ICachedEntity.ChangesRejected
 
         Public Sub RaiseChangesRejected(args As EventArgs) Implements ICachedEntity.RaiseChangesRejected
             RaiseEvent ChangesRejected(Me, args)
         End Sub
+#Region " Relation "
+
+        Public Function GetCmd(t As Type) As RelationCmd Implements IRelations.GetCmd
+            Throw New NotImplementedException()
+        End Function
+
+        Public Function GetCmd(t As Type, key As String) As RelationCmd Implements IRelations.GetCmd
+            Throw New NotImplementedException()
+        End Function
+
+        Public Function GetCmd(entityName As String) As RelationCmd Implements IRelations.GetCmd
+            Throw New NotImplementedException()
+        End Function
+
+        Public Function GetCmd(entityName As String, key As String) As RelationCmd Implements IRelations.GetCmd
+            Throw New NotImplementedException()
+        End Function
+
+        Public Function GetCmd(desc As RelationDesc) As RelationCmd Implements IRelations.GetCmd
+            Throw New NotImplementedException()
+        End Function
+
+        Public Sub Add(o As ICachedEntity) Implements IRelations.Add
+            Throw New NotImplementedException()
+        End Sub
+
+        Public Sub Add(o As ICachedEntity, key As String) Implements IRelations.Add
+            Throw New NotImplementedException()
+        End Sub
+
+        Public Sub Add(o As ICachedEntity, relation As Relation) Implements IRelations.Add
+            Throw New NotImplementedException()
+        End Sub
+
+        Public Sub Remove(o As ICachedEntity) Implements IRelations.Remove
+            Throw New NotImplementedException()
+        End Sub
+
+        Public Sub Remove(o As ICachedEntity, key As String) Implements IRelations.Remove
+            Throw New NotImplementedException()
+        End Sub
+
+        Public Sub Remove(o As ICachedEntity, relation As Relation) Implements IRelations.Remove
+            Throw New NotImplementedException()
+        End Sub
+
+        Public Sub Cancel(t As Type) Implements IRelations.Cancel
+            Throw New NotImplementedException()
+        End Sub
+
+        Public Sub Cancel(t As Type, key As String) Implements IRelations.Cancel
+            Throw New NotImplementedException()
+        End Sub
+
+        Public Sub Cancel(t As Type, relation As Relation) Implements IRelations.Cancel
+            Throw New NotImplementedException()
+        End Sub
+
+        Public Sub Cancel(en As String) Implements IRelations.Cancel
+            Throw New NotImplementedException()
+        End Sub
+
+        Public Sub Cancel(en As String, key As String) Implements IRelations.Cancel
+            Throw New NotImplementedException()
+        End Sub
+
+        Public Sub Cancel(en As String, relation As Relation) Implements IRelations.Cancel
+            Throw New NotImplementedException()
+        End Sub
+
+        Public Sub Cancel(desc As RelationDesc) Implements IRelations.Cancel
+            Throw New NotImplementedException()
+        End Sub
+
+        Public Function GetRelationDesc(t As Type) As RelationDesc Implements IRelations.GetRelationDesc
+            Throw New NotImplementedException()
+        End Function
+
+        Public Function GetRelationDesc(t As Type, key As String) As RelationDesc Implements IRelations.GetRelationDesc
+            Throw New NotImplementedException()
+        End Function
+
+        Public Function GetRelationDesc(en As String) As RelationDesc Implements IRelations.GetRelationDesc
+            Throw New NotImplementedException()
+        End Function
+
+        Public Function GetRelationDesc(en As String, key As String) As RelationDesc Implements IRelations.GetRelationDesc
+            Throw New NotImplementedException()
+        End Function
+
+        Public Function GetRelation(t As Type) As Relation Implements IRelations.GetRelation
+            Throw New NotImplementedException()
+        End Function
+
+        Public Function GetRelation(t As Type, key As String) As Relation Implements IRelations.GetRelation
+            Throw New NotImplementedException()
+        End Function
+
+        Public Function GetRelation(desc As RelationDesc) As Relation Implements IRelations.GetRelation
+            Throw New NotImplementedException()
+        End Function
+
+        Public Function GetRelation(en As String) As Relation Implements IRelations.GetRelation
+            Throw New NotImplementedException()
+        End Function
+
+        Public Function GetRelation(en As String, key As String) As Relation Implements IRelations.GetRelation
+            Throw New NotImplementedException()
+        End Function
+
+        Public Function GetAllRelation() As IList(Of Relation) Implements IRelations.GetAllRelation
+            Throw New NotImplementedException()
+        End Function
+
+        Public Function NormalizeRelation(oldRel As Relation, newRel As Relation, schema As ObjectMappingEngine) As Relation Implements IRelations.NormalizeRelation
+            Throw New NotImplementedException()
+        End Function
+
+        Public Sub RejectM2MIntermidiate() Implements IRelations.RejectM2MIntermidiate
+            Throw New NotImplementedException()
+        End Sub
+#End Region
     End Class
 End Namespace

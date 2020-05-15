@@ -426,8 +426,8 @@ Namespace Database
         ''' <returns></returns>
         ''' <remarks></remarks>
         Protected Friend Function AppendFrom(ByVal mpe As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal contextInfo As IDictionary,
-            ByVal tables As IEnumerable(Of SourceFragment), ByVal selectcmd As StringBuilder, ByVal pname As ICreateParam,
-            ByVal sch As IMultiTableObjectSchema, ByVal t As Type) As StringBuilder
+                                             ByVal tables As IEnumerable(Of SourceFragment), ByVal selectcmd As StringBuilder, ByVal pname As ICreateParam,
+                                             ByVal sch As IMultiTableObjectSchema, ByVal t As Type) As StringBuilder
             'Dim sch As IOrmObjectSchema = GetObjectSchema(original_type)
             For i As Integer = 0 To tables.Count - 1
                 Dim tbl As SourceFragment = tables(i)
@@ -474,9 +474,9 @@ Namespace Database
             Return selectcmd
         End Function
 
-        Public Function SaveM2M(ByVal mpe As ObjectMappingEngine, ByVal obj As ISinglePKEntity,
-            ByVal relation As M2MRelationDesc, ByVal entry As M2MRelation,
-            ByVal pmgr As ParamMgr, ByVal contextInfo As IDictionary) As String
+        Public Function SaveM2M(ByVal mpe As ObjectMappingEngine, ByVal obj As ICachedEntity,
+                                ByVal relation As M2MRelationDesc, ByVal entry As M2MRelation,
+                                ByVal pmgr As ParamMgr, ByVal contextInfo As IDictionary) As String
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
@@ -504,22 +504,76 @@ Namespace Database
                 Throw New ArgumentException("Invalid relation")
             End If
 
-            Dim pk As String = Nothing
+            'Dim pk As String = Nothing
             Dim le As ILastError = TryCast(Me, ILastError)
+
             If entry.HasDeleted Then
                 sb.Append("delete ").Append(al).Append(" from ").Append(GetTableName(tbl, contextInfo)).Append(" ").Append(al)
-                sb.Append(" where ").Append(al).Append(".").Append(param_relation.Column).Append(" = ")
-                pk = pmgr.AddParam(pk, obj.Identifier)
-                sb.Append(pk).Append(" and ").Append(al).Append(".").Append(relation.Column).Append(" in(")
-                For Each toDel As ISinglePKEntity In entry.Deleted
-                    sb.Append(toDel.Identifier).Append(",")
+                sb.Append(" where ")
+
+                Dim pk = obj.GetPKValues(Nothing)
+                Dim start = sb.Length
+                For Each col In pk
+                    Dim fld = param_relation.Columns.FirstOrDefault(Function(it) it.Column2 = col.Column)?.Column1
+                    If Not String.IsNullOrEmpty(fld) Then
+l3:
+                        sb.Append(al).Append(".").Append(fld).Append(" = ")
+                        Dim pkParam = pmgr.AddParam("@pk_" & fld.ClearSourceField & "_" & col.Column.ClearSourceField, col.Value)
+                        sb.Append(pkParam).Append(" and ")
+                    ElseIf pk.Count = 1 AndAlso param_relation.Columns.Count = 1 Then
+                        fld = param_relation.Columns(0).Column1
+                        GoTo l3
+                    End If
                 Next
-                sb.Length -= 1
-                sb.Append(")")
+
+                If sb.Length > start Then
+                    sb.Length -= 5
+                End If
+
+                Dim start2 = sb.Length
+                Dim idx = 0
+                For Each toDel In entry.Deleted
+                    pk = toDel.GetPKValues(Nothing)
+                    start = sb.Length
+                    Dim first = True
+                    For Each col In pk
+                        Dim fld = relation.Columns.FirstOrDefault(Function(it) it.Column2 = col.Column)?.Column1
+                        If Not String.IsNullOrEmpty(fld) Then
+l4:
+                            If idx = 0 Then
+                                sb.Append(" and (")
+                            End If
+                            If first Then
+                                sb.Append("(")
+                            End If
+                            sb.Append(al).Append(".").Append(fld).Append(" = ")
+                            Dim pkParam = pmgr.AddParam("@pk_" & fld.ClearSourceField & "_" & col.Column.ClearSourceField & "_" & idx, col.Value)
+                            sb.Append(pkParam).Append(" and ")
+                            first = False
+                            idx += 1
+                        ElseIf pk.Count = 1 AndAlso relation.Columns.Count = 1 Then
+                            fld = relation.Columns(0).Column1
+                            GoTo l4
+                        End If
+                    Next
+
+                    If sb.Length > start Then
+                        sb.Length -= 5
+                        sb.Append(")")
+                    End If
+
+                    sb.Append(" or ")
+                Next
+
+                If sb.Length > start2 Then
+                    sb.Length -= 4
+                    sb.Append(")")
+                End If
+
                 If relation.Constants IsNot Nothing Then
-                    For Each f As IFilter In relation.Constants
+                    For Each f In relation.Constants
                         sb.Append(" and ")
-                        sb.Append(f.MakeQueryStmt(mpe, Nothing, Me, Nothing, Nothing, almgr, pmgr))
+                        sb.Append(f.MakeQueryStmt(mpe, Nothing, Me, Nothing, contextInfo, almgr, pmgr))
                     Next
                 End If
 
@@ -531,7 +585,33 @@ Namespace Database
             End If
 
             If entry.HasAdded Then
-                For Each toAdd As ISinglePKEntity In entry.Added
+
+                Dim pk = obj.GetPKValues(Nothing)
+                Dim l1 As New List(Of Tuple(Of String, String))
+
+                For Each col In pk
+                    Dim fld = param_relation.Columns.FirstOrDefault(Function(it) it.Column2 = col.Column)?.Column1
+                    If Not String.IsNullOrEmpty(fld) Then
+l1:
+                        Dim pkParam = pmgr.AddParam("@pk_" & fld.ClearSourceField & "_" & col.Column.ClearSourceField, col.Value)
+                        l1.Add(New Tuple(Of String, String)(fld, pkParam))
+                    ElseIf pk.Count = 1 AndAlso param_relation.Columns.Count = 1 Then
+                        fld = param_relation.Columns(0).Column1
+                        GoTo l1
+                    End If
+                Next
+
+                If relation.Constants IsNot Nothing Then
+                    For Each f As ITemplateFilter In relation.Constants
+                        For Each p In f.MakeSingleQueryStmt(mpe, Me, Nothing, pmgr, Nothing)
+                            l1.Add(New Tuple(Of String, String)(p.Column, p.Param))
+                            sb.Append(p.Column)
+                        Next
+                    Next
+                End If
+
+                Dim idx = 0
+                For Each toAdd In entry.Added
                     If entry.HasDeleted Then
                         sb.Append(vbTab)
                     End If
@@ -539,23 +619,27 @@ Namespace Database
                         sb.Append("if ").Append(le.LastError).Append(" = 0 ")
                     End If
                     sb.Append("insert into ").Append(GetTableName(tbl, contextInfo)).Append("(")
-                    sb.Append(param_relation.Column).Append(",").Append(relation.Column)
-                    Dim consts As New List(Of String)
-                    If relation.Constants IsNot Nothing Then
-                        For Each f As ITemplateFilter In relation.Constants
-                            sb.Append(",")
-                            For Each p In f.MakeSingleQueryStmt(mpe, Me, Nothing, pmgr, Nothing)
-                                sb.Append(p.Column)
-                                consts.Add(p.Param)
-                            Next
-                        Next
-                    End If
-                    sb.Append(") values(")
-                    pk = pmgr.AddParam(pk, obj.Identifier)
-                    sb.Append(pk).Append(",").Append(toAdd.Identifier)
-                    For Each s As String In consts
-                        sb.Append(",").Append(s)
+                    sb.Append(String.Join(",", l1.Select(Function(it) it.Item1))).Append(",")
+
+                    Dim l2 As New List(Of String)
+                    pk = toAdd.GetPKValues(Nothing)
+                    For Each col In pk
+                        Dim fld = relation.Columns.FirstOrDefault(Function(it) it.Column2 = col.Column)?.Column1
+                        If Not String.IsNullOrEmpty(fld) Then
+l2:
+                            sb.Append(fld)
+                            Dim pkParam = pmgr.AddParam("@pk_" & fld.ClearSourceField & "_" & col.Column.ClearSourceField & "_" & idx, col.Value)
+                            l2.Add(pkParam)
+
+                            idx += 1
+                        ElseIf pk.Count = 1 AndAlso relation.Columns.Count = 1 Then
+                            fld = relation.Columns(0).Column1
+                            GoTo l2
+                        End If
                     Next
+
+                    sb.Append(") values(").Append(String.Join(",", l1.Select(Function(it) it.Item2))).Append(",")
+                    sb.Append(String.Join(",", l2))
                     sb.AppendLine(")")
                 Next
 

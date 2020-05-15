@@ -138,7 +138,11 @@ Namespace Expressions2
             _dstProp = intoPropertyAlias
             _dst = New EntityUnion(intoType)
         End Sub
-
+        Public Sub New(ByVal exp As Expressions2.IExpression, ByVal intoPropertyAlias As String, ByVal eu As EntityUnion)
+            _exp = exp
+            _dstProp = intoPropertyAlias
+            _dst = eu
+        End Sub
         Public Sub New(ByVal t As SourceFragment, ByVal column As String)
             _exp = New Expressions2.TableExpression(t, column)
         End Sub
@@ -184,15 +188,15 @@ Namespace Expressions2
             _dst = New EntityUnion(intoEntityName)
         End Sub
 
-        Public Sub New(ByVal format As String, ByVal values() As Expressions2.IExpression, _
-            ByVal prop As ObjectProperty)
+        Public Sub New(ByVal format As String, ByVal values() As Expressions2.IExpression,
+                       ByVal prop As ObjectProperty)
             _exp = New Expressions2.CustomExpression(format, values)
             _dstProp = prop.PropertyAlias
             _dst = prop.Entity
         End Sub
 
-        Public Sub New(ByVal format As String, ByVal values() As Expressions2.IExpression, _
-            ByVal prop As ObjectProperty, ByVal attr As Field2DbRelations)
+        Public Sub New(ByVal format As String, ByVal values() As Expressions2.IExpression,
+                       ByVal prop As ObjectProperty, ByVal attr As Field2DbRelations)
             _exp = New Expressions2.CustomExpression(format, values)
             _dstProp = prop.PropertyAlias
             _dst = prop.Entity

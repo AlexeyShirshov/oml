@@ -1130,9 +1130,9 @@ Namespace Cache
 
         End Sub
         Protected Friend Sub UpdateCache(ByVal mpe As ObjectMappingEngine,
-            ByVal objs As IEnumerable(Of UpdatedEntity), ByVal mgr As OrmManager, ByVal afterDelegate As OnUpdated,
-            ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks,
-            ByVal forseEval As Boolean, ByVal fromUpdate As Boolean, Optional processedTypes As List(Of Type) = Nothing)
+                                         ByVal objs As IEnumerable(Of UpdatedEntity), ByVal mgr As OrmManager, ByVal afterDelegate As OnUpdated,
+                                         ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks,
+                                         ByVal forseEval As Boolean, ByVal fromUpdate As Boolean, Optional processedTypes As List(Of Type) = Nothing)
 
             If objs Is Nothing OrElse Not objs.Any Then
                 Return
@@ -1167,12 +1167,12 @@ Namespace Cache
 
                 For Each rt In GetRelatedTypes(tt, entTypes)
                     Dim dic = GetOrmDictionary(rt, mpe)
-                    Dim pkw = New CacheKey(obj)
-                    Dim ro = TryCast(dic(pkw), _ICachedEntity)
+                    'Dim pkw = New CacheKey(obj, oschema)
+                    Dim ro = TryCast(dic(obj), _ICachedEntity)
                     If ro IsNot Nothing Then
                         If Not relatedObjs.Any(Function(it) it.CurrentState.Equals(ro)) Then
                             relatedObjs.Add(New UpdatedEntity(ro, Nothing))
-                            dic.Remove(pkw)
+                            dic.Remove(obj)
                         End If
                     Else
                         Dim osc = mpe.GetEntitySchema(rt)

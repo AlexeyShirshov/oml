@@ -10,7 +10,7 @@ Namespace Entities
     Public Class Relation
         Implements ICopyable
 
-        Private _host As ISinglePKEntity
+        Private _host As ICachedEntity
         Private _addedList As New List(Of ICachedEntity)
         Private _deletedList As New List(Of ICachedEntity)
         'Private _subType As Type
@@ -18,23 +18,23 @@ Namespace Entities
         Private _desc As RelationDesc
         Private _syncRoot As New Object
 
-        Public Sub New(ByVal main As ISinglePKEntity, ByVal subType As Type)
+        Public Sub New(ByVal main As ICachedEntity, ByVal subType As Type)
             MyClass.New(main, New RelationDesc(New EntityUnion(subType), Nothing, Nothing))
         End Sub
 
-        Public Sub New(ByVal main As ISinglePKEntity, ByVal subType As Type, ByVal key As String)
+        Public Sub New(ByVal main As ICachedEntity, ByVal subType As Type, ByVal key As String)
             MyClass.New(main, New RelationDesc(New EntityUnion(subType), Nothing, key))
         End Sub
 
-        Public Sub New(ByVal main As ISinglePKEntity, ByVal entityName As String)
+        Public Sub New(ByVal main As ICachedEntity, ByVal entityName As String)
             MyClass.New(main, New RelationDesc(New EntityUnion(entityName), Nothing, Nothing))
         End Sub
 
-        Public Sub New(ByVal main As ISinglePKEntity, ByVal entityName As String, ByVal key As String)
+        Public Sub New(ByVal main As ICachedEntity, ByVal entityName As String, ByVal key As String)
             MyClass.New(main, New RelationDesc(New EntityUnion(entityName), Nothing, key))
         End Sub
 
-        Sub New(ByVal main As ISinglePKEntity, ByVal desc As RelationDesc)
+        Sub New(ByVal main As ICachedEntity, ByVal desc As RelationDesc)
             If main Is Nothing Then
                 Throw New ArgumentNullException(NameOf(main))
             End If
@@ -67,9 +67,9 @@ Namespace Entities
             Return False
         End Function
 
-        Protected Overridable ReadOnly Property _mainId() As Object
+        Protected Overridable ReadOnly Property _mainId() As IKeyProvider
             Get
-                Return _host.Identifier
+                Return _host
             End Get
         End Property
 
@@ -79,7 +79,7 @@ Namespace Entities
             End Get
         End Property
 
-        Public Overridable ReadOnly Property Host() As ISinglePKEntity
+        Public Overridable ReadOnly Property Host() As ICachedEntity
             Get
                 Return _host
             End Get
@@ -155,8 +155,8 @@ Namespace Entities
             End Get
         End Property
 
-        Public Sub AddRange(ByVal ids As IEnumerable(Of ISinglePKEntity))
-            For Each obj As ISinglePKEntity In ids
+        Public Sub AddRange(ByVal ids As IEnumerable(Of ICachedEntity))
+            For Each obj In ids
                 Add(obj)
             Next
         End Sub
@@ -169,13 +169,13 @@ Namespace Entities
             'Dim cmd As RelationCmd = Relation.CreateCmd(Host)
             Dim cur As IList = cmd.ToList
             If removeNotInList Then
-                For Each o As ISinglePKEntity In cur
+                For Each o As ICachedEntity In cur
                     If Not col.Contains(o) Then
                         Delete(o)
                     End If
                 Next
             End If
-            For Each o As ISinglePKEntity In col
+            For Each o As ICachedEntity In col
                 If Not cur.Contains(o) Then
                     Add(o)
                 End If
@@ -300,31 +300,31 @@ Namespace Entities
         Protected Friend _savedIds As New List(Of ICachedEntity)
         'Private _syncRoot As New Object
 
-        Public Sub New(ByVal main As ISinglePKEntity, ByVal subType As Type)
+        Public Sub New(ByVal main As ICachedEntity, ByVal subType As Type)
             MyClass.New(main, New M2MRelationDesc(subType))
         End Sub
 
-        Public Sub New(ByVal main As ISinglePKEntity, ByVal subType As Type, ByVal direct As Boolean)
+        Public Sub New(ByVal main As ICachedEntity, ByVal subType As Type, ByVal direct As Boolean)
             'MyClass.New(main, subType, Meta.M2MRelationDesc.GetKey(direct))
             MyClass.New(main, New M2MRelationDesc(subType, Meta.M2MRelationDesc.GetKey(direct)))
         End Sub
 
-        Public Sub New(ByVal main As ISinglePKEntity, ByVal subType As Type, ByVal key As String)
+        Public Sub New(ByVal main As ICachedEntity, ByVal subType As Type, ByVal key As String)
             'MyBase.New(main, subType, key)
             MyClass.New(main, New M2MRelationDesc(subType, key))
         End Sub
 
-        Public Sub New(ByVal main As ISinglePKEntity, ByVal entityName As String, ByVal direct As Boolean)
+        Public Sub New(ByVal main As ICachedEntity, ByVal entityName As String, ByVal direct As Boolean)
             'MyClass.New(main, subType, Meta.M2MRelationDesc.GetKey(direct))
             MyClass.New(main, New M2MRelationDesc(entityName, Meta.M2MRelationDesc.GetKey(direct)))
         End Sub
 
-        Public Sub New(ByVal main As ISinglePKEntity, ByVal entityName As String, ByVal key As String)
+        Public Sub New(ByVal main As ICachedEntity, ByVal entityName As String, ByVal key As String)
             'MyBase.New(main, subType, key)
             MyClass.New(main, New M2MRelationDesc(entityName, key))
         End Sub
 
-        Sub New(ByVal main As ISinglePKEntity, ByVal desc As M2MRelationDesc)
+        Sub New(ByVal main As ICachedEntity, ByVal desc As M2MRelationDesc)
             MyBase.New(main, desc)
         End Sub
 
@@ -369,13 +369,13 @@ Namespace Entities
         Public Overloads Sub Reject(ByVal mgr As OrmManager, ByVal rejectDual As Boolean)
             Using SyncRoot
                 If rejectDual Then
-                    For Each obj As _ISinglePKEntity In Added
+                    For Each obj In Added
                         RejectRelated(mgr, obj, True)
                     Next
                 End If
                 Added.Clear()
                 If rejectDual Then
-                    For Each obj As _ISinglePKEntity In Deleted
+                    For Each obj In Deleted
                         RejectRelated(mgr, obj, False)
                     Next
                 End If
@@ -391,7 +391,7 @@ Namespace Entities
         '    End Get
         'End Property
 
-        Protected Sub RejectRelated(ByVal mgr As OrmManager, ByVal obj As _ISinglePKEntity, ByVal add As Boolean)
+        Protected Sub RejectRelated(ByVal mgr As OrmManager, ByVal obj As ICachedEntity, ByVal add As Boolean)
             'Dim m As M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
             Dim el As M2MRelation = GetRevert(mgr, obj)
 
@@ -409,16 +409,16 @@ Namespace Entities
             Return FindIdIdx(l, _mainId)
         End Function
 
-        Protected Shared Function FindIdIdx(ByVal l As IList(Of ICachedEntity), ByVal id As Object) As Integer
+        Protected Shared Function FindIdIdx(ByVal l As IList(Of ICachedEntity), ByVal id As IKeyProvider) As Integer
             For i As Integer = 0 To l.Count - 1
-                If CType(l(i), ISinglePKEntity).Identifier.Equals(id) Then
+                If l(i).Equals(id) Then
                     Return i
                 End If
             Next
             Return -1
         End Function
 
-        Public Overridable Function GetRevert(ByVal mgr As OrmManager, ByVal obj As ISinglePKEntity) As M2MRelation
+        Public Overridable Function GetRevert(ByVal mgr As OrmManager, ByVal obj As ICachedEntity) As M2MRelation
             Dim otherKey As String = Key
             If Me.GetType Is obj.GetType Then
                 otherKey = M2MRelationDesc.GetRevKey(otherKey)
@@ -428,10 +428,10 @@ Namespace Entities
 
         Public Overridable Function GetRevert(ByVal mgr As OrmManager) As IList(Of M2MRelation)
             Dim rels As New List(Of M2MRelation)
-            For Each o As _ISinglePKEntity In Added
+            For Each o In Added
                 rels.Add(GetRevert(mgr, o))
             Next
-            For Each o As _ISinglePKEntity In Deleted
+            For Each o In Deleted
                 rels.Add(GetRevert(mgr, o))
             Next
             Return rels
@@ -445,7 +445,7 @@ Namespace Entities
             Next
         End Sub
 
-        Protected Friend Sub Update(ByVal obj As ISinglePKEntity, ByVal oldId As Object)
+        Protected Friend Sub Update(ByVal obj As ICachedEntity, ByVal oldId As Object)
             'Dim idx As Integer = FindIdIdx(_addedList, oldId)
             'If idx < 0 Then
             '    Throw New ArgumentException("Old id is not found: " & oldId.ToString)
@@ -488,17 +488,17 @@ Namespace Entities
             Return True
         End Function
 
-        Public Overridable Function _AcceptAdd(ByVal obj As ISinglePKEntity, ByVal mgr As OrmManager) As Boolean
+        Public Overridable Function _AcceptAdd(ByVal obj As ICachedEntity, ByVal mgr As OrmManager) As Boolean
             Return True
         End Function
 
-        Public Overridable Sub _AcceptDelete(ByVal obj As ISinglePKEntity)
+        Public Overridable Sub _AcceptDelete(ByVal obj As ICachedEntity)
 
         End Sub
 
-        Public Overridable Overloads Function Accept(ByVal mgr As OrmManager, ByVal obj As ISinglePKEntity) As Boolean
+        Public Overridable Overloads Function Accept(ByVal mgr As OrmManager, ByVal obj As ICachedEntity) As Boolean
             Using SyncRoot
-                Dim idx As Integer = FindIdIdx(Added, obj.Identifier)
+                Dim idx As Integer = FindIdIdx(Added, obj)
                 If idx >= 0 Then
                     If Not _AcceptAdd(obj, mgr) Then
                         Return False
@@ -529,7 +529,7 @@ Namespace Entities
                     'End If
                     Added.RemoveAt(idx)
                 Else
-                    idx = FindIdIdx(Deleted, obj.Identifier)
+                    idx = FindIdIdx(Deleted, obj)
                     If idx >= 0 Then
                         'CType(_mainList, List(Of Integer)).Remove(id)
                         _AcceptDelete(obj)
@@ -547,19 +547,19 @@ Namespace Entities
             'If Not mgr.Cache.IsNewObject(_mainType, mo.GetPKValues) Then
             If Not IsMainObjectNew(mgr) Then
                 Dim ad As New List(Of ICachedEntity)
-                For Each ao As _ISinglePKEntity In Added
+                For Each ao In Added
                     'Dim ao As _ICachedEntity = mgr.GetOrmBaseFromCacheOrCreate(id, _subType, False)
                     'If mgr.Cache.IsNewObject(SubType, ao.GetPKValues) Then
                     If ao.ObjectState = ObjectState.Created Then
                         If _new Is Nothing Then
                             _new = New List(Of ICachedEntity)
                         End If
-                        Dim newIdx As Integer = FindIdIdx(_new, ao.Identifier)
+                        Dim newIdx As Integer = FindIdIdx(_new, ao)
                         If newIdx < 0 Then
                             _new.Add(ao)
                         End If
                     Else
-                        If FindIdIdx(_savedIds, ao.Identifier) < 0 AndAlso CheckDual(mgr, ao) Then
+                        If FindIdIdx(_savedIds, ao) < 0 AndAlso CheckDual(mgr, ao) Then
                             ad.Add(ao)
                         End If
                     End If
@@ -573,7 +573,7 @@ Namespace Entities
             Return newl
         End Function
 
-        Protected Overridable Function CheckDual(ByVal mgr As OrmManager, ByVal obj As _ISinglePKEntity) As Boolean
+        Protected Overridable Function CheckDual(ByVal mgr As OrmManager, ByVal obj As ICachedEntity) As Boolean
             Return FindIdIdx(CType(obj.GetRelation(_mainType, Key), M2MRelation)._savedIds, _mainId) < 0
         End Function
 

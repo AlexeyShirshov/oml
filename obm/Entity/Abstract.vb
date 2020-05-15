@@ -167,7 +167,16 @@ Namespace Entities
     End Interface
 
     Public Interface IKeyProvider
-        ReadOnly Property Key() As Integer
+        ''' <summary>
+        ''' GetHashCode
+        ''' </summary>
+        ''' <returns></returns>
+        Function Key() As Integer
+        Function Equals(o As Object) As Boolean
+        ''' <summary>
+        ''' Used for sync
+        ''' </summary>
+        ''' <returns></returns>
         ReadOnly Property UniqueString() As String
     End Interface
 
@@ -181,7 +190,7 @@ Namespace Entities
     End Interface
 
     Public Interface ICachedEntity
-        Inherits _IEntity, IKeyProvider
+        Inherits _IEntity, IKeyProvider, IRelations
         ''' <summary>
         ''' Возвращает массив полей и значений первичный ключей
         ''' </summary>
@@ -267,10 +276,11 @@ Namespace Entities
         Function GetAllRelation() As Generic.IList(Of Relation)
 
         Function NormalizeRelation(ByVal oldRel As Relation, ByVal newRel As Relation, ByVal schema As ObjectMappingEngine) As Relation
+        Sub RejectM2MIntermidiate()
     End Interface
 
     Public Interface ISinglePKEntity
-        Inherits _ICachedEntityEx, IRelations
+        Inherits _ICachedEntityEx
         'Shadows Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Property Identifier() As Object
 #If OLDM2M Then
@@ -288,8 +298,6 @@ Namespace Entities
         Function GetAccept(ByVal m As M2MCache) As AcceptState2
         Function GetM2M() As Generic.IList(Of AcceptState2)
 #End If
-
-        Sub RejectM2MIntermidiate()
 
     End Interface
 
@@ -401,7 +409,9 @@ Namespace Entities
 
         Private ReadOnly _id As IPKDesc
 #Region " Cache "
+        <NonSerialized>
         Private _k As Integer?
+        <NonSerialized>
         Private _str As String
 #End Region
         ''' <summary>
@@ -412,16 +422,31 @@ Namespace Entities
             _id = pk
         End Sub
 
-        Public Overrides Function GetHashCode() As Integer
+        Public Overrides Function GetHashCode() As Integer Implements IKeyProvider.Key
             If Not _k.HasValue Then
                 _k = _id.CalcHashCode
             End If
 
-            Return _k.value
+            Return _k.Value
         End Function
 
-        Public Overrides Function Equals(ByVal obj As Object) As Boolean
-            Return Equals(TryCast(obj, PKWrapper))
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean Implements IKeyProvider.Equals
+            Dim pkw = TryCast(obj, PKWrapper)
+            If pkw IsNot Nothing Then
+                Return Equals(pkw)
+            Else
+                Dim cc = TryCast(obj, SingleValueKey)
+
+                If cc IsNot Nothing AndAlso _id.Count = 1 Then
+                    Return cc.GetHashCode = CInt(_id(0).Value)
+                Else
+                    Dim pk = SchemaExtensions.GetPKs(obj, Nothing)
+
+                    Return Equals(New PKWrapper(pk))
+                End If
+            End If
+
+            Return False
         End Function
 
         Public Overloads Function Equals(ByVal obj As PKWrapper) As Boolean
@@ -429,14 +454,19 @@ Namespace Entities
                 Return False
             End If
 
+            If GetHashCode() <> obj.GetHashCode Then Return False
+
             Dim ids = obj._id
             If _id.Count <> ids.Count Then Return False
+            If ids.Count = 1 Then Return Object.Equals(_id(0).Value, ids(0).Value)
+
             For i As Integer = 0 To _id.Count - 1
                 Dim p = _id(i)
-                Dim find As Boolean
+                Dim find = False
                 For j As Integer = 0 To ids.Count - 1
                     Dim p2 = ids(j)
                     If p.Column = p2.Column Then
+                        find = True
                         If p.Value.GetType IsNot p2.Value.GetType Then
                             Dim o As Object = Nothing, o2 As Object = p.Value
                             Try
@@ -446,25 +476,25 @@ Namespace Entities
                                     o = Convert.ChangeType(p.Value, p2.Value.GetType)
                                     o2 = p2.Value
                                 Catch
-                                    Exit For
+                                    Return False
                                 End Try
                             End Try
-                            If o2.Equals(o) Then
-                                find = True
-                                Exit For
+                            If Not o2.Equals(o) Then
+                                Return False
                             End If
                         Else
-                            If p.Value.Equals(p2.Value) Then
-                                find = True
-                                Exit For
+                            If Not p.Value.Equals(p2.Value) Then
+                                Return False
                             End If
                         End If
                     End If
                 Next
+
                 If Not find Then
                     Return False
                 End If
             Next
+
             Return True
         End Function
 
@@ -479,11 +509,11 @@ Namespace Entities
             Return _str
         End Function
 
-        Public ReadOnly Property Key() As Integer Implements IKeyProvider.Key
-            Get
-                Return GetHashCode()
-            End Get
-        End Property
+        'Public ReadOnly Property Key() As Integer Implements IKeyProvider.Key
+        '    Get
+        '        Return GetHashCode()
+        '    End Get
+        'End Property
 
         Public ReadOnly Property UniqueString() As String Implements IKeyProvider.UniqueString
             Get

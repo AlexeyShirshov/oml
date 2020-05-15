@@ -4,4 +4,9 @@
   <Add Test="TestProject1.TestCache.TestExpire" />
   <Add Test="TestProject1.TestCache.TestObjects" />
   <Add Test="TestProject1.TestCache.TestWebCache" />
+  <Add Test="TestProject1.TestHosting.TestPost" />
+  <Add Test="TestProject1.TestHosting.TestProcess" />
+  <Add Test="TestProject1.TestMembership.TestCreateMembership" />
+  <Add Test="TestProject1.TestProfile.TestCreate" />
+  <Add Test="TestProject1.TestRoles.TestCreateRoles" />
 </Playlist>

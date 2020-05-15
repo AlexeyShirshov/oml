@@ -6,6 +6,7 @@ Imports System.Collections.Generic
 Imports Worm.Query
 Imports System.Linq
 Imports Worm.Criteria.Conditions
+Imports Worm.Database
 
 Namespace Criteria.Joins
 
@@ -188,7 +189,31 @@ Namespace Criteria.Joins
 
             _oper = operation
         End Sub
+        Public Sub New(ByVal table As SourceFragment, ByVal columns As IEnumerable(Of ColumnPair), ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+            'Dim t As Pair(Of SourceFragment, String) = Nothing
+            'If table IsNot Nothing Then
+            '    t = New Pair(Of SourceFragment, String)(table, column)
+            'End If
+            '_t1 = t
 
+            'Dim p As Pair(Of ObjectSource, String) = Nothing
+            'If t2 IsNot Nothing Then
+            '    p = New Pair(Of ObjectSource, String)(New ObjectSource(t2), propertyAlias2)
+            'End If
+            '_e2 = p
+            Dim f As FieldReference = Nothing
+            If table IsNot Nothing Then
+                f = New FieldReference(table, columns)
+            End If
+            _l = f
+
+            If t2 IsNot Nothing Then
+                f = New FieldReference(t2, propertyAlias2)
+            End If
+            _r = f
+
+            _oper = operation
+        End Sub
         Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal os As EntityUnion, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
             'Dim t As Pair(Of SourceFragment, String) = Nothing
             'If table IsNot Nothing Then
@@ -214,7 +239,31 @@ Namespace Criteria.Joins
 
             _oper = operation
         End Sub
+        Public Sub New(ByVal table As SourceFragment, ByVal columns As IEnumerable(Of ColumnPair), ByVal os As EntityUnion, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+            'Dim t As Pair(Of SourceFragment, String) = Nothing
+            'If table IsNot Nothing Then
+            '    t = New Pair(Of SourceFragment, String)(table, column)
+            'End If
+            '_t1 = t
 
+            'Dim p As Pair(Of ObjectSource, String) = Nothing
+            'If os IsNot Nothing Then
+            '    p = New Pair(Of ObjectSource, String)(os, propertyAlias2)
+            'End If
+            '_e2 = p
+            Dim f As FieldReference = Nothing
+            If table IsNot Nothing Then
+                f = New FieldReference(table, columns)
+            End If
+            _l = f
+
+            If os IsNot Nothing Then
+                f = New FieldReference(os, propertyAlias2)
+            End If
+            _r = f
+
+            _oper = operation
+        End Sub
         Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal prop As ObjectProperty, ByVal operation As FilterOperation)
             Dim f As FieldReference = Nothing
             If table IsNot Nothing Then
@@ -229,7 +278,20 @@ Namespace Criteria.Joins
 
             _oper = operation
         End Sub
+        Public Sub New(ByVal table As SourceFragment, ByVal columns As IEnumerable(Of ColumnPair), ByVal prop As ObjectProperty, ByVal operation As FilterOperation)
+            Dim f As FieldReference = Nothing
+            If table IsNot Nothing Then
+                f = New FieldReference(table, columns)
+            End If
+            _l = f
 
+            If prop.Entity IsNot Nothing Then
+                f = New FieldReference(prop)
+            End If
+            _r = f
+
+            _oper = operation
+        End Sub
         Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal entityName2 As String, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
             'Dim t As Pair(Of SourceFragment, String) = Nothing
             'If table IsNot Nothing Then
@@ -281,7 +343,31 @@ Namespace Criteria.Joins
 
             _oper = operation
         End Sub
+        Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal table2 As SourceFragment, ByVal columns As IEnumerable(Of ColumnPair), ByVal operation As FilterOperation)
+            'Dim t As Pair(Of SourceFragment, String) = Nothing
+            'If table IsNot Nothing Then
+            '    t = New Pair(Of SourceFragment, String)(table, column)
+            'End If
+            '_t1 = t
 
+            't = Nothing
+            'If table2 IsNot Nothing Then
+            '    t = New Pair(Of SourceFragment, String)(table2, column2)
+            'End If
+            '_t2 = t
+            Dim f As FieldReference = Nothing
+            If table IsNot Nothing Then
+                f = New FieldReference(table, column)
+            End If
+            _l = f
+
+            If table2 IsNot Nothing Then
+                f = New FieldReference(table2, columns)
+            End If
+            _r = f
+
+            _oper = operation
+        End Sub
         'Public Sub New(ByVal t1 As Type, ByVal t2 As Type)
         '    MyClass.New(t1, t2, Nothing)
         'End Sub
@@ -432,6 +518,8 @@ Namespace Criteria.Joins
 
             Dim map As MapField2Column = Nothing
             Dim os As EntityUnion = Nothing
+            Dim tbl As SourceFragment = Nothing
+            Dim cols As IEnumerable(Of ColumnPair) = Nothing
             If _l.Property.Entity IsNot Nothing Then
                 Dim lt As Type = _l.Property.Entity.GetRealType(schema)
                 'Dim oschema As IEntitySchema = schema.GetEntitySchema(lt, False)
@@ -482,13 +570,14 @@ Namespace Criteria.Joins
                 End If
                 'ElseIf _d1 IsNot Nothing Then
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d1.First)).GetFieldColumnMap(_d1.Second)
-            ElseIf _l.Column IsNot Nothing Then
-                map = New MapField2Column(Nothing, _l.Column.First, _l.Column.Second)
-                If almgr.ContainsKey(map.Table, _eu) Then
+            ElseIf _l.Columns IsNot Nothing AndAlso _l.Table IsNot Nothing Then
+                tbl = _l.Table
+                If almgr.ContainsKey(tbl, _eu) Then
                     os = _eu
-                ElseIf almgr.ContainsKey(map.Table, _eu2) Then
+                ElseIf almgr.ContainsKey(tbl, _eu2) Then
                     os = _eu2
                 End If
+                cols = _l.Columns
             ElseIf _l.FilterValue IsNot Nothing Then
                 [alias] = _l.FilterValue.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, contextInfo, False, executor)
             Else
@@ -497,6 +586,9 @@ Namespace Criteria.Joins
 
             Dim map2 As MapField2Column = Nothing
             Dim os2 As EntityUnion = Nothing
+            Dim tbl2 As SourceFragment = Nothing
+            Dim cols2 As IEnumerable(Of ColumnPair) = Nothing
+
             If _r.Property.Entity IsNot Nothing Then
                 Dim rt As Type = _r.Property.Entity.GetRealType(schema)
                 'Dim oschema As IEntitySchema = schema.GetEntitySchema(rt, False)
@@ -530,7 +622,8 @@ Namespace Criteria.Joins
                     Else
                         map2 = executor.GetFieldColumnMap(oschema, rt)(f)
                     End If
-                    If almgr.ContainsKey(map.Table, _r.Property.Entity) Then
+
+                    If almgr.ContainsKey(map2.Table, _r.Property.Entity) Then
                         os2 = _r.Property.Entity
                     ElseIf _eu IsNot Nothing AndAlso almgr.ContainsKey(map2.Table, _eu) Then
                         os2 = _eu
@@ -546,13 +639,14 @@ Namespace Criteria.Joins
                 End If
                 'ElseIf _d2 IsNot Nothing Then
                 '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d2.First)).GetFieldColumnMap(_d2.Second)
-            ElseIf _r.Column IsNot Nothing Then
-                map2 = New MapField2Column(Nothing, _r.Column.First, _r.Column.Second)
-                If almgr.ContainsKey(map2.Table, _eu) Then
+            ElseIf _r.Columns IsNot Nothing AndAlso _r.Table IsNot Nothing Then
+                tbl2 = _r.Table
+                If almgr.ContainsKey(tbl2, _eu) Then
                     os2 = _eu
-                ElseIf almgr.ContainsKey(map2.Table, _eu2) Then
+                ElseIf almgr.ContainsKey(tbl2, _eu2) Then
                     os2 = _eu2
                 End If
+                cols2 = _r.Columns
             ElseIf _r.FilterValue IsNot Nothing Then
                 [alias2] = _r.FilterValue.GetParam(schema, fromClause, stmt, pname, almgr, Nothing, contextInfo, False, executor)
             Else
@@ -561,20 +655,22 @@ Namespace Criteria.Joins
 
             If String.IsNullOrEmpty([alias]) AndAlso almgr IsNot Nothing Then
                 'Debug.Assert(almgr.ContainsKey(map.Table, os), "There is not alias for table " & map.Table.RawName)
+                tbl = If(map?.Table, tbl)
                 Try
-                    [alias] = almgr.GetAlias(map.Table, os) & stmt.Selector
+                    [alias] = almgr.GetAlias(tbl, os) & stmt.Selector
                 Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException("There is not alias for table " & map.Table.RawName, ex)
+                    Throw New ObjectMappingException("There is not alias for table " & tbl.RawName, ex)
                 End Try
             End If
 
 
             If String.IsNullOrEmpty(alias2) AndAlso almgr IsNot Nothing Then
                 'Debug.Assert(almgr.ContainsKey(map2.Table, os2), "There is not alias for table " & map2.Table.RawName)
+                tbl2 = If(map2?.Table, tbl2)
                 Try
-                    alias2 = almgr.GetAlias(map2.Table, os2) & stmt.Selector
+                    alias2 = almgr.GetAlias(tbl2, os2) & stmt.Selector
                 Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException("There is not alias for table " & map2.Table.RawName, ex)
+                    Throw New ObjectMappingException("There is not alias for table " & tbl2.RawName, ex)
                 End Try
             End If
 
@@ -598,6 +694,15 @@ Namespace Criteria.Joins
                     If map2 IsNot Nothing Then
                         Dim sf2 = map2.SourceFields(i)
                         sb.Append(sf2.SourceFieldExpression)
+                    ElseIf cols2?.Any Then
+                        If cols2.Count = 1 Then
+                            sb.Append(cols2(0).Column1)
+                        Else
+                            Dim c = cols2.FirstOrDefault(Function(it) it.Column2 = sf.SourceFieldExpression)
+                            If c IsNot Nothing Then
+                                sb.Append(c.Column1)
+                            End If
+                        End If
                     ElseIf i > 0 Then
                         Throw New InvalidOperationException
                     End If
@@ -613,20 +718,72 @@ Namespace Criteria.Joins
                 End If
             Else
 l1:
-                sb.Append(stmt.Oper2String(_oper))
-                sb.Append(rp)
 
-                If map2 IsNot Nothing Then
+                If cols?.Any Then
+                    Dim start = sb.Length
+                    Dim first = True
+                    For Each c In cols
+                        sb.Append(c.Column1)
+                        sb.Append(stmt.Oper2String(_oper))
 
-                    For i = 0 To map2.SourceFields.Count - 1
-                        Dim sf2 = map2.SourceFields(i)
-                        sb.Append(sf2.SourceFieldExpression)
+                        sb.Append(rp)
 
-                        If i > 0 Then
+                        If map2 IsNot Nothing Then
+                            Dim sf2 = map2.SourceFields.FirstOrDefault(Function(it) it.SourceFieldExpression = c.Column2)
+                            If sf2 IsNot Nothing Then
+                                sb.Append(sf2.SourceFieldExpression)
+                            ElseIf cols.Count = 1 AndAlso map2.SourceFields.Count = 1 Then
+                                sb.Append(map2.SourceFields(0).SourceFieldExpression)
+                            End If
+
+                        ElseIf cols2 IsNot Nothing Then
+                            Dim c2 = cols2.FirstOrDefault(Function(it) it.Column2 = c.Column2)
+                            If c2 IsNot Nothing Then
+                                sb.Append(c2.Column1)
+                            End If
+                        ElseIf Not first Then
                             Throw New InvalidOperationException
                         End If
+
+                        sb.Append(" and ")
+                        sb.Append(lp)
+
+                        first = False
                     Next
+
+                    If sb.Length > start Then
+                        sb.Length -= 5 + lp.Length ' cut and
+                    Else
+                        GoTo l2
+                    End If
+                Else
+l2:
+                    sb.Append(stmt.Oper2String(_oper))
+                    sb.Append(rp)
+
+                    If map2 IsNot Nothing Then
+
+                        For i = 0 To map2.SourceFields.Count - 1
+                            Dim sf2 = map2.SourceFields(i)
+                            sb.Append(sf2.SourceFieldExpression)
+
+                            If i > 0 Then
+                                Throw New InvalidOperationException
+                            End If
+                        Next
+                    ElseIf cols2 IsNot Nothing Then
+                        For i = 0 To cols2.Count - 1
+                            Dim c2 = cols2(i)
+                            sb.Append(c2.Column1)
+
+                            If i > 0 Then
+                                Throw New InvalidOperationException
+                            End If
+                        Next
+                    End If
                 End If
+
+
             End If
 
             Return sb.ToString
@@ -703,7 +860,7 @@ l1:
                 If fl IsNot Nothing Then
                     Dim f As IFilter = Nothing
                     If fl._l.Property.Entity IsNot Nothing AndAlso fl._l.Property.Entity.GetRealType(mpe) Is t AndAlso fl._l.Property.PropertyAlias = propertyAlias Then
-                        f = CreateFilter(mpe, fl._r, values, fl._oper, fl._l.Property.Entity, t)
+                        f = CreateFilter(mpe, fl._r, values, fl._oper, fl._l.Property.Entity, t, propertyAlias)
                         'If values.Count = 1 Then
                         '    f = New EntityFilter(fl._r.Property, values.First, fl._oper)
                         'Else
@@ -719,7 +876,7 @@ l1:
                         '    f = cond.Condition
                         'End If
                     ElseIf fl._r.Property.Entity IsNot Nothing AndAlso fl._r.Property.Entity.GetRealType(mpe) Is t AndAlso fl._r.Property.PropertyAlias = propertyAlias Then
-                        f = CreateFilter(mpe, fl._l, values, fl._oper, fl._r.Property.Entity, t)
+                        f = CreateFilter(mpe, fl._l, values, fl._oper, fl._r.Property.Entity, t, propertyAlias)
                         'ElseIf fl._d1 IsNot Nothing Then
                         '    Dim tt As Type = schema.GetTypeByEntityName(fl._d1.First)
                         '    If tt Is t AndAlso fl._d1.Second = propertyAlias Then
@@ -747,14 +904,17 @@ l1:
                 Dim fl As JoinFilter = TryCast(_fl, JoinFilter)
                 If fl IsNot Nothing Then
                     Dim f As IFilter = Nothing
+
+                    If fl._l.Table Is sf AndAlso fl._l.Columns IsNot Nothing AndAlso fl._l.Columns.All(Function(it) fields.Any(Function(it2) it.Column1.Equals(it2.SourceFieldExpression, If(gen.CaseSensitive, StringComparison.InvariantCulture, StringComparison.InvariantCultureIgnoreCase)))) Then
+                        f = SetJF(fl._r, values, fl._oper, fl._l.Columns)
+                    ElseIf fl._r.Table Is sf AndAlso fl._r.Columns IsNot Nothing AndAlso fl._r.Columns.All(Function(it) fields.Any(Function(it2) it.Column1.Equals(it2.SourceFieldExpression, If(gen.CaseSensitive, StringComparison.InvariantCulture, StringComparison.InvariantCultureIgnoreCase)))) Then
+                        f = SetJF(fl._l, values, fl._oper, fl._r.Columns)
+                    End If
+
                     For i = 0 To fields.Count - 1
                         Dim fld = fields(i).SourceFieldExpression
                         Dim v = values(i)
-                        If fl._l.Column IsNot Nothing AndAlso fl._l.Column.First Is sf AndAlso fl._l.Column.Second.Equals(fld, If(gen.CaseSensitive, StringComparison.InvariantCulture, StringComparison.InvariantCultureIgnoreCase)) Then
-                            f = SetJF(fl._r, v, fl._oper)
-                        ElseIf fl._r.Column IsNot Nothing AndAlso fl._r.Column.First Is sf AndAlso fl._r.Column.Second.Equals(fld, If(gen.CaseSensitive, StringComparison.InvariantCulture, StringComparison.InvariantCultureIgnoreCase)) Then
-                            f = SetJF(fl._l, v, fl._oper)
-                        End If
+
 
                         If f IsNot Nothing Then
                             l.Add(New Pair(Of JoinFilter, IFilter)(fl, f))
@@ -775,35 +935,49 @@ l1:
 
             Return Nothing
         End Function
-        Private Shared Function CreateFilter(mpe As ObjectMappingEngine, ByVal fr As FieldReference, ByVal values As IEnumerable(Of IFilterValue), oper As FilterOperation, e As EntityUnion, t As Type) As IFilter
+        Private Shared Function CreateFilter(mpe As ObjectMappingEngine, ByVal fr As FieldReference, ByVal values As IEnumerable(Of IFilterValue), oper As FilterOperation, e As EntityUnion, t As Type, propertyAlias As String) As IFilter
             If values.Count = 1 Then
                 If fr.Property.IsEmpty Then
-                    Return New TableFilter(fr.Column.First, fr.Column.Second, values(0), oper)
+                    Return New TableFilter(fr.Table, fr.Columns(0).Column1, values(0), oper)
                 Else
                     Return New EntityFilter(fr.Property, values.First, oper)
                 End If
-            Else
+            ElseIf fr.Table IsNot Nothing AndAlso fr.Columns IsNot Nothing Then
                 'Return New EntityFilter(fr.Property, New CachedEntityValue(values, t), oper)
                 Dim oschema = mpe.GetEntitySchema(e)
-                Dim pk = oschema.GetPK
-                Dim fields = pk.SourceFields
+                Dim m = oschema.FieldColumnMap(propertyAlias)
+                Dim fields = m.SourceFields
                 Dim cond As New Condition.ConditionConstructor
                 For i = 0 To fields.Count - 1
-                    Dim fld = fields(i).SourceFieldExpression
-                    Dim v = values(i)
-                    'cond.AddFilter(New TableFilter(fr.Column.First, fr.Column.Second, v, oper))
-                    cond.AddFilter(New TableFilter(pk.Table, fld, v, oper))
+                    Dim k = i
+                    Dim fld = fr.Columns.FirstOrDefault(Function(it) it.Column2 = fields(k).SourceFieldExpression)?.Column1
+                    If Not String.IsNullOrEmpty(fld) Then
+                        Dim v = values(i)
+                        'cond.AddFilter(New TableFilter(fr.Column.First, fr.Column.Second, v, oper))
+                        cond.AddFilter(New TableFilter(fr.Table, fld, v, oper))
+                    End If
                 Next
                 Return cond.Condition
+            Else
+                Throw New InvalidOperationException
             End If
         End Function
-        Private Shared Function SetJF(ByVal fr As FieldReference, _
-                               ByVal value As IFilterValue, ByVal oper As FilterOperation) As IFilter
+        Private Shared Function SetJF(ByVal fr As FieldReference, ByVal values As IEnumerable(Of IFilterValue), ByVal oper As FilterOperation, cols As IEnumerable(Of ColumnPair)) As IFilter
             If fr.Property.Entity IsNot Nothing Then
                 Throw New InvalidOperationException
                 'Return New EntityFilter(fr.Property, value, oper)
+            ElseIf fr.Table IsNot Nothing AndAlso fr.Columns IsNot Nothing Then
+                Dim cond As New Condition.ConditionConstructor
+                For i = 0 To cols.Count - 1
+                    Dim k = i
+                    Dim fld = fr.Columns.FirstOrDefault(Function(it) it.Column2 = cols(k).Column1)?.Column1
+                    If Not String.IsNullOrEmpty(fld) Then
+                        cond.AddFilter(New TableFilter(fr.Table, fld, values(i), oper))
+                    End If
+                Next
+                Return cond.Condition
             Else
-                Return New TableFilter(fr.Column.First, fr.Column.Second, value, oper)
+                Throw New InvalidOperationException
             End If
         End Function
 

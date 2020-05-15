@@ -216,23 +216,59 @@ Namespace Cache
         End Property
     End Class
 
-    <Serializable()> _
-    Public Class CacheKey
-        Inherits PKWrapper
+    <Serializable()>
+    Public Class SingleValueKey
+        Implements IKeyProvider
 
         Private ReadOnly _key As Integer
-
-        Public Sub New(ByVal o As ICachedEntity)
-            MyBase.New(o.GetPKValues(Nothing))
-            _key = o.Key.GetHashCode
+        Private ReadOnly _o As Object
+        'Public Sub New(ByVal o As IKeyProvider)
+        '    MyBase.New(o.GetPKs())
+        '    _key = o.Key
+        'End Sub
+        Public Sub New(key As Object)
+            _key = key.GetHashCode
+            _o = key
         End Sub
 
-        Public Overrides Function GetHashCode() As Integer
+        Public ReadOnly Property UniqueString As String Implements IKeyProvider.UniqueString
+            Get
+                Return _key.ToString
+            End Get
+        End Property
+
+        Public Overrides Function GetHashCode() As Integer Implements IKeyProvider.Key
             Return _key
         End Function
 
         Public Overrides Function ToString() As String
             Return _key.ToString
+        End Function
+        Public Overrides Function Equals(obj As Object) As Boolean Implements IKeyProvider.Equals
+            Dim cc = TryCast(obj, SingleValueKey)
+            If cc IsNot Nothing Then
+                Return Equals(cc)
+            Else
+                Dim pkw = TryCast(obj, PKWrapper)
+
+                If pkw IsNot Nothing Then
+                    Return pkw.Equals(Me)
+                Else
+                    Dim spk = TryCast(obj, ISinglePKEntity)
+
+                    If spk IsNot Nothing Then
+                        Return _key = spk.Key
+                    End If
+
+                    Return Object.Equals(_o, obj)
+                End If
+            End If
+
+            Return False
+        End Function
+        Public Overloads Function Equals(ByVal cc As SingleValueKey) As Boolean
+            If cc Is Nothing Then Return False
+            Return _key = cc._key
         End Function
     End Class
 
@@ -258,15 +294,18 @@ Namespace Cache
 
         Protected Function GetEntityFromCacheOrCreate(ByVal mgr As OrmManager, ByVal cache As CacheBase, ByVal pk As IPKDesc, ByVal type As Type,
                                                       ByVal addOnCreate As Boolean, ByVal filterInfo As Object, ByVal mpe As ObjectMappingEngine, ByVal dic As IDictionary) As ICachedEntity
+            Dim wasCreated = False
+            Dim schema = mpe.GetEntitySchema(type)
+            Dim co As ICachedEntity = CType(cache.FindObjectInCacheOrAdd(type, New PKWrapper(pk), dic, addOnCreate, Function()
+                                                                                                                        wasCreated = True
+                                                                                                                        Dim o As _ICachedEntity = CType(CachedEntity.CreateObject(pk, type, mpe), _ICachedEntity)
+                                                                                                                        If addOnCreate Then
+                                                                                                                            o.SetObjectState(ObjectState.NotLoaded)
+                                                                                                                        End If
+                                                                                                                        Return o
+                                                                                                                    End Function), ICachedEntity)
 
-            Dim o As _ICachedEntity = CType(CachedEntity.CreateObject(pk, type, mpe), _ICachedEntity)
-
-            o.SetObjectState(ObjectState.NotLoaded)
-
-            Dim co As ICachedEntity = CType(cache.FindObjectInCache(type, o, New CacheKey(o), TryCast(mpe.GetEntitySchema(type), ICacheBehavior), dic, addOnCreate, False), ICachedEntity)
-
-            cache.GetEntityFromCacheOrCreate(pk, type, addOnCreate, dic, mpe)
-            mgr.RaiseObjectRestored(ReferenceEquals(co, o), co)
+            mgr.RaiseObjectRestored(wasCreated, co)
 
             Return co
         End Function
@@ -275,8 +314,8 @@ Namespace Cache
             Return GetObject(Of T)(mgr, mgr.Cache, mgr.ContextInfo, mgr.MappingEngine, dic)
         End Function
 
-        Public Function GetObject(Of T As ICachedEntity)(ByVal mgr As OrmManager, ByVal cache As CacheBase, _
-            ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal dic As IDictionary) As T
+        Public Function GetObject(Of T As ICachedEntity)(ByVal mgr As OrmManager, ByVal cache As CacheBase,
+                                                         ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal dic As IDictionary) As T
             Dim o As T = CType(_ref.Target, T)
             If o Is Nothing Then
                 o = CType(GetEntityFromCacheOrCreate(mgr, cache, _e.PK, _e.EntityType, True, filterInfo, schema, dic), T) 'mc.FindObject(id, t)
@@ -291,8 +330,8 @@ Namespace Cache
             Return GetObject(mgr, mgr.Cache, mgr.ContextInfo, mgr.MappingEngine, dic)
         End Function
 
-        Public Function GetObject(ByVal mgr As OrmManager, ByVal cache As CacheBase, _
-            ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal dic As IDictionary) As ICachedEntity
+        Public Function GetObject(ByVal mgr As OrmManager, ByVal cache As CacheBase,
+                                  ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal dic As IDictionary) As ICachedEntity
             Dim o As ICachedEntity = CType(_ref.Target, ICachedEntity)
             If o Is Nothing Then
                 o = GetEntityFromCacheOrCreate(mgr, cache, _e.PK, _e.EntityType, True, filterInfo, schema, dic) 'mc.FindObject(id, t)

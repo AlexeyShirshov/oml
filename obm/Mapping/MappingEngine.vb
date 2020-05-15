@@ -3080,32 +3080,24 @@ l1:
                         Throw New OrmManagerException("Cannot find type for entity " & en)
                     End If
                 End If
+                Dim pk = New PKDesc(sv)
+                Dim cb As ICacheBehavior = TryCast(GetEntitySchema(type_created), ICacheBehavior)
+                Dim o = cache.FindObjectInCacheOrAdd(type_created, New PKWrapper(pk), cache.GetOrmDictionary(type_created, cb), True, Function()
+                                                                                                                                          Dim o2 As Object = Entity.CreateObject(pk, type_created, Me)
 
-                Dim o As Object = Entity.CreateObject(New PKDesc(sv), type_created, Me)
-                Dim cce As ICachedEntity = TryCast(o, ICachedEntity)
-                Dim pkw As PKWrapper = Nothing
-                Dim wasCreated = True
-                If cce IsNot Nothing Then
-                    pkw = New CacheKey(CType(o, ICachedEntity))
-                    Dim cb As ICacheBehavior = TryCast(GetEntitySchema(type_created), ICacheBehavior)
-                    Dim o2 = cache.FindObjectInCache(type_created, o, pkw, cb, cache.GetOrmDictionary(type_created, cb), True, True)
-                    wasCreated = o2 Is o
-                    o = o2
-                    'Else
-                    '    pkw = New PKWrapper(sv)
-                End If
+                                                                                                                                          Dim e = TryCast(o2, _IEntity)
+                                                                                                                                          If e IsNot Nothing Then
+                                                                                                                                              Dim eo As IEntity = TryCast(obj, IEntity)
+                                                                                                                                              If eo IsNot Nothing AndAlso eo.GetICreateManager IsNot Nothing Then
+                                                                                                                                                  e.SetCreateManager(eo.GetICreateManager)
+                                                                                                                                              ElseIf crMan IsNot Nothing Then
+                                                                                                                                                  e.SetCreateManager(crMan)
+                                                                                                                                              End If
+                                                                                                                                              e.CorrectStateAfterLoading(True)
+                                                                                                                                          End If
 
-                Dim e = TryCast(o, _IEntity)
-                If e IsNot Nothing Then
-                    Dim eo As IEntity = TryCast(obj, IEntity)
-                    If eo IsNot Nothing AndAlso eo.GetICreateManager IsNot Nothing Then
-                        e.SetCreateManager(eo.GetICreateManager)
-                    ElseIf crMan IsNot Nothing Then
-                        e.SetCreateManager(crMan)
-                    End If
-                    e.CorrectStateAfterLoading(wasCreated)
-                End If
-
+                                                                                                                                          Return o2
+                                                                                                                                      End Function)
                 If m.OptimizedSetValue IsNot Nothing AndAlso m.OptimizedSetValue IsNot MapField2Column.EmptyOptimizedSetValue Then
                     m.OptimizedSetValue(obj, o)
                 Else

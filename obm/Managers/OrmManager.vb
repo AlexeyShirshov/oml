@@ -1649,12 +1649,13 @@ l1:
     Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal entityDictionary As IDictionary,
                                     ByVal add2Cache As Boolean, ByVal fromDb As Boolean, ByVal oschema As IEntitySchema) As _ICachedEntity
         Dim cb As ICacheBehavior = TryCast(oschema, ICacheBehavior)
-        Return CType(_cache.FindObjectInCache(obj.GetType, obj, New CacheKey(obj), cb, entityDictionary, add2Cache, fromDb), _ICachedEntity)
+        Return CType(_cache.FindObjectInCache(obj.GetType, obj, New PKWrapper(oschema.GetPKs(obj)), cb, entityDictionary, add2Cache, fromDb), _ICachedEntity)
     End Function
 
     Public Function GetFromCacheAsIsOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
-        Dim cb As ICacheBehavior = TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior)
-        Dim ck As CacheKey = New CacheKey(obj)
+        Dim schema = obj.GetEntitySchema(MappingEngine)
+        Dim cb As ICacheBehavior = TryCast(schema, ICacheBehavior)
+        Dim ck As New PKWrapper(schema.GetPKs(obj))
         Dim t As Type = obj.GetType
         'Dim e = _cache.FindObjectInCacheOrAdd(t, ck, dic, False, Function()
 
@@ -1679,8 +1680,9 @@ l1:
     End Function
 
     Public Function GetFromCacheLoadedOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
-        Dim cb As ICacheBehavior = TryCast(obj.GetEntitySchema(MappingEngine), ICacheBehavior)
-        Dim ck As CacheKey = New CacheKey(obj)
+        Dim schema = obj.GetEntitySchema(MappingEngine)
+        Dim cb As ICacheBehavior = TryCast(schema, ICacheBehavior)
+        Dim ck As New PKWrapper(schema.GetPKs(obj))
         Dim e As _ICachedEntity = CType(_cache.FindObjectInCache(obj.GetType, obj, ck, cb, dic, False, False), _ICachedEntity)
         If e Is Nothing OrElse (e.ObjectState = ObjectState.NotLoaded) Then
             If e Is Nothing Then
@@ -1817,7 +1819,7 @@ l1:
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 
-        Dim id As CacheKey = New CacheKey(obj)
+        Dim id As New PKWrapper(obj.GetPKs(MappingEngine))
         Dim sync_key As String = "LoadType" & id.ToString & t.ToString
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
@@ -1852,7 +1854,7 @@ l1:
             Throw New ArgumentNullException("obj")
         End If
 
-        Dim id As CacheKey = New CacheKey(obj)
+        Dim id = New PKWrapper(obj.GetPKs(MappingEngine))
         SyncLock dic.SyncRoot
             Dim o As ICachedEntity = CType(dic(id), ICachedEntity)
             If o Is Nothing Then
@@ -1888,7 +1890,7 @@ l1:
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 
-        Dim id As CacheKey = New CacheKey(obj)
+        Dim id = New PKWrapper(obj.GetPKs(MappingEngine))
         Dim sync_key As String = "LoadType" & id.ToString & t.ToString
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
@@ -1963,11 +1965,11 @@ l1:
         Return _cache.GetOrmDictionary(t, cb)
     End Function
 
-    Public Function GetDictionary(Of T As _ICachedEntity)() As Generic.IDictionary(Of Object, T)
+    Public Function GetDictionary(Of T As _ICachedEntity)() As Generic.IDictionary(Of IKeyProvider, T)
         Return _cache.GetOrmDictionary(Of T)(_schema)
     End Function
 
-    Public Function GetDictionary(Of T As _ICachedEntity)(ByVal cb As ICacheBehavior) As Generic.IDictionary(Of Object, T)
+    Public Function GetDictionary(Of T As _ICachedEntity)(ByVal cb As ICacheBehavior) As Generic.IDictionary(Of IKeyProvider, T)
         Return _cache.GetOrmDictionary(Of T)(cb)
     End Function
 
@@ -1975,7 +1977,7 @@ l1:
         Return _cache.IsInCachePrecise(obj, _schema)
     End Function
 
-    Public Function IsInCache(ByVal id As Object, ByVal t As Type) As Boolean
+    Public Function IsInCache(ByVal id As IPKDesc, ByVal t As Type) As Boolean
         Return _cache.IsInCache(id, t, _schema)
     End Function
 
@@ -3730,7 +3732,7 @@ l1:
         Return obj
     End Function
 
-    Protected Friend Sub M2MSave(ByVal obj As ISinglePKEntity, ByVal el As M2MRelation)
+    Protected Friend Sub M2MSave(ByVal obj As ICachedEntity, ByVal el As M2MRelation)
         M2MSave(obj, el.Relation.Entity.GetRealType(MappingEngine), el.Key, el)
     End Sub
 
@@ -3793,7 +3795,7 @@ l1:
 
     Protected Friend MustOverride Sub DeleteObject(ByVal obj As ICachedEntity)
 
-    Protected MustOverride Sub M2MSave(ByVal obj As ISinglePKEntity, ByVal t As Type, ByVal key As String, ByVal el As M2MRelation)
+    Protected MustOverride Sub M2MSave(ByVal obj As ICachedEntity, ByVal t As Type, ByVal key As String, ByVal el As M2MRelation)
 
     Protected Friend MustOverride ReadOnly Property Exec() As TimeSpan
     Protected Friend MustOverride ReadOnly Property Fecth() As TimeSpan
@@ -4094,19 +4096,19 @@ l1:
     End Sub
 
     Protected Friend Shared Function MakeM2MJoin(ByVal schema As ObjectMappingEngine, ByVal m2m As M2MRelationDesc, ByVal type2join As Type) As Worm.Criteria.Joins.QueryJoin()
-        Dim jf As New JoinFilter(m2m.Table, m2m.Column, m2m.Entity.GetRealType(schema), schema.GetPrimaryKey(m2m.Entity.GetRealType(schema)), Worm.Criteria.FilterOperation.Equal)
+        Dim jf As New JoinFilter(m2m.Table, m2m.Columns, m2m.Entity.GetRealType(schema), schema.GetPrimaryKey(m2m.Entity.GetRealType(schema)), Worm.Criteria.FilterOperation.Equal)
         Dim mj As New QueryJoin(m2m.Table, Joins.JoinType.Join, jf)
         m2m = schema.GetM2MRelation(m2m.Entity.GetRealType(schema), type2join, True)
-        Dim jt As New JoinFilter(m2m.Table, m2m.Column, type2join, schema.GetPrimaryKey(type2join), Worm.Criteria.FilterOperation.Equal)
+        Dim jt As New JoinFilter(m2m.Table, m2m.Columns, type2join, schema.GetPrimaryKey(type2join), Worm.Criteria.FilterOperation.Equal)
         Dim tj As New QueryJoin(schema.GetTables(type2join)(0), Joins.JoinType.Join, jt)
         Return New QueryJoin() {mj, tj}
     End Function
 
     Protected Friend Shared Function MakeJoin(ByVal schema As ObjectMappingEngine,
-        ByVal joinOS As EntityUnion, ByVal type2join As Type,
-        ByVal selectType As EntityUnion, ByVal field As String,
-        ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Joins.JoinType,
-        Optional ByVal switchTable As Boolean = False) As Worm.Criteria.Joins.QueryJoin
+                                              ByVal joinOS As EntityUnion, ByVal type2join As Type,
+                                              ByVal selectType As EntityUnion, ByVal field As String,
+                                              ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Joins.JoinType,
+                                              Optional ByVal switchTable As Boolean = False) As Worm.Criteria.Joins.QueryJoin
 
         'Dim tbl As SourceFragment = GetTables(type2join)(0)
         'If switchTable Then
@@ -4355,8 +4357,8 @@ l1:
         Return c
     End Function
     Protected Function PrepareEntity2Load(ByVal obj As _IEntity, ByVal original_type As Type,
-        ByVal selDic As Dictionary(Of EntityUnion, LoadTypeDescriptor),
-        ByVal selOS As EntityUnion, ByVal oschema As IEntitySchema,
+                                          ByVal selDic As Dictionary(Of EntityUnion, LoadTypeDescriptor),
+                                          ByVal selOS As EntityUnion, ByVal oschema As IEntitySchema,
                                           props As IEnumerable(Of String)) As Condition.ConditionConstructor
 
         Dim c As New Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
@@ -4584,7 +4586,7 @@ l1:
                 ElseIf e.UpdateCtx.Added Then
                     '_valProcs = False
                     Dim dic As IDictionary = mc.GetDictionary(e.GetType, TryCast(e.GetEntitySchema(mc.MappingEngine), ICacheBehavior))
-                    Dim kw As CacheKey = New CacheKey(e)
+                    Dim kw = New PKWrapper(e.GetPKs(mc.MappingEngine))
                     'Dim o As CachedEntity = CType(dic(kw), CachedEntity)
                     'If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
                     '    dic(kw) = Me
@@ -4675,9 +4677,9 @@ l1:
                     olds = oc.ObjectState
                 End If
 
-                Dim oldkey As CacheKey = Nothing
+                Dim oldkey As IKeyProvider = Nothing
                 If e.IsPKLoaded Then
-                    oldkey = New CacheKey(e)
+                    oldkey = New PKWrapper(e.GetPKs(mpe))
                 End If
 
                 Dim newid As IPKDesc = Nothing

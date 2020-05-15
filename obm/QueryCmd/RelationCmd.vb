@@ -51,7 +51,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal obj As ISinglePKEntity, ByVal t As Type)
+        Public Sub New(ByVal obj As ICachedEntity, ByVal t As Type)
             'MyBase.New(obj)
             If _desc Is Nothing Then
                 _rel = New Relation(obj, New RelationDesc(New EntityUnion(t), Nothing))
@@ -62,7 +62,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal obj As ISinglePKEntity, ByVal t As Type, ByVal getMgr As ICreateManager)
+        Public Sub New(ByVal obj As ICachedEntity, ByVal t As Type, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             If _desc Is Nothing Then
                 _rel = New Relation(obj, New RelationDesc(New EntityUnion(t), Nothing))
@@ -73,7 +73,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal obj As ISinglePKEntity, ByVal eu As EntityUnion)
+        Public Sub New(ByVal obj As ICachedEntity, ByVal eu As EntityUnion)
             'MyBase.New(obj)
             If _desc Is Nothing Then
                 _rel = New Relation(obj, New RelationDesc(eu, Nothing))
@@ -84,7 +84,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal obj As ISinglePKEntity, ByVal eu As EntityUnion, ByVal key As String)
+        Public Sub New(ByVal obj As ICachedEntity, ByVal eu As EntityUnion, ByVal key As String)
             'MyBase.New(obj, key)
             If _desc Is Nothing Then
                 _rel = New Relation(obj, New RelationDesc(eu, Nothing, key))
@@ -95,7 +95,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal desc As RelationDesc, ByVal obj As ISinglePKEntity)
+        Public Sub New(ByVal desc As RelationDesc, ByVal obj As ICachedEntity)
             'MyBase.New(obj, desc.Key)
             _rel = New Relation(obj, desc)
             [From](desc.Entity)
@@ -116,7 +116,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal obj As _ISinglePKEntity, ByVal eu As EntityUnion, ByVal getMgr As CreateManagerDelegate)
+        Public Sub New(ByVal obj As ICachedEntity, ByVal eu As EntityUnion, ByVal getMgr As CreateManagerDelegate)
             MyBase.New(getMgr)
             If _desc Is Nothing Then
                 _rel = New Relation(obj, New RelationDesc(eu, Nothing, Nothing))
@@ -127,7 +127,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal obj As _ISinglePKEntity, ByVal eu As EntityUnion, ByVal getMgr As ICreateManager)
+        Public Sub New(ByVal obj As ICachedEntity, ByVal eu As EntityUnion, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             If _desc Is Nothing Then
                 _rel = New Relation(obj, New RelationDesc(eu, Nothing, Nothing))
@@ -138,7 +138,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal obj As _ISinglePKEntity, ByVal eu As EntityUnion, ByVal key As String, ByVal getMgr As ICreateManager)
+        Public Sub New(ByVal obj As ICachedEntity, ByVal eu As EntityUnion, ByVal key As String, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             If _desc Is Nothing Then
                 _rel = New Relation(obj, New RelationDesc(eu, Nothing, key))
@@ -149,7 +149,7 @@ Namespace Query
             Init()
         End Sub
 
-        Public Sub New(ByVal desc As RelationDesc, ByVal obj As _ISinglePKEntity, ByVal getMgr As ICreateManager)
+        Public Sub New(ByVal desc As RelationDesc, ByVal obj As ICachedEntity, ByVal getMgr As ICreateManager)
             MyBase.New(getMgr)
             _rel = New Relation(obj, desc)
             [From](desc.Entity)
@@ -166,19 +166,19 @@ Namespace Query
             Return Create(rel, OrmManager.CurrentManager)
         End Function
 
-        Public Overloads Shared Function Create(ByVal obj As ISinglePKEntity, ByVal en As EntityUnion) As RelationCmd
+        Public Overloads Shared Function Create(ByVal obj As ICachedEntity, ByVal en As EntityUnion) As RelationCmd
             Return Create(obj, en, OrmManager.CurrentManager)
         End Function
 
-        Public Overloads Shared Function Create(ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
+        Public Overloads Shared Function Create(ByVal obj As ICachedEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
             Return Create(obj, en, key, OrmManager.CurrentManager)
         End Function
 
-        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As ISinglePKEntity, ByVal en As EntityUnion) As RelationCmd
+        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As ICachedEntity, ByVal en As EntityUnion) As RelationCmd
             Return Create(name, obj, en, OrmManager.CurrentManager)
         End Function
 
-        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
+        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As ICachedEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
             Return Create(name, obj, en, key, OrmManager.CurrentManager)
         End Function
 
@@ -212,7 +212,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Overloads Shared Function Create(ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal mgr As OrmManager) As RelationCmd
+        Public Overloads Shared Function Create(ByVal obj As ICachedEntity, ByVal en As EntityUnion, ByVal mgr As OrmManager) As RelationCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As RelationCmd = Nothing
             If f Is Nothing Then
@@ -227,7 +227,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Overloads Shared Function Create(ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal key As String, ByVal mgr As OrmManager) As RelationCmd
+        Public Overloads Shared Function Create(ByVal obj As ICachedEntity, ByVal en As EntityUnion, ByVal key As String, ByVal mgr As OrmManager) As RelationCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As RelationCmd = Nothing
             If f Is Nothing Then
@@ -242,7 +242,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal mgr As OrmManager) As RelationCmd
+        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As ICachedEntity, ByVal en As EntityUnion, ByVal mgr As OrmManager) As RelationCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As RelationCmd = Nothing
             If f Is Nothing Then
@@ -258,7 +258,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal key As String, ByVal mgr As OrmManager) As RelationCmd
+        Public Overloads Shared Function Create(ByVal name As String, ByVal obj As ICachedEntity, ByVal en As EntityUnion, ByVal key As String, ByVal mgr As OrmManager) As RelationCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As RelationCmd = Nothing
             If f Is Nothing Then
@@ -401,7 +401,7 @@ Namespace Query
                                          ByVal mpe As ObjectMappingEngine, ByVal filterInfo As IDictionary,
                                          ByVal stmt As StmtGenerator, ByRef f As IFilter, ByVal xxx As EntityUnion, ByVal isAnonym As Boolean)
 
-            Dim m2mObject As ISinglePKEntity = _rel.Host
+            Dim m2mObject = _rel.Host
             Dim m2mKey As String = _rel.Key
             'Dim m2mType As Type = selectOS.GetRealType(schema)
             Dim rel As RelationDesc = PrepareRel(mpe, Nothing, Nothing)
@@ -466,12 +466,12 @@ Namespace Query
                     Dim ideu As EntityUnion = m2mEU
                     Dim tu As EntityUnion = Nothing
                     Dim mt As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
-                    Dim prd As Boolean = (AppendMain.HasValue AndAlso AppendMain.Value) OrElse _WithLoad(m2mEU, mpe) OrElse IsFTS OrElse
-                        NeedAppendMain(m2mEU)
+                    Dim prd As Boolean = (AppendMain.HasValue AndAlso AppendMain.Value) OrElse _WithLoad(m2mEU, mpe) OrElse IsFTS OrElse NeedAppendMain(m2mEU)
+
                     If prd OrElse mt IsNot Nothing Then
-                        Dim pka As String = mpe.GetPrimaryKey(m2mType, oschema)
+                        Dim pka As String = oschema.GetPK.PropertyAlias
                         AppendMain = True
-                        Dim jf As New JoinFilter(table, selected_r.Column, m2mEU, pka, _fo)
+                        Dim jf As New JoinFilter(table, selected_r.Columns, m2mEU, pka, _fo)
                         Dim jn As New QueryJoin(table, JoinType.Join, jf)
                         jn.ObjectSource = selected_r.Entity
                         _js.Insert(0, jn)
@@ -505,7 +505,7 @@ l1:
                             Else
                                 'Dim pk As EntityPropertyAttribute = mpe.GetPrimaryKeys(m2mType)(0)
                                 Dim pka As String = mpe.GetPrimaryKey(m2mType, oschema)
-                                Dim te As New TableExpression(table, selected_r.Column)
+                                Dim te As New MultiColumnExpression(table, selected_r.Columns.Select(Function(it) it.Column1))
                                 te.SetEntity(ideu)
                                 _sl.Add(New SelectExpression(te) With {
                                     .Attributes = Field2DbRelations.PK,
@@ -527,17 +527,25 @@ l1:
                     '    Next
                     'End If
 
-                    addf = New TableFilter(table, filtered_r.Column,
-                        New Worm.Criteria.Values.ScalarValue(m2mObject.Identifier), _fo)
+                    Dim cond As Condition.ConditionConstructor = New Condition.ConditionConstructor
+                    Dim pk = m2mObject.GetPKValues(Nothing)
+                    For Each col In pk
+                        Dim fld = filtered_r.Columns.FirstOrDefault(Function(it) it.Column2 = col.Column)?.Column1
+                        If Not String.IsNullOrEmpty(fld) Then
+                            cond.AddFilter(New TableFilter(table, fld, New Worm.Criteria.Values.ScalarValue(col.Value), _fo))
+                        ElseIf pk.Count = 1 AndAlso filtered_r.Columns.Count = 1 Then
+                            cond.AddFilter(New TableFilter(table, filtered_r.Columns(0).Column1, New Worm.Criteria.Values.ScalarValue(col.Value), _fo))
+                        End If
+                    Next
 
                     If selected_r.Constants IsNot Nothing Then
-                        Dim cond As Condition.ConditionConstructor = New Condition.ConditionConstructor
-                        cond.AddFilter(addf)
-                        For Each tf As IFilter In selected_r.Constants
+                        For Each tf In selected_r.Constants
                             cond.AddFilter(tf)
                         Next
-                        addf = cond.Condition
+
                     End If
+
+                    addf = cond.Condition
 
                     If tu IsNot Nothing Then addf.SetUnion(tu)
 
@@ -548,7 +556,8 @@ l1:
                         Dim hschema As IEntitySchema = mpe.GetEntitySchema(hostType)
                         _types.Add(heu, hschema)
                         Dim hpk As String = mpe.GetPrimaryKey(hostType, hschema) 'mpe.GetPrimaryKeys(hostType, hschema)(0).PropertyAlias
-                        _sl.Add(New SelectExpression(table, filtered_r.Column, hpk, heu))
+                        'Throw New NotImplementedException
+                        _sl.Add(New SelectExpression(New MultiColumnExpression(table, filtered_r.Columns.Select(Function(it) it.Column1)), hpk, heu))
 
                         AddEntityToSelectList(heu, False)
 
@@ -587,8 +596,8 @@ l1:
                         PrepareSelectList(executor, stmt, isAnonym, mpe, f, filterInfo)
                     End If
 
-                    addf = New EntityFilter(rel.Entity, rel.Column,
-                           New Worm.Criteria.Values.ScalarValue(m2mObject.Identifier), _fo)
+                    addf = New EntityFilter(rel.Entity, rel.PropertyAlias,
+                           New Worm.Criteria.Values.CachedEntityValue(m2mObject), _fo)
 
                     If _from Is Nothing Then _from = New FromClauseDef(m2mEU)
                 End If
@@ -620,8 +629,8 @@ l1:
 
             Dim selRel As RelationDesc = _rel.Relation
 
-            If selRel Is Nothing OrElse selRel.Entity Is Nothing OrElse String.IsNullOrEmpty(selRel.Column) Then
-                Dim m2mObject As ISinglePKEntity = _rel.Host
+            If selRel Is Nothing OrElse selRel.Entity Is Nothing OrElse String.IsNullOrEmpty(selRel.PropertyAlias) Then
+                Dim m2mObject = _rel.Host
                 Dim m2mKey As String = _rel.Key
 
                 Dim filteredType As Type = m2mObject.GetType
@@ -655,12 +664,12 @@ l1:
                     selectedType = selectOS.GetRealType(schema)
                 End If
 
-                If _rel.Relation Is Nothing OrElse _rel.Relation.Entity Is Nothing OrElse String.IsNullOrEmpty(_rel.Relation.Column) Then
+                If _rel.Relation Is Nothing OrElse _rel.Relation.Entity Is Nothing OrElse String.IsNullOrEmpty(_rel.Relation.PropertyAlias) Then
                     Dim oschema As IEntitySchema = schema.GetEntitySchema(selectedType)
                     field = oschema.GetJoinFieldNameByType(filteredType)
                     needReplace = New RelationDesc(selectOS, field)
                 ElseIf Not TypeOf _rel.Relation Is M2MRelationDesc Then
-                    field = _rel.Relation.Column
+                    field = _rel.Relation.PropertyAlias
                 End If
 
                 If String.IsNullOrEmpty(field) Then
@@ -673,7 +682,7 @@ l1:
                     If selRel Is Nothing Then
                         Throw New QueryCmdException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name), Me)
                     Else
-                        If _rel.Relation Is Nothing OrElse _rel.Relation.Entity Is Nothing OrElse String.IsNullOrEmpty(_rel.Relation.Column) Then
+                        If _rel.Relation Is Nothing OrElse _rel.Relation.Entity Is Nothing OrElse String.IsNullOrEmpty(_rel.Relation.PropertyAlias) Then
                             needReplace = selRel
                             If _rel.Relation IsNot Nothing Then
                                 needReplace.Entity = _rel.Relation.Entity
@@ -856,18 +865,18 @@ l1:
                     End If
 
                     Try
-                        Try
-                            ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, schema)
-                        Catch ex As InvalidCastException
-                            ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Relation.Host.Identifier, schema)
-                        End Try
-                    Catch ex As ArgumentNullException When ex.Message = "oschema"
+                        'Try
+                        ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.PropertyAlias, Relation.Host, schema)
+                            'Catch ex As InvalidCastException
+                            '    ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.PropertyAlias, Relation.Host.Identifier, schema)
+                            'End Try
+                        Catch ex As ArgumentNullException When ex.Message = "oschema"
                         schema = o.GetEntitySchema(mpe)
-                        Try
-                            ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Relation.Host, schema)
-                        Catch ex2 As InvalidCastException
-                            ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Relation.Host.Identifier, schema)
-                        End Try
+                        'Try
+                        ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.PropertyAlias, Relation.Host, schema)
+                        'Catch ex2 As InvalidCastException
+                        '    ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.PropertyAlias, Relation.Host.Identifier, schema)
+                        'End Try
                     End Try
                 End If
             End If
@@ -901,30 +910,30 @@ l1:
                 End If
 
                 Try
-                    Try
-                        ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Nothing, schema)
-                    Catch ex As InvalidCastException
-                        ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, 0, schema)
-                    End Try
+                    'Try
+                    ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.PropertyAlias, Nothing, schema)
+                    'Catch ex As InvalidCastException
+                    '    ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, 0, schema)
+                    'End Try
                 Catch ex As ArgumentNullException When ex.Message = "oschema"
                     schema = o.GetEntitySchema(mpe)
-                    Try
-                        ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, Nothing, schema)
-                    Catch ex2 As InvalidCastException
-                        ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, 0, schema)
-                    End Try
+                    'Try
+                    ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.PropertyAlias, Nothing, schema)
+                    'Catch ex2 As InvalidCastException
+                    '    ObjectMappingEngine.SetPropertyValue(o, Relation.Relation.Column, 0, schema)
+                    'End Try
                 End Try
             End If
         End Sub
 
         Public Sub RemoveAll()
-            For Each o As ISinglePKEntity In ToList()
+            For Each o As ICachedEntity In ToList()
                 Remove(o)
             Next
         End Sub
 
         Public Sub RemoveAll(ByVal mgr As OrmManager)
-            For Each o As ISinglePKEntity In ToList(mgr)
+            For Each o As ICachedEntity In ToList(mgr)
                 Remove(o)
             Next
         End Sub
@@ -1089,7 +1098,7 @@ l1:
 
                 If _rel IsNot Nothing Then
                     Dim oldCnt = _rel.Host.GetAllRelation.Count
-                    Dim newr = _rel.Host.GetRelation(New RelationDesc(eu, RelationDesc.Column, RelationDesc.Key))
+                    Dim newr = _rel.Host.GetRelation(New RelationDesc(eu, RelationDesc.PropertyAlias, RelationDesc.Key))
                     Dim newRel = oldCnt < _rel.Host.GetAllRelation.Count
                     If newRel Then
                         _rel.CopyTo(newr)

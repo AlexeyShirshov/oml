@@ -213,6 +213,7 @@
     <Compile Include="Mapping\Converters.vb" />
     <Compile Include="Mapping\SchemaExtensions.vb" />
     <Compile Include="Query\Criteria\Values\CachedEntityValue.vb" />
+    <Compile Include="Query\Expressions\MultiColumnExpression.vb" />
     <Compile Include="Web\InitMappingEngineModule.vb" />
     <Compile Include="QueryCmd\db\BaseProvider.vb" />
     <Compile Include="IDataContext.vb" />
@@ -382,7 +383,7 @@ del /Q $(TargetDir)$(TargetName)-Full*</PostBuildEvent>
   </PropertyGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="True" />
+      <UserProperties BuildVersion_UpdateFileVersion="True" BuildVersion_BuildVersioningStyle="None.None.None.Increment" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

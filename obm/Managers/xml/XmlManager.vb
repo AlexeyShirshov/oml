@@ -57,7 +57,7 @@ Namespace Xml
             Throw New NotImplementedException
         End Sub
 
-        Protected Overloads Overrides Sub M2MSave(ByVal obj As ISinglePKEntity, ByVal t As System.Type, ByVal direct As String, ByVal el As M2MRelation)
+        Protected Overloads Overrides Sub M2MSave(ByVal obj As ICachedEntity, ByVal t As System.Type, ByVal direct As String, ByVal el As M2MRelation)
             Throw New NotImplementedException
         End Sub
 

@@ -3,6 +3,7 @@ Imports Worm.Entities.Meta
 Imports Worm.Entities
 Imports Worm.Criteria.Core
 Imports Worm.Query
+Imports System.Collections.Generic
 
 Namespace Criteria.Joins
     Public Enum JoinType
@@ -361,39 +362,39 @@ Namespace Criteria.Joins
 
         Public Property Hint As String
 
-        Public Function InjectJoinFilter(ByVal schema As ObjectMappingEngine, ByVal t As Type, ByVal propertyAlias As String, ByVal table As SourceFragment, ByVal column As String) As Core.TemplateBase
+        Public Sub InjectJoinFilter(ByVal schema As ObjectMappingEngine, ByVal t As Type, ByVal propertyAlias As String, ByVal table As SourceFragment, ByVal column As String)
             For Each _fl As Core.IFilter In _condition.GetAllFilters()
                 Dim f As JoinFilter = Nothing
                 Dim fl As JoinFilter = TryCast(_fl, JoinFilter)
-                Dim tm As Core.TemplateBase = Nothing
+                'Dim tm As Core.TemplateBase = Nothing
                 If fl.Left.Property.Entity IsNot Nothing AndAlso fl.Left.Property.Entity.GetRealType(schema) Is t AndAlso fl.Left.Property.PropertyAlias = propertyAlias Then
                     If fl.Right.Property.Entity IsNot Nothing Then
                         f = CreateJoin(table, column, fl.Right.Property, fl._oper)
-                        tm = CreateOrmFilter(fl.Right.Property, fl._oper)
+                        'tm = CreateOrmFilter(fl.Right.Property, fl._oper)
                     Else
-                        f = CreateJoin(table, column, fl.Right.Column, fl._oper)
-                        tm = CreateTableFilter(fl.Right.Column, fl._oper)
+                        f = CreateJoin(table, column, fl.Right.Table, fl.Right.Columns, fl._oper)
+                        'tm = CreateTableFilter(fl.Right.Column, fl._oper)
                     End If
                 End If
                 If f Is Nothing Then
                     If fl.Right.Property.Entity IsNot Nothing AndAlso fl.Right.Property.Entity.GetRealType(schema) Is t AndAlso fl.Right.Property.PropertyAlias = propertyAlias Then
                         If fl.Left.Property.Entity IsNot Nothing Then
                             f = CreateJoin(table, column, fl.Left.Property, fl._oper)
-                            tm = CreateOrmFilter(fl.Left.Property, fl._oper)
+                            'tm = CreateOrmFilter(fl.Left.Property, fl._oper)
                         Else
-                            f = CreateJoin(table, column, fl.Left.Column, fl._oper)
-                            tm = CreateTableFilter(fl.Left.Column, fl._oper)
+                            f = CreateJoin(table, column, fl.Left.Table, fl.Left.Columns, fl._oper)
+                            'tm = CreateTableFilter(fl.Left.Column, fl._oper)
                         End If
                     End If
                 End If
 
                 If f IsNot Nothing Then
                     ReplaceFilter(fl, f)
-                    Return tm
+                    Return
                 End If
             Next
-            Return Nothing
-        End Function
+            Return
+        End Sub
 
         Protected Function CreateTableFilter(ByVal table As SourceFragment, ByVal column As String, ByVal oper As FilterOperation) As Core.TemplateBase
             Return New TableFilterTemplate(table, column, oper)
@@ -423,9 +424,8 @@ Namespace Criteria.Joins
             Return New JoinFilter(table, column, table2, column2, oper)
         End Function
 
-        Protected Function CreateJoin(ByVal table As SourceFragment, ByVal column As String, _
-                                      ByVal p As Pair(Of SourceFragment, String), ByVal oper As FilterOperation) As JoinFilter
-            Return New JoinFilter(table, column, p.First, p.Second, oper)
+        Protected Function CreateJoin(ByVal table As SourceFragment, ByVal column As String, table2 As SourceFragment, columns As IEnumerable(Of ColumnPair), ByVal oper As FilterOperation) As JoinFilter
+            Return New JoinFilter(table, column, table2, columns, oper)
         End Function
 
         Protected Function _Clone() As Object Implements System.ICloneable.Clone

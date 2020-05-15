@@ -67,9 +67,9 @@ Namespace Query
 
         Function Create(ByVal desc As RelationDesc) As RelationCmd
 
-        Function Create(ByVal obj As ISinglePKEntity, ByVal en As EntityUnion) As RelationCmd
+        Function Create(ByVal obj As ICachedEntity, ByVal en As EntityUnion) As RelationCmd
 
-        Function Create(ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
+        Function Create(ByVal obj As ICachedEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
 
         'Function Create(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
 
@@ -81,9 +81,9 @@ Namespace Query
 
         Function Create(ByVal name As String) As QueryCmd
 
-        Function Create(ByVal name As String, ByVal obj As ISinglePKEntity, ByVal en As EntityUnion) As RelationCmd
+        Function Create(ByVal name As String, ByVal obj As ICachedEntity, ByVal en As EntityUnion) As RelationCmd
 
-        Function Create(ByVal name As String, ByVal obj As ISinglePKEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
+        Function Create(ByVal name As String, ByVal obj As ICachedEntity, ByVal en As EntityUnion, ByVal key As String) As RelationCmd
     End Interface
 
     Public Interface IExecutionContext

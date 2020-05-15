@@ -617,9 +617,7 @@ Imports System.Collections.ObjectModel
 
         Dim dic As System.Collections.IDictionary = c.GetOrmDictionary(GetType(Table1), s)
 
-        Dim id As CacheKey = New CacheKey(t)
-
-        dic.Remove(id)
+        dic.Remove(t)
 
         Assert.IsFalse(c.IsInCachePrecise(t, s))
 

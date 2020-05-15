@@ -821,7 +821,7 @@ Namespace Database
         End Sub
 
         Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, _ICachedEntity)),
-            ByVal rejectList As List(Of ICachedEntity), ByVal copies As List(Of Pair(Of ICachedEntity)), ByVal need2save As IEnumerable(Of ICachedEntity))
+                             ByVal rejectList As List(Of ICachedEntity), ByVal copies As List(Of Pair(Of ICachedEntity)), ByVal need2save As IEnumerable(Of ICachedEntity))
             For Each o As _ICachedEntity In rejectList
                 RaiseEvent ObjectRejecting(Me, o)
                 _dontTrackRemoved = True
@@ -832,20 +832,20 @@ Namespace Database
             For Each o As Pair(Of ICachedEntity) In copies
                 OrmManager.CopyBody(o.Second, o.First, Nothing)
                 o.First.SetObjectState(o.Second.ObjectState)
-                Dim orm As _ISinglePKEntity = TryCast(o.First, _ISinglePKEntity)
-                If orm IsNot Nothing Then
-                    orm.RejectM2MIntermidiate()
-                End If
-                RaiseEvent ObjectRestored(Me, o.First)
+                'Dim orm As _ISinglePKEntity = TryCast(o.First, _ISinglePKEntity)
+                'If orm IsNot Nothing Then
+                o.First.RejectM2MIntermidiate()
+                    'End If
+                    RaiseEvent ObjectRestored(Me, o.First)
             Next
             For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
                 Dim o As ICachedEntity = p.Second
                 If Not rejectList.Contains(o) Then
                     RaiseEvent ObjectRejecting(Me, o)
-                    Dim orm As _ISinglePKEntity = TryCast(o, _ISinglePKEntity)
-                    If orm IsNot Nothing Then
-                        orm.RejectM2MIntermidiate()
-                    End If
+                    'Dim orm As _ISinglePKEntity = TryCast(o, _ISinglePKEntity)
+                    'If orm IsNot Nothing Then
+                    o.RejectM2MIntermidiate()
+                    'End If
                     RaiseEvent ObjectRejected(Me, o, True)
                 End If
             Next

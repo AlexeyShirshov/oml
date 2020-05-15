@@ -102,6 +102,17 @@ Public Class ComplexPK
     Protected Overrides Function GetCacheKey() As Integer
         Return _code.GetHashCode Xor _i
     End Function
+    Public Shared ReadOnly Property ChildsRelation() As Worm.Entities.Meta.RelationDescEx
+        Get
+            Return New Worm.Entities.Meta.RelationDescEx(New Worm.Query.EntityUnion(GetType(ComplexPK)), New Worm.Entities.Meta.RelationDesc(New Worm.Query.EntityUnion(GetType(ComplexFK)), "Parent", ""))
+        End Get
+    End Property
+
+    Public ReadOnly Property Childs() As Worm.Query.RelationCmd
+        Get
+            Return Me.GetCmd(ChildsRelation.Rel)
+        End Get
+    End Property
 End Class
 
 <Entity("1", Tablename:="dbo.guid_table")> _

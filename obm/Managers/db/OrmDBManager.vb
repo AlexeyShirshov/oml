@@ -47,9 +47,8 @@ Namespace Database
             Return _upd.InsertObject(Me, obj)
         End Function
 
-        Protected Overrides Sub M2MSave(ByVal obj As ISinglePKEntity, ByVal t As Type, ByVal direct As String, ByVal el As M2MRelation)
+        Protected Overrides Sub M2MSave(ByVal obj As ICachedEntity, ByVal t As Type, ByVal direct As String, ByVal el As M2MRelation)
             _upd.M2MSave(Me, obj, t, direct, el)
-
         End Sub
 
         Protected Friend Overrides Sub DeleteObject(ByVal obj As ICachedEntity)

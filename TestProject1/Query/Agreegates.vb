@@ -12,7 +12,7 @@ Imports Worm.Criteria.Joins
 Imports Worm.Query.Sorting
 Imports Worm.Misc
 Imports Worm.Expressions2
-
+Imports System.Linq
 'Imports Worm.Database.Sorting
 
 <TestClass()> Public Class TestAgreegates
@@ -121,7 +121,7 @@ Imports Worm.Expressions2
 
             Dim inner As QueryCmd = New QueryCmd()
             inner.From(table)
-            inner.Filter = New JoinFilter(table, r2.Column, t, "ID", Worm.Criteria.FilterOperation.Equal)
+            inner.Filter = New JoinFilter(table, r2.Columns, t, "ID", Worm.Criteria.FilterOperation.Equal)
             inner.SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(New SelectExpression() { _
                 New SelectExpression(New Expressions2.AggregateExpression(Expressions2.AggregateExpression.AggregateFunction.Count)) _
             })
@@ -159,14 +159,14 @@ Imports Worm.Expressions2
             Dim r As M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(t, GetType(Entity), CStr(Nothing))
             Dim r2 As M2MRelationDesc = mgr.MappingEngine.GetM2MRelation(GetType(Entity), t, CStr(Nothing))
             Dim table As SourceFragment = r.Table
-            Dim jf As New JoinFilter(table, r2.Column, t, "ID", Worm.Criteria.FilterOperation.Equal)
+            Dim jf As New JoinFilter(table, r2.Columns, t, "ID", Worm.Criteria.FilterOperation.Equal)
             q.Joins = New QueryJoin() {New QueryJoin(table, Worm.Criteria.Joins.JoinType.Join, jf)}
 
             Assert.IsNotNull(q.SelectList)
             Assert.AreEqual(39, q.ToSimpleList(Of Integer)(mgr)(0))
             Assert.IsNotNull(q.SelectList)
 
-            q.Group = GCtor.column(table, r.Column)
+            q.Group = GCtor.column(table, r.Columns(0).column1)
 
             Assert.IsNotNull(q.SelectList)
             Dim l As IList(Of Integer) = q.ToSimpleList(Of Integer)(mgr)
@@ -363,10 +363,10 @@ Imports Worm.Expressions2
 
             Dim q As New QueryCmd()
             q.SelectEntity(typeE4)
-            q.Sort = SCtor.query( _
-                New QueryCmd().From(table). _
-                    Select(FCtor.count). _
-                    Where(Ctor.column(table, r2.Column).eq(typeE4, "ID"))).desc
+            q.Sort = SCtor.query(
+                New QueryCmd().From(table).
+                    Select(FCtor.count).
+                    Where(Ctor.column(table, r2.Columns(0).Column1).eq(typeE4, "ID"))).desc
 
             Assert.AreEqual(12, q.ToList(Of Entity4)(mgr).Count)
         End Using

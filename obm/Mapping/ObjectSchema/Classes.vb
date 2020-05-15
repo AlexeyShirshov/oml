@@ -395,17 +395,17 @@ Namespace Entities.Meta
     End Class
 
     Public Class RelationDesc
-        Public ReadOnly Column As String
+        Public ReadOnly PropertyAlias As String
         Public ReadOnly Key As String
         Private _eu As EntityUnion
 
         Public Sub New(ByVal eu As EntityUnion, ByVal propertyAlias As String)
-            Me.Column = propertyAlias
+            Me.PropertyAlias = propertyAlias
             _eu = eu
         End Sub
 
         Public Sub New(ByVal eu As EntityUnion, ByVal propertyAlias As String, ByVal key As String)
-            Me.Column = propertyAlias
+            Me.PropertyAlias = propertyAlias
             Me.Key = key
             _eu = eu
         End Sub
@@ -532,7 +532,7 @@ Namespace Entities.Meta
                                 If re Is Nothing Then
                                     re = New ReadOnlyList(Of T)(objs)
                                 End If
-                                Dim rv As ReadOnlyList(Of ReturnType) = re.SelectEntity(Of ReturnType)(start, length, Column)
+                                Dim rv As ReadOnlyList(Of ReturnType) = re.SelectEntity(Of ReturnType)(start, length, PropertyAlias)
                                 rv.LoadObjects()
                                 Return rv
                             Else
@@ -579,7 +579,7 @@ Namespace Entities.Meta
                     CType(ll, IListEdit).Add(val)
                 Next
             Else
-                Dim op As New ObjectProperty(rcmd.RelationDesc.Entity, rcmd.RelationDesc.Column)
+                Dim op As New ObjectProperty(rcmd.RelationDesc.Entity, rcmd.RelationDesc.PropertyAlias)
                 Dim rtt As Type = Nothing
                 Dim oschema As IEntitySchema = Nothing
 
@@ -632,8 +632,8 @@ Namespace Entities.Meta
             Return l
         End Function
 
-        Public Overridable Function Load(Of T As ISinglePKEntity, ReturnType As _ISinglePKEntity)(ByVal objs As IEnumerable(Of T), _
-            ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
+        Public Overridable Function Load(Of T As ISinglePKEntity, ReturnType As _ISinglePKEntity)(ByVal objs As IEnumerable(Of T),
+                                                                                                  ByVal loadWithObjects As Boolean) As ReadOnlyList(Of ReturnType)
             Dim lookups As New Dictionary(Of ISinglePKEntity, IList)
             Dim newc As New List(Of ISinglePKEntity)
             Dim hasInCache As New Dictionary(Of ISinglePKEntity, Object)
@@ -665,7 +665,7 @@ Namespace Entities.Meta
                                 If re Is Nothing Then
                                     re = New ReadOnlyList(Of T)(objs)
                                 End If
-                                Dim rv As ReadOnlyList(Of ReturnType) = re.SelectEntity(Of ReturnType)(Column)
+                                Dim rv As ReadOnlyList(Of ReturnType) = re.SelectEntity(Of ReturnType)(PropertyAlias)
                                 rv.LoadObjects()
                                 Return rv
                             Else
@@ -712,7 +712,7 @@ Namespace Entities.Meta
                     CType(ll, IListEdit).Add(val)
                 Next
             Else
-                Dim op As New ObjectProperty(rcmd.RelationDesc.Entity, rcmd.RelationDesc.Column)
+                Dim op As New ObjectProperty(rcmd.RelationDesc.Entity, rcmd.RelationDesc.PropertyAlias)
                 Dim rtt As Type = Nothing
                 Dim oschema As IEntitySchema = Nothing
 
@@ -796,7 +796,7 @@ Namespace Entities.Meta
                                 If re Is Nothing Then
                                     re = New ReadOnlyList(Of T)(objs)
                                 End If
-                                Dim rv As ReadOnlyList(Of ReturnType) = re.SelectEntity(Of ReturnType)(Column)
+                                Dim rv As ReadOnlyList(Of ReturnType) = re.SelectEntity(Of ReturnType)(PropertyAlias)
                                 rv.LoadObjects(mgr)
                                 Return rv
                             Else
@@ -843,7 +843,7 @@ Namespace Entities.Meta
                     CType(ll, IListEdit).Add(val)
                 Next
             Else
-                Dim op As New ObjectProperty(rcmd.RelationDesc.Entity, rcmd.RelationDesc.Column)
+                Dim op As New ObjectProperty(rcmd.RelationDesc.Entity, rcmd.RelationDesc.PropertyAlias)
                 Dim rtt As Type = Nothing
                 Dim oschema As IEntitySchema = Nothing
 
@@ -901,13 +901,45 @@ Namespace Entities.Meta
         End Function
 
     End Class
+    Public Class ColumnPair
+        Private ReadOnly _col As String
+        Private ReadOnly _col2 As String
 
+        Public Sub New(col As String)
+            _col = col
+        End Sub
+        Public Sub New(col1 As String, col2 As String)
+            _col = col1
+            _col2 = col2
+        End Sub
+
+        Public ReadOnly Property Column1 As String
+            Get
+                Return _col
+            End Get
+        End Property
+
+        Public ReadOnly Property Column2 As String
+            Get
+                Return _col2
+            End Get
+        End Property
+        Public Overrides Function ToString() As String
+            If Not String.IsNullOrEmpty(_col2) Then
+                Return _col & "->" & _col2
+            Else
+                Return _col
+            End If
+        End Function
+    End Class
     Public Class M2MRelationDesc
         Inherits RelationDesc
-        Public ReadOnly Table As SourceFragment
-        Public ReadOnly DeleteCascade As Boolean
-        Public ReadOnly Mapping As System.Data.Common.DataTableMapping
-        Public ReadOnly ConnectedType As Type
+
+        Public Property Table As SourceFragment
+        Public Property DeleteCascade As Boolean
+        Public Property Mapping As System.Data.Common.DataTableMapping
+        Public Property ConnectedType As Type
+        Public Property Columns As IEnumerable(Of ColumnPair)
 
         Private ReadOnly _const() As IFilter
 
@@ -939,49 +971,53 @@ Namespace Entities.Meta
             MyBase.New(eu, Nothing, key)
         End Sub
 
-        Public Sub New(ByVal type As Type, ByVal column As String, ByVal key As String)
-            MyBase.New(New EntityUnion(type), column, key)
+        Public Sub New(ByVal type As Type, ByVal propertyAlias As String, ByVal key As String)
+            MyBase.New(New EntityUnion(type), propertyAlias, key)
         End Sub
 
-        Public Sub New(ByVal entityName As String, ByVal column As String, ByVal key As String)
-            MyBase.New(New EntityUnion(entityName), column, key)
+        Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal key As String)
+            MyBase.New(New EntityUnion(entityName), propertyAlias, key)
         End Sub
 
-        Public Sub New(ByVal eu As EntityUnion, ByVal column As String, ByVal key As String)
-            MyBase.New(eu, column, key)
+        Public Sub New(ByVal eu As EntityUnion, ByVal propertyAlias As String, ByVal key As String)
+            MyBase.New(eu, propertyAlias, key)
         End Sub
 
 #Region " Type ctors "
 
-        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
-            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String)
-            MyBase.New(New EntityUnion(type), column, key)
+        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String,
+                       ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String)
+
+            MyBase.New(New EntityUnion(type), Nothing, key)
             Me.Table = table
             Me.DeleteCascade = delete
             Me.Mapping = mapping
+            Columns = {New ColumnPair(column)}
         End Sub
 
-        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
-            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String, ByVal connectedType As Type)
+        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String,
+                       ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String, ByVal connectedType As Type)
+
             MyClass.New(type, table, column, delete, mapping, key)
             Me.ConnectedType = connectedType
         End Sub
 
-        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
-            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, _
-            ByVal key As String, ByVal connectedType As Type, ByVal constFields() As IFilter)
+        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String,
+                       ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping,
+                       ByVal key As String, ByVal connectedType As Type, ByVal constFields() As IFilter)
             MyClass.New(type, table, column, delete, mapping, key, connectedType)
             _const = constFields
         End Sub
 
-        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
-            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type)
+        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String,
+                       ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type)
+
             MyClass.New(type, table, column, delete, mapping)
             Me.ConnectedType = connectedType
         End Sub
 
-        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
-            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping)
+        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String,
+                       ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping)
             MyClass.New(type, table, column, delete, mapping, DirKey)
         End Sub
 

@@ -21,7 +21,7 @@ Namespace Cache
         Public ReadOnly DateTimeCreated As Date
 
         Private _filters As IDictionary
-        Private ReadOnly _nonExist As New Dictionary(Of Type, HashSet(Of PKWrapper))
+        Private ReadOnly _nonExist As New Dictionary(Of Type, HashSet(Of IKeyProvider))
         Private ReadOnly _loadTimes As New Dictionary(Of Type, Pair(Of Integer, TimeSpan))
         Private ReadOnly _lock As New Object
         Private ReadOnly _lock2 As New Object
@@ -55,11 +55,11 @@ Namespace Cache
 
         Public MustOverride Function GetOrmDictionary(ByVal t As Type, ByVal mpe As ObjectMappingEngine) As System.Collections.IDictionary
 
-        Public MustOverride Function GetOrmDictionary(Of T As _ICachedEntity)(ByVal mpe As ObjectMappingEngine) As System.Collections.Generic.IDictionary(Of Object, T)
+        Public MustOverride Function GetOrmDictionary(Of T As _ICachedEntity)(ByVal mpe As ObjectMappingEngine) As System.Collections.Generic.IDictionary(Of IKeyProvider, T)
 
         Public MustOverride Function GetOrmDictionary(ByVal t As Type, ByVal cb As ICacheBehavior) As System.Collections.IDictionary
 
-        Public MustOverride Function GetOrmDictionary(Of T As _ICachedEntity)(ByVal cb As ICacheBehavior) As System.Collections.Generic.IDictionary(Of Object, T)
+        Public MustOverride Function GetOrmDictionary(Of T As _ICachedEntity)(ByVal cb As ICacheBehavior) As System.Collections.Generic.IDictionary(Of IKeyProvider, T)
 
         Public Overridable Sub Reset()
             _filters = CreateRootDictionary4Queries()
@@ -495,6 +495,7 @@ Namespace Cache
                 Return _externalObjects
             End Get
         End Property
+#If Not ExcludeFindMethods Then
         Protected Friend Sub AddM2MObjDependent(ByVal obj As _ISinglePKEntity, ByVal key As String, ByVal id As String)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
@@ -529,7 +530,7 @@ Namespace Cache
                 End If
             End Using
         End Sub
-
+#End If
 
 #If OLDM2M Then
         Protected Friend Function GetM2MEntries(ByVal obj As _IKeyEntity, ByVal name As String) As ICollection(Of Pair(Of M2MCache, Pair(Of String, String)))
@@ -568,7 +569,6 @@ Namespace Cache
                 Return etrs
             End Using
         End Function
-#End If
         Protected Friend Sub UpdateM2MEntries(ByVal obj As _ISinglePKEntity, ByVal oldId As Object, ByVal name As String)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
@@ -596,6 +596,7 @@ Namespace Cache
                 End If
             End Using
         End Sub
+#End If
 
         'Public Function CustomObject(Of T As {New, Class})(ByVal o As T) As ICachedEntity
         '    Throw New NotImplementedException
@@ -617,8 +618,8 @@ Namespace Cache
             End If
 
             Dim t As Type = obj.GetType
-
-            Dim dic As IDictionary = GetOrmDictionary(t, TryCast(obj.GetEntitySchema(mpe), ICacheBehavior))
+            Dim schema = obj.GetEntitySchema(mpe)
+            Dim dic As IDictionary = GetOrmDictionary(t, TryCast(schema, ICacheBehavior))
 
             If dic Is Nothing Then
                 ''todo: throw an exception when all collections will be implemented
@@ -626,14 +627,14 @@ Namespace Cache
                 Throw New OrmManagerException("Collection for " & t.Name & " not exists")
             End If
 
-            Return CType(dic(New CacheKey(obj)), ICachedEntity)
+            Return CType(dic(obj), ICachedEntity)
         End Function
 
         Public Function IsInCachePrecise(ByVal obj As ICachedEntity, ByVal mpe As ObjectMappingEngine) As Boolean
             Return ReferenceEquals(GetFromCache(obj, mpe), obj)
         End Function
 
-        Public Function IsInCache(ByVal id As Object, ByVal t As Type, ByVal mpe As ObjectMappingEngine) As Boolean
+        Public Function IsInCache(ByVal id As IPKDesc, ByVal t As Type, ByVal mpe As ObjectMappingEngine) As Boolean
             Dim dic As IDictionary = GetOrmDictionary(t, mpe)
 
             If dic Is Nothing Then
@@ -642,7 +643,7 @@ Namespace Cache
                 Throw New OrmManagerException("Collection for " & t.Name & " not exists")
             End If
 
-            Return dic.Contains(New CacheKey(SinglePKEntity.CreateKeyEntity(id, t, mpe)))
+            Return dic.Contains(New PKWrapper(id))
         End Function
 
         Public Property NewObjectManager() As INewObjectsStore
@@ -665,14 +666,15 @@ Namespace Cache
         '    Return FindObjectInCache(Nothing, obj, load, checkOnCreate, dic, addOnCreate, mgr, False, mgr.MappingEngine.GetEntitySchema(obj.GetType))
         'End Function
         Public Function FindObjectInCache(ByVal type As Type, ByVal obj As Object,
-                                          ByVal id As PKWrapper, ByVal cb As ICacheBehavior,
-                                          ByVal entityDictionary As IDictionary, ByVal addIfNotFound As Boolean,
+                                          ByVal id As IKeyProvider, ByVal cb As ICacheBehavior,
+                                          ByVal entityDictionary As IDictionary,
+                                          ByVal addIfNotFound As Boolean,
                                           ByVal fromDb As Boolean) As Object
 
             Dim a As Object = entityDictionary(id)
             'Dim oc As ObjectModification = Nothing
             If a Is Nothing AndAlso Not fromDb AndAlso NewObjectManager IsNot Nothing Then
-                a = NewObjectManager.GetNew(type, id.GetPKs)
+                a = NewObjectManager.GetNew(type, SchemaExtensions.GetPKs(obj))
                 If a IsNot Nothing Then Return a
                 'oc = ShadowCopy(type, id, cb)
                 'If oc IsNot Nothing Then
@@ -699,36 +701,26 @@ Namespace Cache
             Return a
         End Function
         Public Function FindObjectInCacheOrAdd(ByVal type As Type,
-                                               ByVal id As PKWrapper,
+                                               ByVal id As IKeyProvider,
                                                ByVal entityDictionary As IDictionary,
-                                               ByVal fromDb As Boolean,
+                                               ByVal addIfNotFound As Boolean,
                                                ByVal getObject As Func(Of Object)) As Object
 
             Dim a As Object = entityDictionary(id)
-            'Dim oc As ObjectModification = Nothing
-            If a Is Nothing AndAlso Not fromDb AndAlso NewObjectManager IsNot Nothing Then
-                a = NewObjectManager.GetNew(type, id.GetPKs)
-                If a IsNot Nothing Then Return a
-                'oc = ShadowCopy(type, id, cb)
-                'If oc IsNot Nothing Then
-                '    Dim oldpk() As PKDesc = oc.OlPK
-                '    If oldpk IsNot Nothing Then
-                '        a = NewObjectManager.GetNew(type, oldpk)
-                '        If a IsNot Nothing Then Return a
-                '    End If
-                'End If
-            End If
 
             If a Is Nothing Then
                 'If oc Is Nothing Then oc = ShadowCopy(type, id, cb)
                 'If oc IsNot Nothing Then
                 '    Return AddObjectInternal(oc.Obj, id, entityDictionary)
                 'End If
-            End If
-            Dim addIfNotFound = getObject IsNot Nothing
-            If a Is Nothing AndAlso addIfNotFound Then
-                a = AddObjectInternal(getObject(), id, entityDictionary)
-                RemoveNonExistent(type, id)
+                If getObject IsNot Nothing Then
+                    a = getObject()
+
+                    If a IsNot Nothing AndAlso addIfNotFound Then
+                        a = AddObjectInternal(a, id, entityDictionary)
+                        RemoveNonExistent(type, id)
+                    End If
+                End If
             End If
 
             Return a
@@ -742,81 +734,89 @@ Namespace Cache
         Public Function GetKeyEntityFromCacheOrCreate(ByVal id As Object, ByVal type As Type,
                                                       ByVal add2CacheOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As ISinglePKEntity
 
-            Dim o As ISinglePKEntity = SinglePKEntity.CreateKeyEntity(id, type, mpe)
-            o.SetObjectState(ObjectState.NotLoaded)
+            Dim schema = mpe.GetEntitySchema(type)
+            Dim cb As ICacheBehavior = TryCast(schema, ICacheBehavior)
+            Return CType(FindObjectInCacheOrAdd(type, New SingleValueKey(id), GetOrmDictionary(type, cb), add2CacheOnCreate, Function()
+                                                                                                                                 Dim o As ISinglePKEntity = SinglePKEntity.CreateKeyEntity(id, type, mpe)
+                                                                                                                                 If add2CacheOnCreate Then
+                                                                                                                                     o.SetObjectState(ObjectState.NotLoaded)
+                                                                                                                                 End If
+                                                                                                                                 Return o
+                                                                                                                             End Function), ISinglePKEntity)
 
-            Dim cb As ICacheBehavior = TryCast(mpe.GetEntitySchema(type), ICacheBehavior)
-            Dim obj As _ICachedEntity = CType(FindObjectInCache(type, o, New CacheKey(o), cb, GetOrmDictionary(type, cb), add2CacheOnCreate, False), _ICachedEntity)
-
-            If ReferenceEquals(o, obj) AndAlso Not add2CacheOnCreate Then
-                o.SetObjectState(ObjectState.Created)
-            End If
-
-            Return CType(obj, ISinglePKEntity)
         End Function
 
         Public Function GetEntityOrOrmFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk As IPKDesc, ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As T
 
-            Dim o As T = CachedEntity.CreateObject(Of T)(pk, mpe)
-
-            o.SetObjectState(ObjectState.NotLoaded)
-
-            Dim cb As ICacheBehavior = TryCast(mpe.GetEntitySchema(GetType(T)), ICacheBehavior)
-            Return CType(FindObjectInCache(GetType(T), o, New CacheKey(o), cb,
-                CType(GetOrmDictionary(Of T)(cb), System.Collections.IDictionary), addOnCreate, False), T)
+            Dim schema = mpe.GetEntitySchema(GetType(T))
+            Dim cb As ICacheBehavior = TryCast(schema, ICacheBehavior)
+            Return CType(FindObjectInCacheOrAdd(GetType(T), New PKWrapper(pk), CType(GetOrmDictionary(Of T)(cb), System.Collections.IDictionary), addOnCreate, Function()
+                                                                                                                                                                   Dim o As T = CachedEntity.CreateObject(Of T)(pk, mpe)
+                                                                                                                                                                   If addOnCreate Then
+                                                                                                                                                                       o.SetObjectState(ObjectState.NotLoaded)
+                                                                                                                                                                   End If
+                                                                                                                                                                   Return o
+                                                                                                                                                               End Function), T)
         End Function
 
         Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk As IPKDesc, ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As T
 
-            Dim o As T = CachedEntity.CreateEntity(Of T)(pk, mpe)
-
-            o.SetObjectState(ObjectState.NotLoaded)
-
-            Dim cb As ICacheBehavior = TryCast(mpe.GetEntitySchema(GetType(T)), ICacheBehavior)
-            Return CType(FindObjectInCache(GetType(T), o, New CacheKey(o), cb,
-                CType(GetOrmDictionary(Of T)(cb), System.Collections.IDictionary), addOnCreate, False), T)
+            Dim schema = mpe.GetEntitySchema(GetType(T))
+            Dim cb As ICacheBehavior = TryCast(schema, ICacheBehavior)
+            Return CType(FindObjectInCacheOrAdd(GetType(T), New PKWrapper(pk), CType(GetOrmDictionary(Of T)(cb), System.Collections.IDictionary), addOnCreate, Function()
+                                                                                                                                                                   Dim o As T = CachedEntity.CreateEntity(Of T)(pk, mpe)
+                                                                                                                                                                   If addOnCreate Then
+                                                                                                                                                                       o.SetObjectState(ObjectState.NotLoaded)
+                                                                                                                                                                   End If
+                                                                                                                                                                   Return o
+                                                                                                                                                               End Function), T)
         End Function
 
         Public Function GetEntityFromCacheOrCreate(ByVal pk As IPKDesc, ByVal type As Type,
                                                    ByVal addOnCreate As Boolean, ByVal mpe As ObjectMappingEngine) As Object
-            Dim o As Object = CachedEntity.CreateObject(pk, type, mpe)
             Dim pkw As PKWrapper = Nothing
-            Dim ce As _ICachedEntity = TryCast(o, _ICachedEntity)
-            Dim e As _IEntity = TryCast(o, _ICachedEntity)
-            If e IsNot Nothing Then
-                e.SetObjectState(ObjectState.NotLoaded)
-            End If
-            If ce IsNot Nothing Then
-                pkw = New CacheKey(ce)
-            Else
-                pkw = New PKWrapper(pk)
-            End If
+            'Dim ce As _ICachedEntity = TryCast(o, _ICachedEntity)
+            Dim schema = mpe.GetEntitySchema(type)
+            'If ce IsNot Nothing Then
+            'pkw = New CacheKey(pk, schema)
+            'Else
+            pkw = New PKWrapper(pk)
+            'End If
 
-            Dim cb As ICacheBehavior = TryCast(mpe.GetEntitySchema(type), ICacheBehavior)
-            Return CType(FindObjectInCache(type, o, pkw, cb, GetOrmDictionary(type, cb), addOnCreate, False), ICachedEntity)
+            Dim cb As ICacheBehavior = TryCast(schema, ICacheBehavior)
+            Return FindObjectInCacheOrAdd(type, pkw, GetOrmDictionary(type, cb), addOnCreate, Function()
+                                                                                                  Dim o As Object = CachedEntity.CreateObject(pk, type, mpe)
+                                                                                                  Dim e As _IEntity = TryCast(o, _ICachedEntity)
+                                                                                                  If addOnCreate AndAlso e IsNot Nothing Then
+                                                                                                      e.SetObjectState(ObjectState.NotLoaded)
+                                                                                                  End If
+                                                                                                  Return o
+                                                                                              End Function)
         End Function
 
         Public Function GetEntityFromCacheOrCreate(ByVal pk As IPKDesc, ByVal type As Type,
                                                    ByVal addOnCreate As Boolean, ByVal dic As IDictionary, ByVal mpe As ObjectMappingEngine) As Object
 
-            Dim o As Object = CachedEntity.CreateObject(pk, type, mpe)
             Dim pkw As PKWrapper = Nothing
-            Dim ce As _ICachedEntity = TryCast(o, _ICachedEntity)
-            Dim e As _IEntity = TryCast(o, _ICachedEntity)
-            If e IsNot Nothing Then
-                e.SetObjectState(ObjectState.NotLoaded)
-            End If
-            If ce IsNot Nothing Then
-                pkw = New CacheKey(ce)
-            Else
-                pkw = New PKWrapper(pk)
-            End If
+            'Dim ce As _ICachedEntity = TryCast(o, _ICachedEntity)
+            'If ce IsNot Nothing Then
+            '    pkw = New CacheKey(ce)
+            'Else
+            pkw = New PKWrapper(pk)
+            'End If
 
             Dim cb As ICacheBehavior = TryCast(mpe.GetEntitySchema(type), ICacheBehavior)
-            Return CType(FindObjectInCache(type, o, pkw, cb, dic, addOnCreate, False), ICachedEntity)
+            Return FindObjectInCacheOrAdd(type, pkw, dic, addOnCreate, Function()
+                                                                           Dim o As Object = CachedEntity.CreateObject(pk, type, mpe)
+                                                                           Dim e As _IEntity = TryCast(o, _ICachedEntity)
+                                                                           If addOnCreate AndAlso e IsNot Nothing Then
+                                                                               e.SetObjectState(ObjectState.NotLoaded)
+                                                                           End If
+                                                                           Return o
+                                                                       End Function)
         End Function
 
-        Protected Friend Shared Function AddObjectInternal(ByVal obj As Object, ByVal id As PKWrapper, ByVal dic As IDictionary) As Object
+        Protected Friend Shared Function AddObjectInternal(ByVal obj As Object, ByVal id As IKeyProvider, ByVal dic As IDictionary) As Object
 #If DEBUG Then
             Dim e As IEntity = TryCast(obj, IEntity)
             If e IsNot Nothing Then Assert(e.ObjectState <> ObjectState.Deleted, "Object {0} cannot be in Deleted state", id.UniqueString)
@@ -872,7 +872,7 @@ Namespace Cache
             Dim pks = oschema.GetPKs(o)
             Dim cb As ICacheBehavior = TryCast(oschema, ICacheBehavior)
 
-            Dim ro As Object = FindObjectInCacheOrAdd(type, New PKWrapper(pks), GetOrmDictionary(GetType(AnonymousCachedEntity), cb), False,
+            Dim ro As Object = FindObjectInCacheOrAdd(type, New PKWrapper(pks), GetOrmDictionary(GetType(AnonymousCachedEntity), cb), True,
                                                                                                  Function()
                                                                                                      Dim c As _ICachedEntity = CachedEntity.CreateEntity(pks, GetType(AnonymousCachedEntity), mpe)
                                                                                                      Dim cc As IKeyProvider = TryCast(o, IKeyProvider)
@@ -919,20 +919,20 @@ Namespace Cache
 
 #End Region
 
-        Public Sub AddNonExistentObject(t As Type, key As PKWrapper)
+        Public Sub AddNonExistentObject(t As Type, key As IKeyProvider)
             SyncLock CType(_nonExist, ICollection).SyncRoot
-                Dim s As HashSet(Of PKWrapper) = Nothing
+                Dim s As HashSet(Of IKeyProvider) = Nothing
                 If Not _nonExist.TryGetValue(t, s) Then
-                    s = New HashSet(Of PKWrapper)
+                    s = New HashSet(Of IKeyProvider)
                     _nonExist(t) = s
                 End If
                 s.Add(key)
             End SyncLock
         End Sub
 
-        Public Function CheckNonExistent(t As Type, ck As PKWrapper) As Boolean
+        Public Function CheckNonExistent(t As Type, ck As IKeyProvider) As Boolean
             SyncLock CType(_nonExist, ICollection).SyncRoot
-                Dim s As HashSet(Of PKWrapper) = Nothing
+                Dim s As HashSet(Of IKeyProvider) = Nothing
                 If _nonExist.TryGetValue(t, s) Then
                     Return s.Contains(ck)
                 End If
@@ -940,9 +940,9 @@ Namespace Cache
             End SyncLock
         End Function
 
-        Friend Sub RemoveNonExistent(t As Type, ck As PKWrapper)
+        Friend Sub RemoveNonExistent(t As Type, ck As IKeyProvider)
             SyncLock CType(_nonExist, ICollection).SyncRoot
-                Dim s As HashSet(Of PKWrapper) = Nothing
+                Dim s As HashSet(Of IKeyProvider) = Nothing
                 If _nonExist.TryGetValue(t, s) Then
                     s.Remove(ck)
                 End If
@@ -1004,12 +1004,12 @@ Namespace Cache
             Return dic
         End Function
 
-        Public Overrides Function GetOrmDictionary(Of T As _ICachedEntity)(ByVal mpe As ObjectMappingEngine) As System.Collections.Generic.IDictionary(Of Object, T)
-            Return CType(GetOrmDictionary(GetType(T), mpe), IDictionary(Of Object, T))
+        Public Overrides Function GetOrmDictionary(Of T As _ICachedEntity)(ByVal mpe As ObjectMappingEngine) As System.Collections.Generic.IDictionary(Of IKeyProvider, T)
+            Return CType(GetOrmDictionary(GetType(T), mpe), IDictionary(Of IKeyProvider, T))
         End Function
 
-        Public Overrides Function GetOrmDictionary(Of T As _ICachedEntity)(ByVal cb As ICacheBehavior) As System.Collections.Generic.IDictionary(Of Object, T)
-            Return CType(GetOrmDictionary(GetType(T), cb), IDictionary(Of Object, T))
+        Public Overrides Function GetOrmDictionary(Of T As _ICachedEntity)(ByVal cb As ICacheBehavior) As System.Collections.Generic.IDictionary(Of IKeyProvider, T)
+            Return CType(GetOrmDictionary(GetType(T), cb), IDictionary(Of IKeyProvider, T))
         End Function
 
         Protected Overridable Function CreateDictionary4ObjectInstances(ByVal t As Type) As IDictionary

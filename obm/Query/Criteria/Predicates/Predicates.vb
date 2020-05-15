@@ -168,8 +168,8 @@ Namespace Criteria
             _col = column
         End Sub
 
-        Protected Friend Sub New(ByVal table As Meta.SourceFragment, ByVal column As String, _
-            ByVal con As Condition.ConditionConstructor, ByVal ct As ConditionOperator)
+        Protected Friend Sub New(ByVal table As Meta.SourceFragment, ByVal column As String,
+                                 ByVal con As Condition.ConditionConstructor, ByVal ct As ConditionOperator)
             MyBase.New(con, ct)
             _tbl = table
             _col = column

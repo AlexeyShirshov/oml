@@ -69,7 +69,11 @@ Namespace Criteria.Joins
             Dim c As New CriteriaJoin(jf, _c, _jc)
             Return c
         End Function
-
+        Public Function [and](ByVal table As SourceFragment, ByVal columns As IEnumerable(Of ColumnPair)) As CriteriaJoin
+            Dim jf As New JoinFilter(table, columns, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+            Dim c As New CriteriaJoin(jf, _c, _jc)
+            Return c
+        End Function
         Public Function [and](ByVal table As SourceFragment, ByVal column As String) As CriteriaJoin
             Dim jf As New JoinFilter(table, column, CType(Nothing, Type), Nothing, FilterOperation.Equal)
             Dim c As New CriteriaJoin(jf, _c, _jc)
@@ -246,6 +250,11 @@ Namespace Criteria.Joins
 
         Public Function eq(ByVal table As SourceFragment, ByVal column As String) As JoinLink
             _jf.Right = New FieldReference(table, column)
+            _jf._oper = FilterOperation.Equal
+            Return GetLink()
+        End Function
+        Public Function eq(ByVal table As SourceFragment, ByVal columns As IEnumerable(Of ColumnPair)) As JoinLink
+            _jf.Right = New FieldReference(table, columns)
             _jf._oper = FilterOperation.Equal
             Return GetLink()
         End Function

@@ -166,4 +166,23 @@ Imports Worm.Entities.Meta
 
         Assert.AreEqual("dsfklvmdlf", o.Parent.Name)
     End Sub
+
+    <TestMethod>
+    Public Sub TestComplexFKRelation()
+        Dim cache As New Worm.Cache.OrmCache
+        Dim gen As New ObjectMappingEngine("1")
+        Dim dx As New DataContext(Function() TestManager.CreateManager(cache, gen))
+        Dim schema = gen.GetEntitySchema(GetType(ComplexPK))
+        Dim tbl = schema.Table
+
+        Dim o = dx.CreateQuery.Where(Ctor.column(tbl, "i").eq(453).[and](tbl, "code").eq("3lmdfv")).FirstOrDefault(Of ComplexPK)
+
+        Assert.IsNotNull(o)
+
+        Dim l = o.GetCmd(GetType(ComplexFK)).ToList(Of ComplexFK)
+
+        Assert.AreEqual(1, l.Count)
+
+        Assert.AreEqual(-8, l(0).x)
+    End Sub
 End Class

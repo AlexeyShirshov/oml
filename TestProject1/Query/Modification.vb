@@ -290,7 +290,7 @@ Imports Worm.Cache
 
         Assert.AreEqual(o.ID, shadow.Key)
         Assert.AreEqual(o.ID, shadow.GetPKs.CalcHashCode)
-        Assert.AreEqual(o.ID, New CacheKey(shadow).GetHashCode)
+        Assert.AreEqual(o.ID, shadow.GetHashCode)
         Assert.AreEqual(o.ID, New PKWrapper(shadow.GetPKs).GetHashCode)
         Assert.AreEqual(o.Code, ce("Code"))
 

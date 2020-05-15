@@ -182,7 +182,7 @@ Namespace Query
             If GetType(M2MRelationDesc).IsAssignableFrom(r.Rel.GetType) Then
                 Return JCtor.join(r.Rel.Entity).onM2M(r.Rel.Key, r.HostEntity)
             Else
-                Return JCtor.join(r.Rel.Entity).on(r.HostEntity, ObjectProperty.PrimaryKeyReference).eq(r.Rel.Entity, r.Rel.Column)
+                Return JCtor.join(r.Rel.Entity).on(r.HostEntity, ObjectProperty.PrimaryKeyReference).eq(r.Rel.Entity, r.Rel.PropertyAlias)
             End If
         End Function
 
@@ -543,7 +543,11 @@ Namespace Query
             Dim c As New CriteriaJoin(jf, _j)
             Return c
         End Function
-
+        Public Function [on](ByVal table As SourceFragment, ByVal columns As IEnumerable(Of ColumnPair)) As CriteriaJoin
+            Dim jf As New JoinFilter(table, columns, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+            Dim c As New CriteriaJoin(jf, _j)
+            Return c
+        End Function
         'Public Shared Function Create(ByVal entityName As String, ByVal propertyAlias As String) As CriteriaJoin
         '    Dim jf As New JoinFilter(entityName, propertyAlias, CType(Nothing, String), Nothing, FilterOperation.Equal)
         '    Dim c As New CriteriaJoin(jf, Nothing)

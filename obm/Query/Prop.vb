@@ -2,6 +2,8 @@
 Imports System.Collections.Generic
 Imports Worm.Query
 Imports Worm.Criteria.Values
+Imports System.Web.UI.WebControls
+Imports System.Linq
 
 Namespace Query
 
@@ -13,12 +15,13 @@ Namespace Query
         [Aggregate]
     End Enum
 
-    <Serializable()> _
+    <Serializable()>
     Public Class FieldReference
         Implements IQueryElement
 
         Private _op As ObjectProperty
-        Private _tf As Pair(Of SourceFragment, String)
+        Private _sf As SourceFragment
+        Private _cols As IEnumerable(Of ColumnPair)
         Private _c As Criteria.Values.IFilterValue
 
         Protected Sub New()
@@ -45,9 +48,13 @@ Namespace Query
         End Sub
 
         Public Sub New(ByVal table As SourceFragment, ByVal column As String)
-            _tf = New Pair(Of SourceFragment, String)(table, column)
+            _sf = table
+            _cols = {New ColumnPair(column)}
         End Sub
-
+        Public Sub New(ByVal table As SourceFragment, ByVal columns As IEnumerable(Of ColumnPair))
+            _sf = table
+            _cols = columns
+        End Sub
         Public Sub New(ByVal value As Criteria.Values.IFilterValue)
             _c = value
         End Sub
@@ -64,12 +71,16 @@ Namespace Query
             End Get
         End Property
 
-        Public ReadOnly Property Column() As Pair(Of SourceFragment, String)
+        Public ReadOnly Property Columns() As IEnumerable(Of ColumnPair)
             Get
-                Return _tf
+                Return _cols
             End Get
         End Property
-
+        Public ReadOnly Property Table() As SourceFragment
+            Get
+                Return _sf
+            End Get
+        End Property
 #If DEBUG Then
         Public Overrides Function ToString() As String
             Throw New NotSupportedException
@@ -92,12 +103,23 @@ Namespace Query
                 Return False
             End If
 
-            Return Object.Equals(_tf, obj._tf) OrElse Object.Equals(_op, obj._op) OrElse Object.Equals(_c, obj._c)
+            Return (Object.Equals(_sf, obj._sf) AndAlso (
+                        (_cols Is Nothing AndAlso obj._cols Is Nothing) OrElse _cols.All(Function(it) obj._cols.Any(Function(it2) it.Column1 = it2.Column1 AndAlso it.Column2 = it2.Column2)))
+            ) OrElse Object.Equals(_op, obj._op) OrElse Object.Equals(_c, obj._c)
         End Function
 
         Public Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
-            If _tf IsNot Nothing Then
-                Return _tf.First.RawName & "$" & _tf.Second
+            If _sf IsNot Nothing Then
+                Dim sb As New StringBuilder
+                sb.Append(_sf.RawName)
+                If _cols IsNot Nothing Then
+                    sb.Append("$")
+                    For Each col In _cols
+                        sb.Append(col.ToString)
+                        sb.Append(",")
+                    Next
+                End If
+                Return sb.ToString
             ElseIf _c IsNot Nothing Then
                 Return _c._ToString
             Else
@@ -106,8 +128,17 @@ Namespace Query
         End Function
 
         Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
-            If _tf IsNot Nothing Then
-                Return _tf.First.RawName & "$" & _tf.Second
+            If _sf IsNot Nothing Then
+                Dim sb As New StringBuilder
+                sb.Append(_sf.RawName)
+                If _cols IsNot Nothing Then
+                    sb.Append("$")
+                    For Each col In _cols
+                        sb.Append(col.ToString)
+                        sb.Append(",")
+                    Next
+                End If
+                Return sb.ToString
             ElseIf _c IsNot Nothing Then
                 Return _c.GetStaticString(mpe)
             Else
@@ -148,13 +179,13 @@ Namespace Query
                 target._c = TryCast(_c.Clone, IFilterValue)
             End If
 
-            If _tf IsNot Nothing Then
-                Dim tbl As SourceFragment = Nothing
-                If _tf.First IsNot Nothing Then
-                    tbl = _tf.First.Clone
-                End If
+            If _sf IsNot Nothing Then
+                target._sf = _sf.Clone
 
-                target._tf = New Pair(Of SourceFragment, String)(tbl, _tf.Second)
+            End If
+
+            If _cols IsNot Nothing Then
+                target._cols = _cols.Select(Function(it) New ColumnPair(it.Column1, it.Column2)).ToArray
             End If
 
             Return True

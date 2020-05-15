@@ -285,7 +285,7 @@ Namespace Database
                 Return True
             End Function
 
-            Public Sub M2MSave(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As ISinglePKEntity, ByVal t As Type, ByVal direct As String,
+            Public Sub M2MSave(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As ICachedEntity, ByVal t As Type, ByVal direct As String,
                                ByVal el As M2MRelation)
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
@@ -3627,17 +3627,17 @@ l2:
         End Function
 
         Friend Function GetFilters(ByVal ids As Generic.List(Of Object), ByVal f As FieldReference,
-            ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal idsSorted As Boolean) As Generic.IEnumerable(Of Pair(Of String, Integer))
+                                   ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal idsSorted As Boolean) As Generic.IEnumerable(Of Pair(Of String, Integer))
 
-            If f.Column IsNot Nothing Then
-                Return GetFilters(ids, f.Column.First, f.Column.Second, almgr, params, idsSorted)
+            If f.Table IsNot Nothing AndAlso f.Columns IsNot Nothing Then
+                Return GetFilters(ids, f.Table, f.Columns(0).Column1, almgr, params, idsSorted)
             Else
                 Return GetFilters(ids, f.Property, almgr, params, idsSorted)
             End If
         End Function
 
         Protected Function GetFilters(ByVal ids_ As Generic.List(Of Object), ByVal op As ObjectProperty,
-            ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal idsSorted As Boolean) As Generic.IEnumerable(Of Pair(Of String, Integer))
+                                      ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal idsSorted As Boolean) As Generic.IEnumerable(Of Pair(Of String, Integer))
 
             Dim mr As MergeResult = Nothing
             Dim l As New Generic.List(Of Pair(Of String, Integer))
@@ -3725,7 +3725,7 @@ l2:
         End Function
 
         Protected Function GetFilters(ByVal ids_ As Generic.List(Of Object), ByVal table As SourceFragment, ByVal column As String,
-            ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal idsSorted As Boolean) As Generic.IEnumerable(Of Pair(Of String, Integer))
+                                      ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal idsSorted As Boolean) As Generic.IEnumerable(Of Pair(Of String, Integer))
 
             Dim mr As MergeResult = Nothing
             Dim l As New Generic.List(Of Pair(Of String, Integer))
@@ -4347,7 +4347,7 @@ l2:
         '    Throw New NotImplementedException()
         'End Sub
 
-        Protected Overrides Sub M2MSave(ByVal obj As Entities.ISinglePKEntity, ByVal t As System.Type, ByVal key As String, ByVal el As M2MRelation)
+        Protected Overrides Sub M2MSave(ByVal obj As Entities.ICachedEntity, ByVal t As System.Type, ByVal key As String, ByVal el As M2MRelation)
             Throw New NotImplementedException("Manager is readonly")
         End Sub
 
@@ -4371,8 +4371,7 @@ l2:
             End Get
         End Property
 
-        Protected Friend Function QueryM2M(Of ReturnType As {ISinglePKEntity, New})(ByVal t As Type,
-            ByVal cmd As System.Data.Common.DbCommand, ByVal withLoad As Boolean) As ReadonlyMatrix
+        Protected Friend Function QueryM2M(Of ReturnType As {ICachedEntity, New})(ByVal t As Type, ByVal cmd As System.Data.Common.DbCommand, ByVal withLoad As Boolean) As ReadonlyMatrix
 
             Dim v As New List(Of ReadOnlyCollection(Of _IEntity))
 
